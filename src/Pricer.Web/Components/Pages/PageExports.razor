@@ -1,0 +1,72 @@
+@page "/exports"
+@inject ServiceMarche Marche
+@inject Blotter BlotterDesk
+@inject Pricer.Domaine.Booking.Book BookDesk
+@inject OptionsPricer Options
+
+<PageTitle>Exports · Pricer Deribit</PageTitle>
+
+<div class="entete">
+    <div>
+        <h1>Exports</h1>
+        <div class="muet">Téléchargez l'historique des trades, les positions, les résultats et le risque par échéance en CSV, Excel et JSON.</div>
+    </div>
+</div>
+
+<Message @bind-Texte="_message" Type="erreur" />
+
+<div class="carte">
+    <div style="display:flex; gap:10px; flex-wrap:wrap">
+        @foreach (var format in Enum.GetValues<FormatExport>())
+        {
+            var f = format;
+            <button class="bouton @(f == FormatExport.Excel ? "" : "secondaire")" @onclick="() => Exporter([f])">Exporter en @f</button>
+        }
+        <button class="bouton vert" @onclick="() => Exporter(Enum.GetValues<FormatExport>())">Tout exporter</button>
+    </div>
+    <div class="muet" style="margin-top:10px; font-size:12px">Dossier : <code>@Path.GetFullPath(Options.DossierExports)</code> · @BlotterDesk.Trades.Count trade(s) au blotter</div>
+</div>
+
+@if (_fichiers.Count > 0)
+{
+    <div class="carte">
+        <h2>Fichiers générés</h2>
+        <table>
+            <thead><tr><th class="texte">Fichier</th><th>Taille</th><th class="texte"></th></tr></thead>
+            <tbody>
+                @foreach (var f in _fichiers)
+                {
+                    <tr>
+                        <td class="texte mono">@Path.GetFileName(f)</td>
+                        <td>@((new FileInfo(f).Length / 1024.0).ToString("0.0")) Ko</td>
+                        <td class="texte"><a class="bouton petit secondaire" href="telecharger/@Uri.EscapeDataString(Path.GetFileName(f))" download>Télécharger</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private readonly List<string> _fichiers = new();
+    private string? _message;
+
+    /// <summary>
+    /// On crée les formats demandés à partir du même état du book et on présente les fichiers
+    /// téléchargeables.
+    /// </summary>
+    private void Exporter(IEnumerable<FormatExport> formats)
+    {
+        try
+        {
+            _message = null;
+            var etat = BookDesk.Evaluer(Marche.EtatCourant);
+            foreach (var f in formats)
+                _fichiers.InsertRange(0, FabriqueExportateurs.Creer(f).Exporter(BlotterDesk.Trades, etat, Options.DossierExports));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PricerException)
+        {
+            _message = "Export impossible : " + ex.Message;
+        }
+    }
+}

@@ -1,0 +1,50 @@
+@using System.Globalization
+<svg class="graphique" viewBox="0 0 760 310" role="img" aria-label="@Titre">
+    @foreach (var y in _y.Graduations())
+    {
+        <g><line class="axe" x1="76" x2="742" y1="@P(_y.Vers(y))" y2="@P(_y.Vers(y))" opacity="0.35" />
+        <text x="70" y="@P(_y.Vers(y) + 4)" text-anchor="end">@y.ToString(Vega ? "N2" : "N3", Fr)</text></g>
+    }
+    @foreach (var x in _x.Graduations(6))
+    {
+        <g><text x="@P(_x.Vers(x))" y="284" text-anchor="middle">@x.ToString("N0", Fr)</text></g>
+    }
+    <line class="zero" x1="76" x2="742" y1="@P(_y.Vers(0))" y2="@P(_y.Vers(0))" />
+    <line class="future" x1="@P(_x.Vers(Profil.Future))" x2="@P(_x.Vers(Profil.Future))" y1="20" y2="268" />
+    <g><text x="@P(_x.Vers(Profil.Future)+4)" y="30">Marché actuel</text></g>
+    <polyline class="courbe-echeance" points="@Courbe" />
+    @foreach (var point in Profil.Points)
+    {
+        <circle cx="@P(_x.Vers(point.SousJacent))" cy="@P(_y.Vers(Valeur(point)))" r="4" fill="transparent">
+            <title>@($"Sous-jacent {point.SousJacent:N2} USD — {Titre} : {Valeur(point):N4}")</title>
+        </circle>
+    }
+    <g><text x="380" y="307" text-anchor="middle">Sous-jacent (USD)</text></g>
+</svg>
+<div class="legende"><span>@Titre · @(Vega ? "USD par point de volatilité" : "unités de sous-jacent")</span></div>
+
+@code {
+    [Parameter, EditorRequired] public ProfilStructure Profil { get; set; } = default!;
+    [Parameter] public bool Vega { get; set; }
+    private string Titre => Vega ? "Vega" : "Delta";
+    private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
+    private Echelle _x = default!, _y = default!;
+    /// <summary>
+    /// On sélectionne la sensibilité demandée pour réutiliser le même tracé pour le delta et le vega.
+    /// </summary>
+    private double Valeur(PointProfil p) => Vega ? p.Vega : p.Delta;
+    /// <summary>
+    /// On conserve un point décimal dans les coordonnées du dessin SVG.
+    /// </summary>
+    private static string P(double x) => Echelle.P(x);
+    private string Courbe => string.Join(" ", Profil.Points.Select(p => $"{P(_x.Vers(p.SousJacent))},{P(_y.Vers(Valeur(p)))}"));
+    /// <summary>
+    /// On adapte les axes aux nouveaux scénarios et on inclut zéro pour repérer le changement de signe
+    /// du risque.
+    /// </summary>
+    protected override void OnParametersSet()
+    {
+        _x = new Echelle(Profil.Points[0].SousJacent, Profil.Points[^1].SousJacent, 76, 742);
+        _y = Echelle.Autour(Profil.Points.Select(Valeur), 268, 20, true);
+    }
+}

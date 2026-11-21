@@ -1,0 +1,83 @@
+@page "/"
+@inherits ComposantLive
+@inject ServiceMarche Marche
+@inject Pricer.Domaine.Booking.Book BookDesk
+@inject OptionsPricer Options
+
+<PageTitle>Tableau de bord · Deribit Desk</PageTitle>
+
+@{
+    var etat = Marche.EtatCourant;
+    var book = BookDesk.Evaluer(etat);
+    var echeance = etat.Referentiel.Echeances.FirstOrDefault(e => (e - etat.Maintenant).TotalDays > 1.5 && etat.Smiles().Any(s => s.Echeance == e));
+    var smile = etat.Smiles().FirstOrDefault(s => s.Echeance == echeance);
+}
+
+<div class="entete">
+    <div>
+        <h1>Tableau de bord</h1>
+        <div class="muet">Desk options @Options.Devise · données Deribit en mode <b>@Options.Mode</b> · @etat.Maintenant.ToString("dd/MM/yyyy HH:mm:ss") UTC</div>
+    </div>
+    <div style="display:flex; gap:8px">
+        <a class="bouton" href="pricer">Coter une structure</a>
+        <a class="bouton secondaire" href="sur-mesure">Option sur mesure</a>
+    </div>
+</div>
+
+<div class="grille g4">
+    <div class="kpi"><div class="libelle">Indice @Options.Devise/USD</div><div class="valeur">@Format.Usd(etat.Indice)</div><div class="detail">@etat.Referentiel.NombreOptions options · @etat.Referentiel.Echeances.Count échéances</div></div>
+    <div class="kpi"><div class="libelle">P&amp;L total du book</div><div class="valeur @Format.ClasseSigne(book.PnlTotalBtc)">@Format.Signe(book.PnlTotalBtc, 6) @Options.Devise</div><div class="detail">@Format.Usd(book.PnlTotalUsd) $ · réalisé @Format.Btc(book.PnlRealiseBtc)</div></div>
+    <div class="kpi"><div class="libelle">Positions ouvertes</div><div class="valeur">@book.Ouvertes.Count()</div><div class="detail">@BookDesk.Blotter.Trades.Count trades au blotter</div></div>
+    <div class="kpi"><div class="libelle">Delta · Vega du book</div><div class="valeur">@Format.Nombre(book.GrecquesTotales.Delta, "0.000")</div><div class="detail">vega @Format.Nombre(book.GrecquesTotales.Vega, "N1") $/pt · theta @Format.Nombre(book.GrecquesTotales.Theta, "N1") $/j</div></div>
+</div>
+
+@if (!book.ValorisationComplete || !book.RisqueComplet)
+{
+    <div class="message message-info" role="status">Certaines positions ne disposent pas de données exploitables. Le book détaille les valeurs indisponibles et le risque partiel.</div>
+}
+
+<div class="carte aide-accueil">
+    <b>Votre parcours</b>
+    <span>1. Choisissez les données dans <a href="donnees">Données &amp; lecture</a>.</span>
+    <span>2. Composez une structure ou une option sur mesure.</span>
+    <span>3. Examinez son prix, ses scénarios et sa couverture avant de la booker.</span>
+    <span class="muet">Les trades sont simulés et sauvegardés localement. Aucun ordre n'est transmis à Deribit.</span>
+</div>
+
+<div class="grille g2" style="margin-top:16px">
+    <div class="carte">
+        <h2>Smile @(echeance == default ? "" : Format.Court(echeance)) <span class="muet">— vols inversées par notre Black-76 depuis le mark</span></h2>
+        <GraphiqueSmile Smile="smile" />
+    </div>
+    <div class="carte">
+        <h2>Structure par terme</h2>
+        <div class="tableau-wrap">
+            <table>
+                <thead><tr><th>Échéance</th><th>Jours</th><th>Future</th><th>Vol ATM</th><th>Points du smile</th></tr></thead>
+                <tbody>
+                    @foreach (var s in etat.Smiles().Take(12))
+                    {
+                        <tr>
+                            <td>@Format.Court(s.Echeance)</td>
+                            <td>@Format.Nombre(s.Maturite * 365, "0.0")</td>
+                            <td>@Format.Usd(s.Future)</td>
+                            <td>@VolAtm(s)</td>
+                            <td>@s.Points.Count</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// On prend le point du smile le plus proche du future pour résumer la volatilité à la monnaie.
+    /// </summary>
+    private static string VolAtm(SmileEcheance s)
+    {
+        try { return Format.Pct(Interpolateur.VolSurEcheance(s, 0)); }
+        catch (HorsPlageException) { return "—"; }
+    }
+}

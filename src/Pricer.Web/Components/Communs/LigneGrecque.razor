@@ -1,0 +1,13 @@
+<tr>
+    <td class="texte">@Nom</td>
+    <td>@Format.Nombre(Nous, Motif)</td>
+    <td>@Format.Nombre(Deribit, Motif)</td>
+    <td class="muet">@(Deribit is double d ? Format.Nombre(Nous - d, Motif) : "—")</td>
+</tr>
+
+@code {
+    [Parameter] public string Nom { get; set; } = "";
+    [Parameter] public double Nous { get; set; }
+    [Parameter] public double? Deribit { get; set; }
+    [Parameter] public string Motif { get; set; } = "0.00";
+}

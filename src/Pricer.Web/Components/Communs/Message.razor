@@ -1,0 +1,18 @@
+@if (!string.IsNullOrEmpty(Texte))
+{
+    <div class="message message-@Type">
+        <span>@Texte</span>
+        <button class="fermer" @onclick="Fermer">×</button>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Texte { get; set; }
+    [Parameter] public string Type { get; set; } = "info";
+    [Parameter] public EventCallback<string?> TexteChanged { get; set; }
+
+    /// <summary>
+    /// On signale au parent que le message est fermé pour qu'il efface son texte.
+    /// </summary>
+    private Task Fermer() => TexteChanged.InvokeAsync(null);
+}

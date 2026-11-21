@@ -1,0 +1,288 @@
+@page "/sur-mesure"
+@inherits ComposantLive
+@inject ServiceMarche Marche
+@inject Blotter BlotterDesk
+@inject OptionsPricer Options
+
+<PageTitle>Option sur mesure · Pricer Deribit</PageTitle>
+
+@{
+    var etat = Marche.EtatCourant;
+    var echeances = etat.Referentiel.Echeances.Where(e => e > etat.Maintenant).ToList();
+}
+
+<div class="entete">
+    <div>
+        <h1>Option sur mesure et couverture</h1>
+        <div class="muet">Strike et échéance libres · future et vol interpolés · couverture neutre en delta, gamma et vega avec deux options cotées et un future.</div>
+    </div>
+</div>
+
+<Message @bind-Texte="_message" Type="@_typeMessage" />
+
+<div class="carte">
+    <div class="formulaire">
+        <div class="champ">
+            <label>Type</label>
+            <div class="segmente">
+                <button class="@(_typeOption == TypeOption.Call ? "actif" : "")" @onclick="() => { _typeOption = TypeOption.Call; Invalider(); }">Call</button>
+                <button class="@(_typeOption == TypeOption.Put ? "actif" : "")" @onclick="() => { _typeOption = TypeOption.Put; Invalider(); }">Put</button>
+            </div>
+        </div>
+        <div class="champ"><label>Strike (libre)</label><input type="number" step="100" @bind="_strike" @bind:after="Invalider" /></div>
+        <div class="champ"><label>Échéance (libre)</label><input type="date" @bind="_date" @bind:after="Invalider" /></div>
+        <div class="champ"><label>Heure UTC (règlement)</label><input type="time" @bind="_heure" @bind:after="Invalider" /></div>
+        <div class="champ">
+            <label>Le client</label>
+            <div class="segmente">
+                <button class="@(_sensClient == Sens.Achat ? "actif achat" : "")" @onclick="() => { _sensClient = Sens.Achat; Invalider(); }">achète</button>
+                <button class="@(_sensClient == Sens.Vente ? "actif vente" : "")" @onclick="() => { _sensClient = Sens.Vente; Invalider(); }">vend</button>
+            </div>
+        </div>
+        <div class="champ"><label>Quantité (pas @PasQuantite.ToString("0.###"))</label><input type="number" step="@PasQuantite.ToString(CultureInfo.InvariantCulture)" @bind="_quantite" @bind:after="Invalider" /></div>
+        <div class="champ">
+            <label>Couverture</label>
+            <div class="segmente">
+                <button class="@(_auto ? "actif" : "")" @onclick="() => { _auto = true; Invalider(); }">Choix automatique</button>
+                <button class="@(!_auto ? "actif" : "")" @onclick="() => { _auto = false; Invalider(); }">Paire manuelle</button>
+            </div>
+        </div>
+    </div>
+    <p class="muet" style="margin-top:12px">L’heure peut être simulée librement. Le traitement est disponible à 08:00 UTC, heure du prix de règlement quotidien Deribit utilisé par le book.</p>
+    @if (!_auto)
+    {
+        <div class="formulaire" style="margin-top:14px">
+            @foreach (var h in _manuelles)
+            {
+                var choix = h;
+                <div class="champ">
+                    <label>Option de couverture @(Array.IndexOf(_manuelles, choix) + 1) : échéance</label>
+                    <select value="@choix.Echeance.Ticks" @onchange="e => { choix.Echeance = new DateTime(long.Parse((string)e.Value!), DateTimeKind.Utc); choix.Strike = StrikeAtm(choix.Echeance); Invalider(); }">
+                        @foreach (var e in echeances) { <option value="@e.Ticks">@Format.Court(e)</option> }
+                    </select>
+                </div>
+                <div class="champ">
+                    <label>strike</label>
+                    <select @key="choix.Echeance" value="@choix.Strike.ToString(CultureInfo.InvariantCulture)" @onchange="e => { choix.Strike = double.Parse((string)e.Value!, CultureInfo.InvariantCulture); Invalider(); }">
+                        @foreach (var ps in etat.Referentiel.Strikes(choix.Echeance)) { <option value="@ps.Strike.ToString(CultureInfo.InvariantCulture)">@ps.Strike.ToString("N0")</option> }
+                    </select>
+                </div>
+                <div class="champ">
+                    <label>type</label>
+                    <select value="@choix.Type" @onchange="e => { choix.Type = Enum.Parse<TypeOption>((string)e.Value!); Invalider(); }">
+                        <option value="@TypeOption.Call">Call</option><option value="@TypeOption.Put">Put</option>
+                    </select>
+                </div>
+                <div style="width:24px"></div>
+            }
+        </div>
+    }
+    <div style="margin-top:14px"><button class="bouton" @onclick="CalculerAsync">Interpoler et couvrir</button></div>
+</div>
+
+@if (_proposition is { } p)
+{
+    var i = p.Interpolation;
+    <div class="grille g4">
+        <div class="kpi"><div class="libelle">Vol interpolée</div><div class="valeur">@Format.Pct(i.Sigma)</div><div class="detail">σ₁ @Format.Pct(i.Sigma1)@(i.Sigma2 is double s2 ? " · σ₂ " + Format.Pct(s2) : "")</div></div>
+        <div class="kpi"><div class="libelle">Future interpolé</div><div class="valeur">@Format.Usd(i.Future)</div><div class="detail">k = ln(K/F) = @Format.Nombre(i.LogMoneyness, "0.0000")</div></div>
+        <div class="kpi"><div class="libelle">Prix théorique</div><div class="valeur">@Format.Btc(p.ValeurOption.PrixBtc) @etat.Referentiel.Devise</div><div class="detail">@Format.Usd(p.ValeurOption.PrixUsd) $ par unité</div></div>
+        <div class="kpi" style="border-color:var(--alerte)"><div class="libelle">Prix proposé au client</div><div class="valeur alerte-txt">@Format.Btc(p.PrixClientBtc) @etat.Referentiel.Devise</div><div class="detail">@Format.Usd(p.PrixClientUsd) $ · coût @Format.Btc(p.CoutCouvertureBtc) + marge @Format.Btc(p.MargeBtc)/u</div></div>
+    </div>
+
+    <div class="grille @(i.Echeance2 is null ? "" : "g2")" style="margin-top:16px">
+        <div class="carte">
+            <h2>Smile @Format.Court(i.Echeance1.Echeance) @(i.EcheanceCotee ? "(échéance cotée)" : "— échéance encadrante 1")</h2>
+            <GraphiqueSmile Smile="i.Echeance1" StrikeMarque="i.Echeance1.Future * Math.Exp(i.LogMoneyness)" Vol="i.Sigma1" />
+        </div>
+        @if (i.Echeance2 is not null)
+        {
+            <div class="carte">
+                <h2>Smile @Format.Court(i.Echeance2.Echeance) — échéance encadrante 2</h2>
+                <GraphiqueSmile Smile="i.Echeance2" StrikeMarque="i.Echeance2.Future * Math.Exp(i.LogMoneyness)" Vol="i.Sigma2" />
+            </div>
+        }
+    </div>
+
+    <div class="grille g2">
+        <div class="carte">
+            <h2>Couverture proposée <span class="muet">— déterminant normalisé @Format.Nombre(p.DeterminantNormalise, "0.000")</span></h2>
+            <table>
+                <thead><tr><th>Instrument</th><th>Qté brute</th><th>Qté arrondie</th><th>Exécutable</th><th>Mid</th><th>Coût @etat.Referentiel.Devise</th></tr></thead>
+                <tbody>
+                    @foreach (var l in p.Lignes)
+                    {
+                        <tr>
+                            <td>@l.Nom</td>
+                            <td class="muet">@Format.Signe(l.QuantiteAvantArrondi, 3)</td>
+                            <td class="@Format.ClasseSigne(l.Quantite)">@Format.Signe(l.Quantite, 3)</td>
+                            <td>@(l.Nature == NatureJambe.Future ? Format.Usd(l.PrixExecutable, 1) + " $" : Format.Btc(l.PrixExecutable, 4))</td>
+                            <td>@(l.Nature == NatureJambe.Future ? Format.Usd(l.Mid, 1) + " $" : Format.Btc(l.Mid, 5))</td>
+                            <td>@Format.Btc(l.CoutBtc)</td>
+                        </tr>
+                    }
+                    <tr class="total"><td>Coût de couverture</td><td></td><td></td><td></td><td></td><td>@Format.Btc(p.CoutCouvertureBtc)</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="carte">
+            <h2>Grecques</h2>
+            <table>
+                <thead><tr><th></th><th>Delta</th><th>Gamma</th><th>Vega $/pt</th><th>Theta $/j</th></tr></thead>
+                <tbody>
+                    <tr><td class="texte">Option sur mesure (desk)</td><td>@Format.Nombre(p.GrecquesOption.Delta, "0.0000")</td><td>@Format.Nombre(p.GrecquesOption.Gamma, "0.000000")</td><td>@Format.Nombre(p.GrecquesOption.Vega, "N2")</td><td>@Format.Nombre(p.GrecquesOption.Theta, "N2")</td></tr>
+                    <tr><td class="texte">Couverture</td><td>@Format.Nombre(p.GrecquesCouverture.Delta, "0.0000")</td><td>@Format.Nombre(p.GrecquesCouverture.Gamma, "0.000000")</td><td>@Format.Nombre(p.GrecquesCouverture.Vega, "N2")</td><td>@Format.Nombre(p.GrecquesCouverture.Theta, "N2")</td></tr>
+                    <tr class="total"><td class="texte">Position globale</td><td>@Format.Nombre(p.GrecquesGlobales.Delta, "0.0000")</td><td>@Format.Nombre(p.GrecquesGlobales.Gamma, "0.000000")</td><td>@Format.Nombre(p.GrecquesGlobales.Vega, "N2")</td><td>@Format.Nombre(p.GrecquesGlobales.Theta, "N2")</td></tr>
+                    <tr class="muet"><td class="texte">Globale avant arrondi</td><td>@Format.Nombre(p.GrecquesGlobalesAvantArrondi.Delta, "0.0000")</td><td>@Format.Nombre(p.GrecquesGlobalesAvantArrondi.Gamma, "0.000000")</td><td>@Format.Nombre(p.GrecquesGlobalesAvantArrondi.Vega, "N2")</td><td>@Format.Nombre(p.GrecquesGlobalesAvantArrondi.Theta, "N2")</td></tr>
+                </tbody>
+            </table>
+            <div style="margin-top:16px"><button class="bouton vert" disabled="@(p.Option.Echeance.TimeOfDay != TimeSpan.FromHours(8))" @onclick="Traiter">Traiter avec le client à @Format.Btc(p.PrixClientBtc) @etat.Referentiel.Devise et exécuter la couverture</button></div>
+        </div>
+    </div>
+    <PanneauScenarios Otc="p" />
+
+}
+
+@code {
+    private sealed class ChoixOption
+    {
+        public DateTime Echeance { get; set; }
+        public double Strike { get; set; }
+        public TypeOption Type { get; set; } = TypeOption.Call;
+    }
+
+    private TypeOption _typeOption = TypeOption.Call;
+    private double _strike;
+    private DateTime _date;
+    private TimeOnly _heure = new(8, 0);
+    private double PasQuantite => Marche.EtatCourant.Referentiel.Devise == "ETH" ? 1 : 0.1;
+    private Sens _sensClient = Sens.Achat;
+    private double _quantite = 10;
+    private bool _auto = true;
+    private readonly ChoixOption[] _manuelles = [new(), new()];
+    private JambeSurMesure? _jambe;
+    private Instrument? _h1, _h2;
+    private Sens _sensFige;
+    private double _quantiteFigee;
+    private PropositionCouverture? _proposition;
+    private string? _message, _typeMessage = "info";
+
+    /// <summary>
+    /// On prépare une date et un strike dans la plage de marché pour permettre une première
+    /// interpolation.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        // On propose une échéance entre deux maturités cotées et un strike proche du future pour donner un premier exemple d'interpolation exploitable.
+        var etat = Marche.EtatCourant;
+        var cotees = etat.Smiles().Select(s => s.Echeance).OrderBy(e => e).ToList();
+        var paire = cotees.Zip(cotees.Skip(1)).FirstOrDefault(x => (x.First - etat.Maintenant).TotalDays > 1.5 && (x.Second - x.First).TotalDays >= 3);
+        var cible = paire == default ? etat.Maintenant.AddDays(10) : paire.First + (paire.Second - paire.First) / 2;
+        _date = cible.Date;
+        double f = etat.Future(paire == default ? etat.Referentiel.Echeances[0] : paire.First) ?? etat.Indice ?? 70000;
+        _strike = Math.Round(f * 1.05 / 500) * 500;
+        if (cotees.Count >= 2)
+        {
+            _manuelles[0].Echeance = paire == default ? cotees[0] : paire.First;
+            _manuelles[1].Echeance = paire == default ? cotees[1] : paire.Second;
+            foreach (var m in _manuelles) m.Strike = StrikeAtm(m.Echeance);
+        }
+        base.OnInitialized();
+    }
+
+    /// <summary>
+    /// On cherche un strike coté proche du future de l'échéance pour initialiser le choix manuel de
+    /// couverture.
+    /// </summary>
+    private double StrikeAtm(DateTime echeance)
+    {
+        var etat = Marche.EtatCourant;
+        double f = etat.Future(echeance) ?? _strike;
+        return etat.Referentiel.Strikes(echeance).Select(p => p.Strike).OrderBy(k => Math.Abs(k - f)).First();
+    }
+
+    /// <summary>
+    /// On interpole l'OTC et on cherche une couverture automatique ou manuelle, puis on suit les
+    /// instruments proposés.
+    /// </summary>
+    private async Task CalculerAsync()
+    {
+        _message = null;
+        Invalider();
+        try
+        {
+            var etat = Marche.EtatCourant;
+            var echeance = DateTime.SpecifyKind(_date.Date + _heure.ToTimeSpan(), DateTimeKind.Utc);
+            ValidateurStructure.ValiderQuantite(_quantite, PasQuantite);
+            var jambe = (JambeSurMesure)FabriqueStructures.CreerSurMesure(_typeOption, echeance, _strike, etat).Jambes[0];
+
+            PropositionCouverture p;
+            if (_auto)
+            {
+                p = MoteurCouverture.CalculerMeilleure(jambe, _sensClient, _quantite, etat, Options.MargeVolPoints);
+                var options = p.Lignes.Where(l => l.Nature == NatureJambe.OptionCotee).ToList();
+                (_h1, _h2) = (etat.Referentiel.Obtenir(options[0].Nom), etat.Referentiel.Obtenir(options[1].Nom));
+            }
+            else
+            {
+                _h1 = ValidateurStructure.ValiderStrikeCote(etat.Referentiel, _manuelles[0].Echeance, _manuelles[0].Strike, _manuelles[0].Type);
+                _h2 = ValidateurStructure.ValiderStrikeCote(etat.Referentiel, _manuelles[1].Echeance, _manuelles[1].Strike, _manuelles[1].Type);
+                p = MoteurCouverture.Calculer(jambe, _sensClient, _quantite, _h1, _h2, etat, Options.MargeVolPoints);
+            }
+            (_jambe, _sensFige, _quantiteFigee, _proposition) = (jambe, _sensClient, _quantite, p);
+            await Marche.SuivreAsync(p.Lignes.Select(l => l.Nom));
+        }
+        catch (SaisieInvalideException ex) { Afficher($"Saisie refusée : {ex.Message}", "erreur"); }
+        catch (PricerException ex) { _proposition = null; Afficher($"{ex.GetType().Name.Replace("Exception", "")} : {ex.Message}", "erreur"); }
+    }
+
+    /// <summary>
+    /// On garde les deux instruments de couverture choisis pour que la proposition reste lisible ; on
+    /// actualise leurs quantités et leurs prix avec le marché.
+    /// </summary>
+    protected override Task AvantRafraichissementAsync()
+    {
+        if (_jambe is not null && _h1 is not null && _h2 is not null)
+        {
+            try { _proposition = MoteurCouverture.Calculer(_jambe, _sensFige, _quantiteFigee, _h1, _h2, Marche.EtatCourant, Options.MargeVolPoints); }
+            catch (PricerException ex) { _proposition = null; Afficher(ex.Message, "erreur"); }
+        }
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// On recalcule la proposition et on enregistre l'OTC avec ses couvertures si son règlement est
+    /// pris en charge.
+    /// </summary>
+    private void Traiter()
+    {
+        try
+        {
+            if (_jambe is null || _h1 is null || _h2 is null) return;
+            if (_jambe.Echeance.TimeOfDay != TimeSpan.FromHours(8))
+                throw new PricerException("Le traitement nécessite 08:00 UTC pour utiliser le prix de règlement quotidien officiel.");
+            // On recalcule au dernier marché, même si le rafraîchissement de l'écran n'a pas encore eu lieu.
+            _proposition = MoteurCouverture.Calculer(_jambe, _sensFige, _quantiteFigee, _h1, _h2, Marche.EtatCourant, Options.MargeVolPoints);
+            var t = BlotterDesk.BookerSurMesure(_proposition, Marche.EtatCourant.Maintenant);
+            Afficher($"Trade {t.Id.ToString()[..8]} booké : option sur mesure + {t.Jambes.Count - 1} instruments de couverture.", "succes");
+        }
+        catch (PricerException ex) { _proposition = null; Afficher(ex.Message, "erreur"); }
+    }
+
+    /// <summary>
+    /// On efface la demande figée et ses instruments pour qu'une ancienne couverture ne réapparaisse
+    /// pas après une modification.
+    /// </summary>
+    private void Invalider()
+    {
+        // On retire aussi la paire figée : un résultat précédent ne doit pas réapparaître pendant une nouvelle saisie.
+        _proposition = null;
+        _jambe = null;
+        _h1 = _h2 = null;
+    }
+
+    /// <summary>
+    /// On associe un message et son niveau d'affichage au résultat du formulaire OTC.
+    /// </summary>
+    private void Afficher(string texte, string type) => (_message, _typeMessage) = (texte, type);
+}

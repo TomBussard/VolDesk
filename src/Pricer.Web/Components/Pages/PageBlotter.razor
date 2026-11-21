@@ -1,0 +1,93 @@
+@page "/blotter"
+@inherits ComposantLive
+@inject ServiceMarche Marche
+@inject Blotter BlotterDesk
+@inject OptionsPricer Options
+
+<PageTitle>Blotter · Pricer Deribit</PageTitle>
+
+<div class="entete">
+    <div>
+        <h1>Blotter</h1>
+        <div class="muet">Tous les trades : ouvertures, débouclages (liés au trade d'origine) et règlements à l'échéance.</div>
+    </div>
+</div>
+
+<Message @bind-Texte="_message" Type="@_typeMessage" />
+
+<div class="carte">
+    @if (BlotterDesk.Trades.Count == 0)
+    {
+        <div class="vide">Le blotter est vide.</div>
+    }
+    else
+    {
+        <div class="tableau-wrap">
+            <table>
+                <thead><tr><th>Trade</th><th class="texte">Nature</th><th class="texte">Description</th><th>Qté</th><th class="texte">Jambes (qté signée @@ prix, future, vol)</th><th>Prime @Options.Devise</th><th class="texte">Débouclage</th></tr></thead>
+                <tbody>
+                    @foreach (var t in BlotterDesk.Trades.Reverse())
+                    {
+                        double ouverte = t.Nature == NatureTrade.Ouverture ? BlotterDesk.QuantiteOuverte(t.Id) : 0;
+                        <tr>
+                            <td>@t.Id.ToString()[..8]<div class="muet" style="font-size:11px">@t.Horodatage.ToString("dd/MM HH:mm:ss")</div></td>
+                            <td class="texte"><span class="badge @(t.Nature == NatureTrade.Ouverture ? "ok" : "neutre")">@t.Nature</span>@if (t.IdTradeOrigine is Guid o) { <div class="muet" style="font-size:11px">← @o.ToString()[..8]</div> }</td>
+                            <td class="texte retour">@t.Description<div class="@(t.Sens == Sens.Achat ? "pos" : "neg")" style="font-size:12px">@t.Sens</div></td>
+                            <td>@t.Quantite.ToString("0.0")</td>
+                            <td class="texte mono jambes">
+                                @foreach (var j in t.Jambes)
+                                {
+                                    <div>@(j.Nature == NatureJambe.Future ? Format.Signe(j.NotionnelUsd, 0) + " USD" : Format.Signe(j.QuantiteSignee, 3)) @j.Instrument @@ @(j.Nature == NatureJambe.Future ? Format.Usd(j.PrixExecution, 1) + " $" : Format.Btc(j.PrixExecution, 4)) <span class="muet">F @Format.Usd(j.Future, 0) @(j.Vol is double v ? "σ " + Format.Pct(v, 1) : "")</span></div>
+                                }
+                            </td>
+                            <td class="@Format.ClasseSigne(-t.PrimeBtc)">@Format.Btc(t.PrimeBtc)</td>
+                            <td class="texte">
+                                @if (t.Nature == NatureTrade.Ouverture && BlotterDesk.ADesJambesOuvertes(t.Id))
+                                {
+                                    <div style="display:flex; gap:6px; align-items:center">
+                                        <input type="number" step="@t.Jambes.First(j => !j.Couverture).PasQuantite.ToString(CultureInfo.InvariantCulture)" style="width:80px; min-width:0" value="@Quantite(t.Id, ouverte).ToString(CultureInfo.InvariantCulture)"
+                                               @oninput="e => _quantites[t.Id] = double.TryParse((string?)e.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var q) ? q : 0" />
+                                        <button class="bouton rouge petit" @onclick="() => DeboucherAsync(t)">@(ouverte > 0 ? "Déboucler" : "Fermer les couvertures")</button>
+                                        <span class="muet">/ @ouverte.ToString("0.0")</span>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly Dictionary<Guid, double> _quantites = new();
+    private string? _message, _typeMessage = "info";
+
+    protected override TimeSpan Periode => TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// On reprend la quantité saisie pour ce trade, ou toute la quantité ouverte lors du premier
+    /// affichage.
+    /// </summary>
+    private double Quantite(Guid id, double ouverte) => _quantites.TryGetValue(id, out var q) ? q : ouverte;
+
+    /// <summary>
+    /// On demande les instruments du trade, puis on déboucle la quantité choisie avec les dernières
+    /// cotations disponibles.
+    /// </summary>
+    private async Task DeboucherAsync(Trade t)
+    {
+        try
+        {
+            double q = Quantite(t.Id, BlotterDesk.QuantiteOuverte(t.Id));
+            await Marche.SuivreAsync(t.Jambes.Where(j => j.Nature != NatureJambe.OptionSurMesure).Select(j => j.Instrument));
+            var d = BlotterDesk.Deboucler(t.Id, q, Marche.EtatCourant);
+            _quantites.Remove(t.Id);
+            (_message, _typeMessage) = ($"Débouclage {d.Id.ToString()[..8]} de {q:0.0} booké, lié au trade {t.Id.ToString()[..8]} (prime {Format.Btc(d.PrimeBtc)} {Options.Devise}).", "succes");
+        }
+        catch (PricerException ex) { (_message, _typeMessage) = (ex.Message, "erreur"); }
+    }
+}
+
+

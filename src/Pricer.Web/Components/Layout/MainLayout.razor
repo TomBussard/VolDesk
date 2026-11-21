@@ -1,0 +1,157 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject ServiceMarche Marche
+@inject OptionsPricer Options
+@inject EtatApplication Etat
+@inject ServiceSession Session
+@inject NavigationManager Navigation
+
+<div class="app">
+    <aside class="barre">
+        <div class="logo">
+            <span class="logo-icone">Δ</span>
+            <div>
+                <div class="logo-titre">Deribit Desk</div>
+                <div class="logo-sous">options @Options.Devise · desk</div>
+            </div>
+        </div>
+        <nav>
+            <NavLink href="" Match="NavLinkMatch.All"><span>◎</span> Tableau de bord</NavLink>
+            <NavLink href="referentiel"><span>☰</span> Référentiel</NavLink>
+            <NavLink href="pricer"><span>⚖</span> Pricer de structures</NavLink>
+            <NavLink href="sur-mesure"><span>✎</span> Option sur mesure</NavLink>
+            <NavLink href="book"><span>▤</span> Book</NavLink>
+            <NavLink href="blotter"><span>≡</span> Blotter</NavLink>
+            <NavLink href="exports"><span>⇩</span> Exports</NavLink>
+            <NavLink href="donnees"><span>▷</span> Données &amp; lecture</NavLink>
+        </nav>
+        <div class="statut">
+            <div class="mode mode-@Options.Mode.ToString().ToLowerInvariant()">@Session.LibelleMode</div>
+            @if (Etat.Erreur is not null)
+            {
+                <div class="neg">Erreur de démarrage</div>
+            }
+            else if (!Etat.Pret)
+            {
+                <div class="muet">Chargement du marché…</div>
+            }
+            else
+            {
+                <div class="muet">@Marche.EtatCourant.Maintenant.ToString("dd/MM HH:mm:ss") UTC</div>
+                <div class="muet">@Marche.MessagesRecus.ToString("N0") ticks @(Marche.FluxTermine ? "· rejeu terminé" : "")</div>
+                <div class="muet">indice @Format.Usd(Marche.EtatCourant.Indice) $</div>
+            }
+        </div>
+    </aside>
+    <main class="contenu">
+        @if(Options.AvertissementSession is not null) { <p class="alerte-txt" role="alert">@Options.AvertissementSession</p> }
+        @if (Etat.Pret)
+        {
+            <div class="carte bandeau-lecture" style="margin-bottom:20px">
+                <div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                    <div>
+                        <strong>@Session.LibelleMode · @Options.Devise</strong>
+                        <div class="muet">@DescriptionSource</div>
+                    </div>
+                    <div><strong>@EtatLecture</strong><div class="muet">Marché du @Marche.EtatCourant.Maintenant.ToString("dd/MM/yyyy HH:mm:ss.fff") UTC</div></div>
+                </div>
+                @if (Marche.Rejeu is { } r)
+                {
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px">
+                        <button class="bouton secondaire petit" disabled="@(r.FluxTermine || Session.ChangementEnCours)" @onclick="Pause">@(r.Lecture.EnPause ? "Reprendre" : "Pause lecture")</button>
+                        <button class="bouton secondaire petit" disabled="@(r.FluxTermine || Session.ChangementEnCours)" @onclick="Suivante">Données suivantes</button>
+                        <label for="vitesse-lecture">Vitesse</label>
+                        <select id="vitesse-lecture" style="min-width:100px;width:115px" value="@r.Lecture.Vitesse.ToString(CultureInfo.InvariantCulture)" @onchange="Vitesse">
+                            <option value="1">×1 · normal</option><option value="5">×5</option><option value="20">×20</option><option value="100">×100</option><option value="0">Maximum</option>
+                        </select>
+                        <button class="bouton secondaire petit" disabled="@Session.ChangementEnCours" @onclick="Recommencer">Recommencer</button>
+                        <a href="donnees">Comprendre ces commandes</a>
+                    </div>
+                }
+                @if (_erreur is not null) { <div class="neg" role="alert">@_erreur</div> }
+                @if (Session.ErreurSauvegarde is not null) { <div class="neg" role="alert">@Session.ErreurSauvegarde</div> }
+            </div>
+        }
+        @if (Etat.Erreur is not null)
+        {
+            <div class="carte alerte">
+                <h2>Démarrage impossible</h2>
+                <p>@Etat.Erreur</p>
+                <p class="muet">Choisissez une démonstration hors connexion dans <a href="donnees">Données &amp; lecture</a>.</p>
+            </div>
+        }
+        else if (!Etat.Pret)
+        {
+            <div class="chargement"><div class="spinner"></div>Chargement des options @Options.Devise (@Options.Mode)…</div>
+        }
+        @if (Etat.Pret || Navigation.Uri.TrimEnd('/').EndsWith("/donnees",StringComparison.OrdinalIgnoreCase))
+        {
+            <div @key="Options.CleBookSession">@Body</div>
+        }
+    </main>
+</div>
+
+@code {
+    private Timer? _minuteur;
+    private string? _erreur;
+    private string DescriptionSource => Options.Mode switch
+    {
+        ModeDonnees.Demonstration => "Données fictives pour explorer l'application sans Internet.",
+        ModeDonnees.Rejeu => "Cotations d'un fichier enregistré. L'heure affichée est celle de l'enregistrement.",
+        _ => "Cotations publiques reçues de Deribit. Une connexion Internet est nécessaire."
+    };
+    private string EtatLecture => Marche.ErreurFlux is not null ? "Lecture interrompue" : Marche.Rejeu is { } r ?
+        r.FluxTermine ? "Fin du fichier" : r.Lecture.EnPause ? "En pause · marché figé" : "Lecture en cours" : "Actualisation automatique";
+    /// <summary>
+    /// On bascule entre pause et reprise du fichier sans modifier le marché déjà reçu.
+    /// </summary>
+    private void Pause()
+    {
+        if(Marche.Rejeu is not { } r) return;
+        if(r.Lecture.EnPause) r.Lecture.Reprendre(); else r.Lecture.Pause();
+    }
+    /// <summary>
+    /// On autorise un ticker supplémentaire puis on laisse la lecture en pause pour examiner son effet.
+    /// </summary>
+    private void Suivante() => Marche.Rejeu?.Lecture.DonneeSuivante();
+    /// <summary>
+    /// On transforme le choix du menu en facteur de vitesse et on le transmet au service de session.
+    /// </summary>
+    private void Vitesse(ChangeEventArgs e)
+    {
+        if(double.TryParse((string?)e.Value,NumberStyles.Float,CultureInfo.InvariantCulture,out double v)) Session.Vitesse(v);
+    }
+    /// <summary>
+    /// On crée une nouvelle session de lecture et on conserve le message d'erreur si le redémarrage
+    /// échoue.
+    /// </summary>
+    private async Task Recommencer()
+    {
+        _erreur=null;
+        try { await Session.RecommencerAsync(); Navigation.NavigateTo("",forceLoad:true); }
+        catch(Exception ex) when(ex is IOException or PricerException or ArgumentException or HttpRequestException) { _erreur=ex.Message; }
+    }
+
+    /// <summary>
+    /// On s'abonne aux changements de l'état de démarrage pour actualiser le bandeau des pages.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        Etat.Change += Rafraichir;
+        _minuteur = new Timer(_ => Rafraichir(), null, 1000, 1000);
+    }
+
+    /// <summary>
+    /// On demande le rafraîchissement du bandeau sur le contexte d'affichage Blazor.
+    /// </summary>
+    private void Rafraichir() => InvokeAsync(StateHasChanged);
+
+    /// <summary>
+    /// On retire l'abonnement à l'état partagé lorsque la mise en page est détruite.
+    /// </summary>
+    public void Dispose()
+    {
+        Etat.Change -= Rafraichir;
+        _minuteur?.Dispose();
+    }
+}

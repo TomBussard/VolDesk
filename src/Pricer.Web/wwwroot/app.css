@@ -1,0 +1,158 @@
+:root {
+    --fond: #0d1117;
+    --fond-2: #131a24;
+    --carte: #161e2b;
+    --carte-2: #1c2636;
+    --bord: #263245;
+    --texte: #e6edf3;
+    --muet: #8b98a9;
+    --accent: #4f8cff;
+    --accent-2: #7aa8ff;
+    --pos: #2fbf71;
+    --neg: #f0525b;
+    --alerte: #f5a524;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--fond); color: var(--texte); font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 14px; }
+a { color: var(--accent-2); }
+code { font-family: var(--mono); font-size: 12px; background: var(--carte-2); padding: 1px 5px; border-radius: 4px; }
+h1 { font-size: 22px; margin: 0 0 4px; font-weight: 700; }
+h2 { font-size: 15px; margin: 0 0 12px; font-weight: 600; }
+h3 { font-size: 13px; margin: 0 0 8px; font-weight: 600; color: var(--muet); text-transform: uppercase; letter-spacing: .04em; }
+.muet { color: var(--muet); }
+.pos { color: var(--pos); }
+.neg { color: var(--neg); }
+.alerte-txt { color: var(--alerte); font-weight: 600; }
+.mono { font-family: var(--mono); }
+
+/* On sépare la navigation et le contenu pour garder les actions principales accessibles. */
+.app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
+.barre { background: var(--fond-2); border-right: 1px solid var(--bord); padding: 18px 14px; display: flex; flex-direction: column; gap: 22px; position: sticky; top: 0; height: 100vh; }
+.logo { display: flex; gap: 10px; align-items: center; padding: 0 6px; }
+.logo-icone { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, var(--accent), #9b6bff); display: grid; place-items: center; font-weight: 700; font-size: 18px; }
+.logo-titre { font-weight: 700; }
+.logo-sous { color: var(--muet); font-size: 12px; }
+nav { display: flex; flex-direction: column; gap: 2px; }
+nav a { color: var(--muet); text-decoration: none; padding: 8px 10px; border-radius: 7px; display: flex; gap: 10px; align-items: center; }
+nav a span { width: 18px; text-align: center; }
+nav a:hover { background: var(--carte); color: var(--texte); }
+nav a.active { background: var(--carte-2); color: var(--texte); box-shadow: inset 3px 0 0 var(--accent); }
+.statut { margin-top: auto; font-size: 12px; display: flex; flex-direction: column; gap: 4px; padding: 0 6px; }
+.mode { display: inline-block; width: fit-content; padding: 2px 8px; border-radius: 99px; font-weight: 600; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 4px; }
+.mode-live { background: rgba(47,191,113,.15); color: var(--pos); }
+.mode-rejeu { background: rgba(245,165,36,.15); color: var(--alerte); }
+.mode-enregistrement { background: rgba(240,82,91,.15); color: var(--neg); }
+.contenu { padding: 22px 24px 48px; max-width: 1500px; width: 100%; min-width: 0; }
+.grille > * { min-width: 0; }
+.carte { min-width: 0; overflow-x: auto; }
+h1:focus { outline: none; }
+.entete { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px; gap: 16px; flex-wrap: wrap; }
+
+/* On regroupe les informations en cartes et en grilles pour comparer les résultats sans surcharger chaque bloc. */
+.carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; }
+.carte.alerte { border-color: var(--neg); }
+.grille { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .g3, .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1350px) { .g2 { grid-template-columns: 1fr; } }
+.kpi { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 14px 16px; }
+.kpi .libelle { color: var(--muet); font-size: 12px; }
+.kpi .valeur { font-family: var(--mono); font-size: 22px; font-weight: 500; margin-top: 4px; }
+.kpi .detail { color: var(--muet); font-size: 12px; margin-top: 2px; font-family: var(--mono); }
+
+/* On garde des champs et des boutons cohérents entre les écrans pour faciliter les saisies. */
+.formulaire { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: flex-end; }
+.champ { display: flex; flex-direction: column; gap: 5px; }
+.champ label { font-size: 12px; color: var(--muet); }
+input, select { background: var(--fond-2); color: var(--texte); border: 1px solid var(--bord); border-radius: 7px; padding: 7px 9px; font: inherit; min-width: 110px; }
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+input[type=number] { font-family: var(--mono); width: 130px; }
+.segmente { display: inline-flex; border: 1px solid var(--bord); border-radius: 8px; overflow: hidden; }
+.segmente button { background: var(--fond-2); color: var(--muet); border: 0; padding: 7px 14px; cursor: pointer; font: inherit; }
+.segmente button.actif { background: var(--accent); color: white; }
+.segmente button.actif.vente { background: var(--neg); }
+.segmente button.actif.achat { background: var(--pos); }
+.bouton { background: var(--accent); color: white; border: 0; border-radius: 8px; padding: 8px 16px; font: inherit; font-weight: 600; cursor: pointer; }
+.bouton:hover { filter: brightness(1.1); }
+.bouton:disabled { opacity: .45; cursor: not-allowed; }
+.bouton.secondaire { background: var(--carte-2); border: 1px solid var(--bord); color: var(--texte); }
+.bouton.vert { background: var(--pos); }
+.bouton.rouge { background: var(--neg); }
+.bouton.petit { padding: 4px 10px; font-size: 12px; }
+
+/* On aligne les nombres dans les tableaux et on permet le défilement horizontal des détails. */
+.tableau-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: right; color: var(--muet); font-weight: 500; font-size: 12px; padding: 7px 9px; border-bottom: 1px solid var(--bord); white-space: nowrap; }
+td { text-align: right; padding: 6px 8px; border-bottom: 1px solid rgba(38,50,69,.55); font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td.texte, th.texte { text-align: left; font-family: Inter, sans-serif; }
+tr:hover td { background: rgba(79,140,255,.05); }
+tr.total td { font-weight: 600; border-top: 1px solid var(--bord); }
+td.strike { text-align: center; font-weight: 600; background: var(--carte-2); }
+tr.atm td.strike { color: var(--alerte); }
+td.signale { color: var(--neg); font-weight: 600; }
+td.signale::after { content: " ⚠"; }
+.badge { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-family: Inter, sans-serif; font-weight: 600; }
+.badge.ok { background: rgba(47,191,113,.15); color: var(--pos); }
+.badge.ko { background: rgba(240,82,91,.15); color: var(--neg); }
+.badge.neutre { background: var(--carte-2); color: var(--muet); }
+.ligne-prix { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 18px; font-family: var(--mono); font-size: 13px; }
+.ligne-prix .lib { font-family: Inter, sans-serif; color: var(--muet); }
+.ligne-prix .fort { font-weight: 600; color: var(--texte); }
+
+/* On distingue les erreurs, les confirmations et les informations avec des messages visibles. */
+.message { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 9px; margin-bottom: 14px; border: 1px solid; }
+.message-erreur { background: rgba(240,82,91,.1); border-color: rgba(240,82,91,.5); color: #ffb3b8; }
+.message-succes { background: rgba(47,191,113,.1); border-color: rgba(47,191,113,.5); color: #a6ecc4; }
+.message-info { background: rgba(79,140,255,.1); border-color: rgba(79,140,255,.5); }
+.fermer { background: none; border: 0; color: inherit; font-size: 18px; cursor: pointer; }
+
+/* On conserve les mêmes couleurs pour les courbes et leurs légendes afin de faciliter leur lecture. */
+svg.graphique { width: 100%; height: auto; display: block; }
+svg.graphique text { fill: var(--muet); font-size: 11px; font-family: Inter, sans-serif; }
+svg.graphique .axe { stroke: var(--bord); stroke-width: 1; }
+svg.graphique .zero { stroke: #3a475d; stroke-dasharray: 4 4; }
+svg.graphique .courbe-echeance { fill: none; stroke: var(--accent); stroke-width: 2.2; }
+svg.graphique .courbe-aujourdhui { fill: none; stroke: #c792ea; stroke-width: 1.8; stroke-dasharray: 6 4; }
+svg.graphique .courbe-smile { fill: none; stroke: var(--accent); stroke-width: 2; }
+svg.graphique .point { fill: var(--accent-2); }
+svg.graphique .future { stroke: var(--alerte); stroke-dasharray: 3 3; }
+svg.graphique .point-mort { fill: var(--alerte); }
+svg.graphique .zone-gain { fill: rgba(47,191,113,.12); }
+svg.graphique .zone-perte { fill: rgba(240,82,91,.10); }
+.legende { display: flex; gap: 16px; font-size: 12px; color: var(--muet); margin-top: 6px; }
+.legende span::before { content: ""; display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; background: var(--accent); }
+.legende span.auj::before { background: #c792ea; }
+.legende span.pm::before { background: var(--alerte); height: 8px; width: 8px; border-radius: 50%; }
+
+/* On signale le chargement pour éviter de présenter un écran vide pendant l'arrivée des données. */
+.chargement { display: flex; gap: 14px; align-items: center; color: var(--muet); padding: 40px; }
+.spinner { width: 22px; height: 22px; border: 3px solid var(--bord); border-top-color: var(--accent); border-radius: 50%; animation: tourne .8s linear infinite; }
+@keyframes tourne { to { transform: rotate(360deg); } }
+.vide { color: var(--muet); padding: 18px 0; text-align: center; }
+
+td.retour { white-space: normal; min-width: 170px; max-width: 260px; }
+.jambes { font-size: 11px; line-height: 1.5; white-space: nowrap; }
+
+/* On adapte la disposition des cartes pour garder les formulaires lisibles sur un petit écran. */
+.aide-accueil { display: flex; flex-direction: column; gap: 7px; line-height: 1.5; margin-top: 16px; }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; }
+.legende { flex-wrap: wrap; }
+@media (max-width: 720px) {
+    .app { grid-template-columns: 1fr; }
+    .barre { height: auto; position: relative; padding: 12px; gap: 12px; border-right: 0; border-bottom: 1px solid var(--bord); }
+    .barre nav { flex-direction: row; flex-wrap: wrap; }
+    .barre nav a { padding: 7px; font-size: 12px; }
+    .barre .statut { display: none; }
+    .contenu { padding: 16px 12px 32px; }
+    .g2, .g3, .g4 { grid-template-columns: 1fr; }
+    .formulaire .champ { flex: 1 1 160px; }
+    .formulaire input, .formulaire select { width: 100%; }
+    .carte { padding: 14px 12px; }
+    .ligne-prix { font-size: 12px; gap: 5px 10px; }
+}

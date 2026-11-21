@@ -1,0 +1,95 @@
+@page "/donnees"
+@inherits ComposantLive
+@inject OptionsPricer Options
+@inject ServiceSession Session
+@inject ServiceMarche Marche
+@inject EtatApplication Etat
+@inject NavigationManager Navigation
+
+<PageTitle>Données et lecture · Deribit Desk</PageTitle>
+<div class="entete"><div><h1>Données &amp; lecture</h1><div class="muet">Choisissez les données, puis appliquez votre choix. Les opérations restent locales : aucun ordre n'est envoyé à Deribit.</div></div></div>
+
+<div class="grille g3">
+    <div class="carte"><h2>Démonstration</h2><p>Un marché fictif, reproductible, pour tester toutes les fonctions sans connexion.</p></div>
+    <div class="carte"><h2>Marché enregistré</h2><p>Des cotations relues depuis un fichier. On retrouve le marché à sa date d'enregistrement.</p></div>
+    <div class="carte"><h2>Direct Deribit</h2><p>Les cotations publiques actuelles, reçues par Internet. L'enregistrement est facultatif.</p></div>
+</div>
+
+<div class="carte">
+    <h2>Choisir les données</h2>
+    <div class="formulaire">
+        <div class="champ"><label for="mode-source">Mode de données</label><select id="mode-source" @bind="_mode"><option value="Demonstration">Démonstration fictive</option><option value="Rejeu">Marché enregistré</option><option value="Live">Direct Deribit</option><option value="Enregistrement">Direct et enregistrement</option></select></div>
+        <div class="champ"><label for="devise-source">Devise</label><select id="devise-source" @bind="_devise"><option>BTC</option><option>ETH</option></select></div>
+    </div>
+    @if(_mode==ModeDonnees.Rejeu)
+    {
+        <div class="champ" style="margin-top:12px"><label for="fichier-source">Fichier enregistré (.jsonl ou .jsonl.gz)</label><input id="fichier-source" style="width:100%" @bind="_fichier" /></div>
+        <p class="muet">Le fichier doit contenir la devise choisie. Le fichier réel fourni est en BTC.</p>
+    }
+    @if(_mode==ModeDonnees.Enregistrement)
+    {
+        <p class="muet">Les réponses publiques et les cotations reçues seront enregistrées dans un nouveau fichier propre à cette session.</p>
+    }
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:16px">
+        <button class="bouton" disabled="@Session.ChangementEnCours" @onclick="AppliquerAsync">@(Session.ChangementEnCours?"Chargement…":"Utiliser ces données")</button>
+        <button class="bouton secondaire" disabled="@Session.ChangementEnCours" @onclick="NouvelleDemoAsync">Nouvelle démo @_devise</button>
+        @if(_mode!=Options.Mode || _devise!=Options.Devise || (_mode==ModeDonnees.Rejeu && _fichier!=Options.FichierRejeu))
+        { <span class="alerte-txt">Choix non appliqué : le bandeau indique toujours la source active.</span> }
+    </div>
+    @if(_message is not null) { <p class="neg" role="alert">@_message</p> }
+</div>
+
+<div class="carte">
+    <h2>Comment lire un fichier ?</h2>
+    <p><strong>Pause lecture</strong> fige l'arrivée des cotations. Les calculs, les graphiques et le booking restent disponibles sur ce marché figé.</p>
+    <p><strong>Données suivantes</strong> avance d'une seule cotation enregistrée, puis reste en pause. Plusieurs cotations peuvent porter la même heure.</p>
+    <p><strong>Vitesse ×1</strong> conserve les intervalles du fichier ; ×5 les parcourt cinq fois plus vite. Maximum termine la lecture dès que possible.</p>
+    <p><strong>Recommencer</strong> repart au début avec un nouveau book. Le précédent reste sauvegardé dans son fichier séparé.</p>
+    <p>Ces commandes concernent les fichiers et la démonstration. En direct, le marché s'actualise automatiquement.</p>
+</div>
+
+<details class="carte"><summary>Détails de la source et sauvegarde</summary>
+    <p>Source active : @Session.LibelleMode · @Options.Devise.</p>
+    @if(Options.Mode==ModeDonnees.Rejeu) { <p>Fichier : <code>@Options.FichierRejeu</code></p> }
+    @if(Options.Mode==ModeDonnees.Enregistrement) { <p>Enregistrement : <code>@Options.FichierEnregistrement</code></p> }
+    <p>Book actif : <code>@Session.CheminBook</code></p>
+    <p class="muet">Chaque opération est sauvegardée immédiatement. Le prochain lancement retrouve la configuration active et reprend le fichier au dernier trade sauvegardé. Les books des devises et des sources restent séparés.</p>
+</details>
+
+@code {
+    private ModeDonnees _mode;
+    private string _devise="BTC",_fichier="",_message="";
+    /// <summary>
+    /// On remplit le formulaire avec la configuration active sans changer la source tant que le choix
+    /// n'est pas appliqué.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        _mode=Options.Mode; _devise=Options.Devise; _fichier=Options.FichierRejeu;
+        base.OnInitialized();
+    }
+    /// <summary>
+    /// On applique le mode et la devise demandés, puis on recharge la page après la restauration du
+    /// book associé.
+    /// </summary>
+    private async Task AppliquerAsync()
+    {
+        _message="";
+        try
+        {
+            await Session.ChangerAsync(_mode,_devise,_fichier);
+            Navigation.NavigateTo("",forceLoad:true);
+        }
+        catch(Exception ex) when(ex is IOException or PricerException or ArgumentException or HttpRequestException or UnauthorizedAccessException)
+        { _message="Changement impossible : "+ex.Message; }
+    }
+    /// <summary>
+    /// On ouvre une nouvelle démonstration pour la devise choisie avec une session de book distincte.
+    /// </summary>
+    private async Task NouvelleDemoAsync()
+    {
+        _message="";
+        try { await Session.ChangerAsync(ModeDonnees.Demonstration,_devise,_fichier,true); Navigation.NavigateTo("",forceLoad:true); }
+        catch(Exception ex) when(ex is IOException or PricerException or ArgumentException or HttpRequestException) { _message=ex.Message; }
+    }
+}

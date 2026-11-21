@@ -1,0 +1,82 @@
+@inject ServiceMarche Marche
+<div class="carte">
+    <h2>Scénarios et risque</h2>
+    <p class="muet">La structure sélectionnée seule, sans les instruments de couverture. On conserve la volatilité et la durée restantes de chaque jambe.</p>
+    <details style="margin-bottom:16px"><summary>Modifier la plage de prix (par défaut −30 % à +30 %, pas de 5 %)</summary>
+        <div class="formulaire" style="margin-top:12px">
+            <div class="champ"><label>Minimum (%)</label><input type="number" @bind="_min" /></div>
+            <div class="champ"><label>Maximum (%)</label><input type="number" @bind="_max" /></div>
+            <div class="champ"><label>Pas (%)</label><input type="number" @bind="_pas" /></div>
+            <button class="bouton secondaire" @onclick="Recalculer">Appliquer la plage</button>
+        </div>
+    </details>
+    @if (_erreur is not null) { <div class="message message-erreur">@_erreur</div> }
+    else if (_profil is { } p && _dense is not null)
+    {
+        <div class="grille g4" style="margin-bottom:16px">
+            <div class="kpi"><div class="libelle">Prime signée (@Devise)</div><div class="valeur">@Format.Btc(p.PrimeBtc)</div><div class="detail">positive : payée par le desk</div></div>
+            <div class="kpi"><div class="libelle">Gain maximal (@Devise)</div><div class="valeur pos">@(p.GainMaxBtc is double g ? Format.Btc(g) : "illimité")</div></div>
+            <div class="kpi"><div class="libelle">Perte maximale (@Devise)</div><div class="valeur neg">@(p.PerteMaxBtc is double v ? Format.Btc(v) : "illimitée")</div></div>
+            <div class="kpi"><div class="libelle">Points morts (USD)</div><div class="valeur" style="font-size:16px">@(p.PointsMorts.Count == 0 ? "aucun" : string.Join(" · ", p.PointsMorts.Select(x => x.ToString("N2"))))</div><div class="detail">sur toute la plage positive, même hors graphique</div></div>
+        </div>
+        <div class="segmente" style="margin-bottom:16px" role="tablist" aria-label="Courbe de scénario">
+            <button role="tab" aria-selected="@(_onglet == 0)" class="@(_onglet == 0 ? "actif" : "")" @onclick="() => _onglet = 0">P&amp;L · résultat</button>
+            <button role="tab" aria-selected="@(_onglet == 1)" class="@(_onglet == 1 ? "actif" : "")" @onclick="() => _onglet = 1">Delta · marché</button>
+            <button role="tab" aria-selected="@(_onglet == 2)" class="@(_onglet == 2 ? "actif" : "")" @onclick="() => _onglet = 2">Vega · volatilité</button>
+        </div>
+        @if (_onglet == 0)
+        {
+            <div class="formulaire"><label>Unité du résultat</label><select @bind="_usd"><option value="true">USD</option><option value="false">@Devise</option></select></div>
+            <GraphiqueProfil Profil="_dense" Usd="_usd" Devise="Devise" />
+            <p class="muet">La prime reste en crypto : P&amp;L terminal = payoff USD / prix du scénario − prime crypto. Le montant USD est ce résultat multiplié par le prix du scénario. Les points morts sont identiques dans les deux unités.</p>
+            <p class="muet">Bornes en USD avec ce financement : gain @(p.GainMaxUsd is double gu ? Format.Usd(gu) : "illimité"), perte @(p.PerteMaxUsd is double pu ? Format.Usd(pu) : "illimitée"). Une prime détenue en crypto change aussi de valeur en USD.</p>
+        }
+        else
+        {
+            <p><strong>@(_onglet == 1 ? "Delta" : "Vega") au marché actuel : @(_onglet == 1 ? Format.Nombre(Actuel.Delta, "N4") + " unité(s) de sous-jacent" : Format.Usd(Actuel.Vega) + " USD par point de vol")</strong></p>
+            <p class="muet">@(_onglet == 1 ? "Le delta mesure la variation approximative du prix théorique USD quand le future gagne 1 USD. Un delta négatif correspond à une exposition baissière." : "Le vega mesure la variation approximative du prix théorique USD lorsque la volatilité gagne 1 point, par exemple de 40 % à 41 %. Un vega négatif perd de la valeur lorsque la volatilité augmente.")</p>
+            <GraphiqueSensibilite Profil="_dense" Vega="@(_onglet == 2)" />
+            <p class="muet">Ces grecques portent sur le prix théorique USD, selon les unités du sujet. Le P&amp;L tient aussi compte de la prime conservée en crypto.</p>
+        }
+        <details style="margin-top:16px"><summary>Voir les valeurs des scénarios</summary><div class="tableau-wrap">
+            <table><thead><tr><th>Variation</th><th>Sous-jacent USD</th><th>P&amp;L échéance USD</th><th>P&amp;L échéance @Devise</th><th>P&amp;L aujourd'hui USD</th><th>Delta</th><th>Vega USD/pt</th></tr></thead>
+            <tbody>@foreach (var x in p.Points) { <tr><td>@x.Variation.EnPourcentage()</td><td>@Format.Usd(x.SousJacent)</td><td>@Format.Usd(x.PnlEcheanceUsd)</td><td>@Format.Btc(x.PnlEcheanceBtc)</td><td>@Format.Usd(x.PnlAujourdhuiUsd)</td><td>@Format.Nombre(x.Delta,"N4")</td><td>@Format.Usd(x.Vega)</td></tr> }</tbody></table>
+        </div></details>
+    }
+</div>
+@code {
+    [Parameter] public CotationStructure? Cotation { get; set; }
+    [Parameter] public PropositionCouverture? Otc { get; set; }
+    private double _min = -30, _max = 30, _pas = 5;
+    private bool _usd = true;
+    private int _onglet;
+    private string? _erreur;
+    private ProfilStructure? _profil, _dense;
+    private string Devise => Marche.EtatCourant.Referentiel.Devise;
+    private Grecques Actuel => Cotation?.Grecques ?? Otc?.GrecquesOption ?? Grecques.Zero;
+    /// <summary>
+    /// On met les profils à jour lorsqu'une nouvelle cotation ou une nouvelle proposition OTC arrive
+    /// dans le panneau.
+    /// </summary>
+    protected override void OnParametersSet() => Recalculer();
+    /// <summary>
+    /// On calcule une grille lisible pour le tableau et une grille dense pour les courbes, puis on
+    /// affiche les saisies refusées.
+    /// </summary>
+    private void Recalculer()
+    {
+        try
+        {
+            var e = Marche.EtatCourant;
+            double dense = Math.Max(Math.Min(_pas / 100, 0.005), (_max - _min) / 100 / 900);
+            _profil = Otc is not null ? ProfilPnL.PourOptionSurMesure(Otc, e, _min/100, _max/100, _pas/100) : Cotation is not null ? ProfilPnL.Calculer(Cotation, e, _min/100, _max/100, _pas/100) : null;
+            _dense = Otc is not null ? ProfilPnL.PourOptionSurMesure(Otc, e, _min/100, _max/100, dense) : Cotation is not null ? ProfilPnL.Calculer(Cotation, e, _min/100, _max/100, dense) : null;
+            _erreur = null;
+        }
+        catch (Exception ex) when (ex is PricerException or ArgumentException or InvalidOperationException)
+        {
+            _profil = _dense = null;
+            _erreur = ex.Message;
+        }
+    }
+}

@@ -1,0 +1,74 @@
+@using System.Globalization
+@* On distingue le résultat à l'échéance du résultat aujourd'hui avec deux tracés, puis on ajoute les points morts et le repère du marché actuel. *@
+<svg class="graphique" viewBox="0 0 @L @H" role="img" aria-label="Profil de P&L">
+    @foreach (var y in _y.Graduations())
+    {
+        <g>
+        <line class="axe" x1="@G" x2="@(L - D)" y1="@P(_y.Vers(y))" y2="@P(_y.Vers(y))" opacity="0.35" />
+        <text x="@(G - 6)" y="@P(_y.Vers(y) + 4)" text-anchor="end">@y.ToString(Usd ? "N0" : "N4", Fr)</text>
+        </g>
+    }
+    @foreach (var x in _x.Graduations(6))
+    {
+        <g>
+        <text x="@P(_x.Vers(x))" y="@(H - B + 16)" text-anchor="middle">@x.ToString("N0", Fr)</text>
+        </g>
+    }
+    <path class="zone-gain" d="@Zone(true)" />
+    <path class="zone-perte" d="@Zone(false)" />
+    <line class="zero" x1="@G" x2="@(L - D)" y1="@P(_y.Vers(0))" y2="@P(_y.Vers(0))" />
+    <line class="future" x1="@P(_x.Vers(Profil.Future))" x2="@P(_x.Vers(Profil.Future))" y1="@Haut" y2="@(H - B)" />
+    <text x="@P(_x.Vers(Profil.Future) + 4)" y="@(Haut + 10)">Marché actuel</text>
+    <polyline class="courbe-aujourdhui" points="@Polyligne(p => Usd ? p.PnlAujourdhuiUsd : p.PnlAujourdhuiBtc)" />
+    <polyline class="courbe-echeance" points="@Polyligne(p => Usd ? p.PnlEcheanceUsd : p.PnlEcheanceBtc)" />
+    @foreach (var pm in Profil.PointsMorts.Where(k => k >= _x.Min && k <= _x.Max))
+    {
+        <circle class="point-mort" cx="@P(_x.Vers(pm))" cy="@P(_y.Vers(0))" r="4.5" />
+    }
+    <line class="axe" x1="@G" x2="@G" y1="@Haut" y2="@(H - B)" />
+    <line class="axe" x1="@G" x2="@(L - D)" y1="@(H - B)" y2="@(H - B)" />
+    <text x="@(L / 2)" y="@(H - 3)" text-anchor="middle">Sous-jacent (USD)</text>
+</svg>
+<div class="legende"><span>À l'échéance (@(Usd ? "USD" : Devise))</span><span class="auj">Aujourd'hui, vol inchangée</span><span class="pm">Point mort</span></div>
+
+@code {
+    [Parameter] public bool Usd { get; set; } = true;
+    [Parameter] public string Devise { get; set; } = "BTC";
+    [Parameter, EditorRequired] public ProfilStructure Profil { get; set; } = default!;
+
+    private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
+    private const double L = 760, H = 310, G = 76, D = 18, Haut = 20, B = 42;
+    private Echelle _x = default!, _y = default!;
+
+    /// <summary>
+    /// On recalcule les axes à partir des scénarios et de l'unité choisie avant de dessiner les deux
+    /// profils de résultat.
+    /// </summary>
+    protected override void OnParametersSet()
+    {
+        _x = new Echelle(Profil.Points[0].SousJacent, Profil.Points[^1].SousJacent, G, L - D);
+        _y = Echelle.Autour(Profil.Points.SelectMany(p => new[] { Usd ? p.PnlEcheanceUsd : p.PnlEcheanceBtc, Usd ? p.PnlAujourdhuiUsd : p.PnlAujourdhuiBtc }), H - B, Haut, true);
+    }
+
+    /// <summary>
+    /// On convertit la coordonnée calculée en texte numérique compatible avec le SVG.
+    /// </summary>
+    private static string P(double v) => Echelle.P(v);
+
+    /// <summary>
+    /// On relie les scénarios dans leur ordre pour tracer le résultat aujourd'hui ou à l'échéance.
+    /// </summary>
+    private string Polyligne(Func<PointProfil, double> y) =>
+        string.Join(" ", Profil.Points.Select(p => $"{P(_x.Vers(p.SousJacent))},{P(_y.Vers(y(p)))}"));
+
+    /// <summary>
+    /// On colore l'espace entre le résultat à l'échéance et zéro pour distinguer rapidement les zones de
+    /// gain et de perte.
+    /// </summary>
+    private string Zone(bool gain)
+    {
+        double y0 = _y.Vers(0);
+        var pts = Profil.Points.Select(p => $"{P(_x.Vers(p.SousJacent))},{P(gain ? Math.Min(_y.Vers(Usd ? p.PnlEcheanceUsd : p.PnlEcheanceBtc), y0) : Math.Max(_y.Vers(Usd ? p.PnlEcheanceUsd : p.PnlEcheanceBtc), y0))}");
+        return $"M{P(_x.Vers(Profil.Points[0].SousJacent))},{P(y0)} L" + string.Join(" L", pts) + $" L{P(_x.Vers(Profil.Points[^1].SousJacent))},{P(y0)} Z";
+    }
+}

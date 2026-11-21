@@ -1,0 +1,85 @@
+@page "/referentiel"
+@inherits ComposantLive
+@inject ServiceMarche Marche
+@inject OptionsPricer Options
+
+<PageTitle>Référentiel · Pricer Deribit</PageTitle>
+
+@{
+    var etat = Marche.EtatCourant;
+    var echeances = etat.Referentiel.Echeances.Where(e => e > etat.Maintenant).ToList();
+    if (_echeance == default && echeances.Count > 0) _echeance = echeances.FirstOrDefault(e => (e - etat.Maintenant).TotalDays > 1.5, echeances[0]);
+    double? f = etat.Future(_echeance);
+}
+
+<div class="entete">
+    <div>
+        <h1>Référentiel des options</h1>
+        <div class="muet">Parcours par échéance puis par strike : bid, ask, mark et vol implicite (Deribit), en temps réel.</div>
+    </div>
+    <div class="champ">
+        <label>Échéance</label>
+        <select @bind="EcheanceTexte">
+            @foreach (var e in echeances)
+            {
+                <option value="@e.Ticks">@Format.Echeance(e) (@Format.Nombre((e - etat.Maintenant).TotalDays, "0.0") j)</option>
+            }
+        </select>
+    </div>
+</div>
+
+<div class="grille g2">
+    <div class="kpi"><div class="libelle">Future de l'échéance</div><div class="valeur">@Format.Usd(f)</div><div class="detail">maturité @Format.Nombre(Maturite.EnAnnees(_echeance, etat.Maintenant) * 365, "0.00") jours</div></div>
+    <div class="kpi"><div class="libelle">Strikes cotés</div><div class="valeur">@etat.Referentiel.Strikes(_echeance).Count</div><div class="detail">options européennes inverses, prix et règlements en @Options.Devise</div></div>
+</div>
+
+<div class="carte" style="margin-top:16px">
+    <h2>Smile de l'échéance <span class="muet">— notre inversion du mark, options hors de la monnaie</span></h2>
+    <GraphiqueSmile Smile="etat.Smiles().FirstOrDefault(s => s.Echeance == _echeance)" />
+</div>
+
+<div class="carte">
+    <div class="tableau-wrap">
+        <table>
+            <thead>
+                <tr><th>Bid</th><th>Ask</th><th>Mark</th><th>IV mark</th><th>Delta B-76</th><th style="text-align:center">CALL · Strike · PUT</th><th>Bid</th><th>Ask</th><th>Mark</th><th>IV mark</th><th>Delta B-76</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in etat.Referentiel.Strikes(_echeance))
+                {
+                    var c = p.Call is null ? null : etat.Cotation(p.Call.Nom);
+                    var q = p.Put is null ? null : etat.Cotation(p.Put.Nom);
+                    bool atm = f is double ff && Math.Abs(p.Strike / ff - 1) < 0.01;
+                    <tr class="@(atm ? "atm" : "")">
+                        <td>@Format.Btc(c?.Bid, 4)</td><td>@Format.Btc(c?.Ask, 4)</td><td>@Format.Btc(c?.Mark, 4)</td><td>@Format.Nombre(c?.MarkIv, "0.0")</td><td>@Format.Nombre(Delta(p.Call, etat), "0.00")</td>
+                        <td class="strike">@p.Strike.ToString("N0")</td>
+                        <td>@Format.Btc(q?.Bid, 4)</td><td>@Format.Btc(q?.Ask, 4)</td><td>@Format.Btc(q?.Mark, 4)</td><td>@Format.Nombre(q?.MarkIv, "0.0")</td><td>@Format.Nombre(Delta(p.Put, etat), "0.00")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private DateTime _echeance;
+
+    private string EcheanceTexte
+    {
+        get => _echeance.Ticks.ToString();
+        set => _echeance = new DateTime(long.Parse(value), DateTimeKind.Utc);
+    }
+
+    protected override TimeSpan Periode => TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// On calcule le delta avec notre Black-76 à partir du future et de mark_iv, même lorsque le résumé ne
+    /// contient pas les grecques Deribit.
+    /// </summary>
+    private static double? Delta(Instrument? instrument, EtatMarche etat)
+    {
+        if (instrument is null) return null;
+        try { return new JambeCotee(instrument, 1).Evaluer(etat).Grecques.Delta; }
+        catch (PricerException) { return null; }
+    }
+}

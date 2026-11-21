@@ -1,0 +1,10 @@
+@* On place côte à côte notre volatilité recalculée et celle de Deribit, puis on signale les écarts supérieurs à 0,1 point. *@
+<td class="@(C?.Signale == true ? "signale" : "")">
+    @if (C is null) { <span class="muet">—</span> }
+    else if (!C.Calculee.EstCalculee) { <span class="alerte-txt">@C.Calculee.Libelle</span> }
+    else { @Format.Nombre(C.Calculee.Sigma * 100, "0.00") <span class="muet"> / @Format.Nombre(C.Deribit, "0.00")</span> }
+</td>
+
+@code {
+    [Parameter] public ComparaisonVol? C { get; set; }
+}

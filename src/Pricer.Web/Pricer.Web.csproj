@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pricer.Domaine\Pricer.Domaine.csproj" />
+    <ProjectReference Include="..\Pricer.Infrastructure\Pricer.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <RootNamespace>Pricer.Web</RootNamespace>
+  </PropertyGroup>
+
+</Project>

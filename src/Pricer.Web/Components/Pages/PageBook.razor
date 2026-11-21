@@ -1,0 +1,110 @@
+@page "/book"
+@inherits ComposantLive
+@inject ServiceMarche Marche
+@inject Pricer.Domaine.Booking.Book BookDesk
+@inject ILogger<PageBook> Log
+@inject OptionsPricer Options
+
+<PageTitle>Book · Pricer Deribit</PageTitle>
+
+@{
+    var e = BookDesk.Evaluer(Marche.EtatCourant);
+    double vegaMax = Math.Max(1e-9, e.GrecquesParEcheance.Values.Select(g => Math.Abs(g.Vega)).DefaultIfEmpty(0).Max());
+}
+
+<div class="entete">
+    <div>
+        <h1>Suivi du book</h1>
+        <div class="muet">Valorisation continue au mark Deribit et au théorique · P&amp;L converti à l'indice (@Format.Usd(e.Indice) $) · règlement automatique des échéances au prix de livraison Deribit.</div>
+    </div>
+    <a class="bouton secondaire" href="blotter">Blotter et débouclage</a>
+</div>
+
+<Message @bind-Texte="_message" Type="succes" />
+@if (!e.ValorisationComplete || !e.RisqueComplet)
+{
+    <div class="carte alerte"><strong>@e.Statut</strong><p>Les montants indisponibles restent vides. Les grecques affichées sont partielles lorsque des jambes ne peuvent pas être valorisées. Le P&amp;L réalisé reste conservé.</p></div>
+}
+
+<div class="grille g4">
+    <div class="kpi"><div class="libelle">Valeur au mark</div><div class="valeur">@Format.Btc(e.ValeurMarkBtc) @Options.Devise</div><div class="detail">théorique @Format.Btc(e.ValeurTheoriqueBtc) @Options.Devise</div></div>
+    <div class="kpi"><div class="libelle">P&amp;L latent</div><div class="valeur @Format.ClasseSigne(e.PnlLatentBtc)">@Format.Signe(e.PnlLatentBtc, 6) @Options.Devise</div><div class="detail">@Format.Usd(e.PnlLatentBtc * e.Indice) $</div></div>
+    <div class="kpi"><div class="libelle">P&amp;L réalisé</div><div class="valeur @Format.ClasseSigne(e.PnlRealiseBtc)">@Format.Signe(e.PnlRealiseBtc, 6) @Options.Devise</div><div class="detail">débouclages et règlements</div></div>
+    <div class="kpi"><div class="libelle">P&amp;L total</div><div class="valeur @Format.ClasseSigne(e.PnlTotalBtc)">@Format.Usd(e.PnlTotalUsd) $</div><div class="detail">@Format.Signe(e.PnlTotalBtc, 6) @Options.Devise</div></div>
+</div>
+
+<div class="carte" style="margin-top:16px">
+    <h2>Positions</h2>
+    @if (e.Positions.Count == 0)
+    {
+        <div class="vide">Aucun trade : cotez une structure dans le <a href="pricer">pricer</a> puis bookez-la.</div>
+    }
+    else
+    {
+        <div class="tableau-wrap">
+            <table>
+                <thead><tr><th>Trade</th><th class="texte">Structure</th><th>Qté ouverte</th><th>Valeur mark</th><th>Valeur théo</th><th>Prime</th><th>P&amp;L latent</th><th>P&amp;L réalisé</th><th>P&amp;L total $</th><th>Delta</th><th>Gamma</th><th>Vega</th><th>Theta</th></tr></thead>
+                <tbody>
+                    @foreach (var p in e.Positions)
+                    {
+                        <tr class="@(p.EstOuverte ? "" : "muet")">
+                            <td>@p.Origine.Id.ToString()[..8]</td>
+                            <td class="texte">@p.Origine.Description<div class="muet" style="font-size:11px">@p.Statut · mark : @p.SourceMark</div> @if (!p.EstOuverte) { <span class="badge neutre">fermée</span> }</td>
+                            <td>@p.QuantiteOuverte.ToString("0.0")</td>
+                            <td>@Format.Btc(p.ValeurMarkBtc)</td><td>@Format.Btc(p.ValeurTheoriqueBtc)</td><td>@Format.Btc(p.PrimeOuverteBtc)</td>
+                            <td class="@Format.ClasseSigne(p.PnlLatentBtc)">@Format.Signe(p.PnlLatentBtc, 6)</td>
+                            <td class="@Format.ClasseSigne(p.PnlRealiseBtc)">@Format.Signe(p.PnlRealiseBtc, 6)</td>
+                            <td class="@Format.ClasseSigne(p.PnlTotalBtc)">@Format.Usd(p.PnlTotalBtc * e.Indice)</td>
+                            <td>@Format.Nombre(p.Grecques.Delta, "0.000")</td><td>@Format.Nombre(p.Grecques.Gamma, "0.000000")</td><td>@Format.Nombre(p.Grecques.Vega, "N2")</td><td>@Format.Nombre(p.Grecques.Theta, "N2")</td>
+                        </tr>
+                    }
+                    <tr class="total">
+                        <td></td><td class="texte">Total</td><td></td><td>@Format.Btc(e.ValeurMarkBtc)</td><td>@Format.Btc(e.ValeurTheoriqueBtc)</td><td></td>
+                        <td class="@Format.ClasseSigne(e.PnlLatentBtc)">@Format.Signe(e.PnlLatentBtc, 6)</td><td class="@Format.ClasseSigne(e.PnlRealiseBtc)">@Format.Signe(e.PnlRealiseBtc, 6)</td>
+                        <td class="@Format.ClasseSigne(e.PnlTotalBtc)">@Format.Usd(e.PnlTotalUsd)</td>
+                        <td>@Format.Nombre(e.GrecquesTotales.Delta, "0.000")</td><td>@Format.Nombre(e.GrecquesTotales.Gamma, "0.000000")</td><td>@Format.Nombre(e.GrecquesTotales.Vega, "N2")</td><td>@Format.Nombre(e.GrecquesTotales.Theta, "N2")</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="carte">
+    <h2>Grecques agrégées par échéance @(e.RisqueComplet ? "" : "· PARTIELLES")</h2>
+    <table>
+        <thead><tr><th>Échéance</th><th>Delta</th><th>Gamma</th><th>Vega $/pt</th><th>Theta $/j</th><th style="width:30%">Vega</th></tr></thead>
+        <tbody>
+            @foreach (var (ech, g) in e.GrecquesParEcheance)
+            {
+                <tr>
+                    <td>@(ech == DateTime.MaxValue ? "Perpétuel" : Format.Court(ech))</td>
+                    <td>@Format.Nombre(g.Delta, "0.0000")</td><td>@Format.Nombre(g.Gamma, "0.000000")</td><td>@Format.Nombre(g.Vega, "N2")</td><td>@Format.Nombre(g.Theta, "N2")</td>
+                    <td><div style="height:8px;border-radius:4px;width:@((Math.Abs(g.Vega) / vegaMax * 100).ToString("0", CultureInfo.InvariantCulture))%;background:@(g.Vega >= 0 ? "var(--pos)" : "var(--neg)")"></div></td>
+                </tr>
+            }
+            <tr class="total"><td>Total</td><td>@Format.Nombre(e.GrecquesTotales.Delta, "0.0000")</td><td>@Format.Nombre(e.GrecquesTotales.Gamma, "0.000000")</td><td>@Format.Nombre(e.GrecquesTotales.Vega, "N2")</td><td>@Format.Nombre(e.GrecquesTotales.Theta, "N2")</td><td></td></tr>
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private string? _message;
+    private bool _suivisDemandes;
+
+    protected override TimeSpan Periode => TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// On réévalue les positions et les grecques avant chaque rafraîchissement du tableau de suivi.
+    /// </summary>
+    protected override async Task AvantRafraichissementAsync()
+    {
+        if (!_suivisDemandes)
+        {
+            _suivisDemandes = true;
+            await Marche.SuivreAsync(BookDesk.InstrumentsSuivis());
+        }
+
+    }
+}
+
