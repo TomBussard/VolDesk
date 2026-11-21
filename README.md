@@ -32,11 +32,33 @@ The screenshots are from a running offline BTC session. The numerical example be
 
 ## Implementation
 
-This example uses the project's pricing engine for a one-month call spread at 60 percent volatility. At a futures price of USD 100,000, the spread costs USD 3,584 and has a delta of 0.214 BTC. The dotted lines mark the strikes.
+I used a BTC call spread to check whether the displayed premium and hedge agree leg by leg. The example buys one call struck at USD 100,000 and sells one struck at USD 110,000. Both expire in 30 days. The futures price is USD 100,000, annual volatility is 60% for both strikes and the interest rate is zero. The dotted lines mark the two strikes.
 
 ![Model value and net delta of a BTC call spread as the futures price varies](figures/call-spread.png)
 
-The domain library prices options on futures with Black-76, interpolates the volatility smile and aggregates risk across legs. The market-data layer can replay a session or subscribe to public quotes. The Blazor interface and console both use the same pricing and booking logic. The simulated book uses a zero interest rate and an initial hedge. Fees and order-book depth are outside the model.
+### From the futures price to the hedge
+
+For each European call let $F$ be the expiry's futures price, $K$ its strike, $T=30/365$ its remaining life in years and $\Phi$ the standard normal cumulative distribution function. At the desk's zero rate the Black-76 call value $C$ is in USD, and its futures delta is $\partial C/\partial F$.
+
+```math
+d_1=\frac{\log(F/K)+\tfrac12\sigma^2 T}{\sigma\sqrt T},\qquad d_2=d_1-\sigma\sqrt T
+```
+
+```math
+C=F\Phi(d_1)-K\Phi(d_2),\qquad \Delta=\Phi(d_1)
+```
+
+| Position | Signed model value (USD) | Signed futures delta (BTC) |
+| --- | ---: | ---: |
+| Buy the 100,000 call | 6,853.94 | 0.53427 |
+| Sell the 110,000 call | −3,270.26 | −0.31987 |
+| Call spread | **3,583.68** | **0.21440** |
+
+The desk divides the USD value by $F$ to express the spread premium in BTC, giving **0.03584 BTC**. Near this forward, a USD 100 rise adds about USD 21.44 to the unhedged spread at fixed volatility. Selling 0.21440 BTC of futures offsets that first-order exposure at entry. The model values in the table use a single volatility. A simulated purchase uses the two executable quote sides shown above. [Black-76 and Greeks](src/Pricer.Domaine/Pricing/Black76.cs) · [Multi-leg quotes](src/Pricer.Domaine/Pricing/PricerStructure.cs)
+
+### How the desk handles an unquoted strike or expiry
+
+A quoted premium implies the volatility that makes the model price equal the quote. The solver tries Newton's method and falls back to bisection when the step is unusable. For an unquoted strike, the desk interpolates each smile in log-moneyness, $\log(K/F)$. Between two expiries it interpolates total variance $w=\sigma^2T$ at the same log-moneyness and converts back to $\sqrt{w/T}$. The simulated book uses an initial hedge and excludes fees and order-book depth. [Implied-volatility solver](src/Pricer.Domaine/Pricing/VolImplicite.cs) · [Smile interpolation](src/Pricer.Domaine/Pricing/Interpolateur.cs)
 
 ## Run locally
 
