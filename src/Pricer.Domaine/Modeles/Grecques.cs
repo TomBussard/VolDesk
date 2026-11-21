@@ -1,28 +1,29 @@
 namespace Pricer.Domaine.Modeles;
 
 /// <summary>
-/// On conserve des unités communes : delta en unités de sous-jacent, gamma par USD, vega en USD par
-/// point de vol et theta en USD par jour. On additionne ensuite les risques pondérés par les quantités
-/// signées avec les opérateurs + et *.
+/// Common units are retained: delta in underlying units, gamma per USD, vega in USD per volatility
+/// point and theta in USD per day. The risk weighted by the quantities signed with operators +
+/// and * is then added.
 /// </summary>
 public readonly record struct Grecques(double Delta, double Gamma, double Vega, double Theta)
 {
     public static Grecques Zero => new(0, 0, 0, 0);
 
     /// <summary>
-    /// On additionne les quatre sensibilités composante par composante pour agréger des jambes dans les
-    /// mêmes unités.
+    /// The four component sensitivities per component are added together to aggregate legs in
+    /// the same units.
     /// </summary>
     public static Grecques operator +(Grecques a, Grecques b) =>
         new(a.Delta + b.Delta, a.Gamma + b.Gamma, a.Vega + b.Vega, a.Theta + b.Theta);
 
     /// <summary>
-    /// On retire les sensibilités d'une position pour mesurer l'écart de risque entre deux ensembles.
+    /// The sensitivities of a position are removed to measure the risk gap between two sets.
     /// </summary>
     public static Grecques operator -(Grecques a, Grecques b) => a + (-1.0 * b);
 
     /// <summary>
-    /// On pondère chaque grecque par la quantité signée ; une vente inverse ainsi le signe de l'exposition.
+    /// We weigh each Greek by the signed quantity; a sale reverses so the sign of the
+    /// exhibition.
     /// </summary>
     public static Grecques operator *(double quantite, Grecques g) =>
         new(quantite * g.Delta, quantite * g.Gamma, quantite * g.Vega, quantite * g.Theta);

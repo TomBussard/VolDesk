@@ -1,18 +1,22 @@
 namespace Pricer.Domaine.Pricing;
 
 /// <summary>
-/// On calcule la loi normale sans ajouter de bibliothèque de pricing. On utilise l'approximation
-/// rationnelle de Hart dans la version de West (2005), choisie pour sa précision en double ; les tests
-/// comparent la fonction à des valeurs de référence.
+/// The normal law is calculated without adding a pricing library. Hart's rational approximation
+/// is used in the version of West (2005), chosen for its double accuracy; the tests compare the
+/// function with reference values.
 /// </summary>
 public static class LoiNormale
 {
     private static readonly double UnSurRacineDeuxPi = 1.0 / Math.Sqrt(2 * Math.PI);
 
-    /// <summary>On calcule la densité de la loi normale, utilisée dans gamma, vega et theta.</summary>
+    /// <summary>
+    /// The density of normal law, used in gamma, vega and theta, is calculated.
+    /// </summary>
     public static double Densite(double x) => UnSurRacineDeuxPi * Math.Exp(-0.5 * x * x);
 
-    /// <summary>On calcule la probabilité cumulée de la loi normale, utilisée dans le prix et le delta.</summary>
+    /// <summary>
+    /// The cumulative probability of normal law used in price and delta is calculated.
+    /// </summary>
     public static double Cdf(double x)
     {
         double xAbs = Math.Abs(x);
@@ -46,7 +50,7 @@ public static class LoiNormale
             }
             else
             {
-                // On utilise une fraction continue dans les queues, où la probabilité devient très petite.
+                // A continuous fraction is used in the tails, where the probability becomes very small.
                 double b = xAbs + 0.65;
                 b = xAbs + 4 / b;
                 b = xAbs + 3 / b;

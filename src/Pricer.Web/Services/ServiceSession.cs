@@ -9,7 +9,9 @@ using Pricer.Infrastructure.Services;
 
 namespace Pricer.Web.Services;
 
-/// <summary>On sépare les books par source, devise et session de lecture.</summary>
+/// <summary>
+/// Books are separated by source, currency and reading session.
+/// </summary>
 public sealed class ServiceSession : IDisposable
 {
     private readonly OptionsPricer _options;
@@ -25,15 +27,15 @@ public sealed class ServiceSession : IDisposable
     public string CheminBook => Path.Combine(Path.GetDirectoryName(_options.FichierSession)!, "books", _options.CleBookSession + ".json");
     public string LibelleMode => _options.Mode switch
     {
-        ModeDonnees.Demonstration => "Démonstration fictive",
-        ModeDonnees.Rejeu => "Marché enregistré",
-        ModeDonnees.Enregistrement => "Direct Deribit · enregistrement",
-        _ => "Direct Deribit"
+        ModeDonnees.Demonstration => "Synthetic market",
+        ModeDonnees.Rejeu => "Recorded market",
+        ModeDonnees.Enregistrement => "Deribit live recording",
+        _ => "Deribit live"
     };
 
     /// <summary>
-    /// On relie le book au service de marché et on s'abonne aux nouveaux trades pour déclencher leur
-    /// sauvegarde.
+    /// We connect the book to the market service and subscribe to the new trades to trigger
+    /// their backup.
     /// </summary>
     public ServiceSession(OptionsPricer options, ServiceMarche marche, Blotter blotter, Book book, EtatApplication etat, ILoggerFactory journaux)
     {
@@ -43,12 +45,12 @@ public sealed class ServiceSession : IDisposable
     }
 
     /// <summary>
-    /// On identifie la source et la devise pour retrouver leur book ; un rejeu est reconnu par le
-    /// contenu du fichier.
+    /// The source and currency are identified to find their book; a replay is recognized by the
+    /// content of the file.
     /// </summary>
     public static string CleSource(OptionsPricer options)
     {
-        // On utilise le contenu du fichier pour identifier un rejeu, afin de retrouver son book même si le fichier est renommé.
+        // The content of the file is used to identify a replay, in order to find its book even if the file is renamed.
         string source = options.Mode is ModeDonnees.Live or ModeDonnees.Enregistrement ? "live" : options.Mode.ToString();
         string empreinte = "";
         if (options.Mode == ModeDonnees.Rejeu)
@@ -64,8 +66,8 @@ public sealed class ServiceSession : IDisposable
     }
 
     /// <summary>
-    /// On restaure la configuration valide et l'heure du dernier trade, en conservant un avertissement
-    /// si les fichiers sont illisibles.
+    /// We restore the valid configuration and the time of the last trade, keeping a warning if
+    /// the files are unreadable.
     /// </summary>
     public static void ChargerAvantDemarrage(OptionsPricer options, bool chargerConfiguration)
     {
@@ -107,11 +109,12 @@ public sealed class ServiceSession : IDisposable
     }
 
     /// <summary>
-    /// On recharge les événements enregistrés pour la session active dans le blotter partagé.
+    /// Reload the recorded events for the active session in the shared float.
     /// </summary>
     public void ChargerBook() => _blotter.Charger(ExportJson.Charger(CheminBook));
     /// <summary>
-    /// On restaure le blotter puis on abonne les instruments encore nécessaires aux positions ouvertes.
+    /// We restore the float then we subscribe the instruments still necessary to the open
+    /// positions.
     /// </summary>
     public async Task ChargerBookAsync()
     {
@@ -120,8 +123,8 @@ public sealed class ServiceSession : IDisposable
     }
 
     /// <summary>
-    /// On retrouve la dernière session de chaque source ; un index absent ou illisible est traité comme
-    /// vide.
+    /// We find the last session of each source; an absent or unreadable index is treated as
+    /// empty.
     /// </summary>
     private static Dictionary<string, string> LireIndex(OptionsPricer options)
     {
@@ -131,12 +134,12 @@ public sealed class ServiceSession : IDisposable
     }
 
     /// <summary>
-    /// On écrit le contenu complet dans un temporaire avant de remplacer le fichier pour éviter une
-    /// sauvegarde tronquée.
+    /// Complete content is written in a temporary before replacing the file to avoid a
+    /// truncated backup.
     /// </summary>
     private static void EcrireAtomique(string fichier, string texte)
     {
-        // On écrit la sauvegarde complète dans un fichier temporaire avant de remplacer l'ancienne, pour éviter un JSON tronqué.
+        // The full backup is written in a temporary file before replacing the old one, to avoid a truncated JSON.
         Directory.CreateDirectory(Path.GetDirectoryName(fichier)!);
         string temporaire = fichier + "." + Guid.NewGuid().ToString("N") + ".tmp";
         File.WriteAllText(temporaire, texte);
@@ -144,17 +147,17 @@ public sealed class ServiceSession : IDisposable
     }
 
     /// <summary>
-    /// On conserve un instantané cohérent du book, de la configuration et de l'index des sessions sous
-    /// le même verrou.
+    /// A consistent snapshot of the session book, configuration and index is kept under the
+    /// same lock.
     /// </summary>
     public void Sauvegarder()
     {
         string cle = _options.CleBookSession;
-        // On prend la copie du blotter avant le verrou de session pour éviter deux verrous pris dans un ordre opposé.
+        // A copy of the float is taken before the session lock to avoid two locks in an opposite order.
         var trades = _blotter.Trades;
         lock (_verrou)
         {
-            // On ne remplace pas un book plus récent par un instantané pris avant un booking concurrent.
+            // We don't replace a newer book with a snapshot taken before a competing booking.
             if (cle != _options.CleBookSession || trades.Count < _dernieresSauvegardes.GetValueOrDefault(cle)) return;
             EcrireAtomique(CheminBook, JsonSerializer.Serialize(trades, ExportJson.Options));
             _options.ReprendreAu = trades.Count == 0 ? null : trades.Max(t => t.Horodatage);
@@ -168,8 +171,8 @@ public sealed class ServiceSession : IDisposable
     }
 
     /// <summary>
-    /// On sauvegarde dès l'ajout d'une opération et on rend une erreur d'écriture visible sans annuler
-    /// le trade déjà enregistré.
+    /// You save when you add an operation and make a write error visible without canceling the
+    /// already registered trade.
     /// </summary>
     private void TradeAjoute(object? sender, Trade trade)
     {
@@ -179,13 +182,13 @@ public sealed class ServiceSession : IDisposable
     }
 
     /// <summary>
-    /// On sauvegarde l'ancienne session, on remplace sa source et son book, puis on restaure l'état
-    /// précédent si le changement échoue.
+    /// You save the old session, replace its source and book, and then restore the previous
+    /// state if the change fails.
     /// </summary>
     public async Task ChangerAsync(ModeDonnees mode, string devise, string fichier, bool nouvelleSession = false)
     {
         if (devise is not "BTC" and not "ETH") throw new ArgumentException("Choisissez BTC ou ETH.");
-        // On n'autorise qu'un changement de source à la fois pour ne pas mélanger l'état du marché et le book associé.
+        // Only one source change is allowed to not mix market conditions with the associated book.
         await _changement.WaitAsync();
         var ancienne = JsonSerializer.Deserialize<OptionsPricer>(JsonSerializer.Serialize(_options))!;
         var ancienBook = _blotter.Trades;
@@ -212,7 +215,7 @@ public sealed class ServiceSession : IDisposable
         }
         catch
         {
-            // On remet la source précédente si la nouvelle connexion échoue.
+            // The previous source is returned if the new connection fails.
             Copier(ancienne, _options);
             _blotter.Charger(ancienBook);
             try
@@ -228,7 +231,7 @@ public sealed class ServiceSession : IDisposable
     }
 
     /// <summary>
-    /// On reporte les réglages de source sur l'objet partagé afin que tous les services lisent la même
+    /// The source settings are reported on the shared object so that all services read the same
     /// configuration.
     /// </summary>
     private static void Copier(OptionsPricer a, OptionsPricer b)
@@ -238,12 +241,12 @@ public sealed class ServiceSession : IDisposable
     }
 
     /// <summary>
-    /// On relance la source depuis le début avec un nouvel identifiant de session pour garder l'ancien
-    /// book séparé.
+    /// Reboot the source from the beginning with a new session ID to keep the old book
+    /// separate.
     /// </summary>
     public Task RecommencerAsync() => ChangerAsync(_options.Mode, _options.Devise, _options.FichierRejeu, true);
     /// <summary>
-    /// On règle le rythme du rejeu actif et on sauvegarde ce choix pour le prochain lancement.
+    /// We set the pace of active replay and save this choice for the next launch.
     /// </summary>
     public void Vitesse(double vitesse)
     {
@@ -251,8 +254,8 @@ public sealed class ServiceSession : IDisposable
         r.Lecture.Vitesse = vitesse; _options.VitesseRejeu = vitesse; Sauvegarder();
     }
     /// <summary>
-    /// On retire l'abonnement au blotter et on libère le verrou de changement lorsque le service est
-    /// arrêté.
+    /// The subscription to the float is removed and the change lock is released when the
+    /// service is stopped.
     /// </summary>
     public void Dispose() { _blotter.TradeAjoute -= TradeAjoute; _changement.Dispose(); }
 }

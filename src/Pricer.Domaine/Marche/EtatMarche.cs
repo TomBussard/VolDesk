@@ -7,9 +7,9 @@ using Pricer.Domaine.Utilitaires;
 namespace Pricer.Domaine.Marche;
 
 /// <summary>
-/// On garde la dernière cotation de chaque instrument et on prévient les écrans lorsqu'elle change. On
-/// utilise des collections adaptées aux accès concurrents, car le flux et l'interface travaillent sur des
-/// tâches différentes.
+/// The last rating of each instrument is kept and screens are prevented when it changes.
+/// Collections are used adapted to competing accesses, as the flow and interface work on
+/// different tasks.
 /// </summary>
 public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
 {
@@ -23,8 +23,8 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
     private DateTime _cacheSmilesDate;
 
     /// <summary>
-    /// On associe le référentiel à une horloge injectée pour utiliser les mêmes calculs en direct et en
-    /// rejeu.
+    /// The reference frame is combined with an injected clock to use the same calculations in
+    /// live and replay.
     /// </summary>
     public EtatMarche(ReferentielOptions referentiel, IHorloge horloge)
     {
@@ -37,18 +37,20 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
     public double? Indice { get; private set; }
     public int NombreCotations => _cotations.Count;
 
-    /// <summary>On expose aussi un événement C# pour que l'interface puisse suivre les cotations simplement.</summary>
+    /// <summary>
+    /// A C# event is also displayed so that the interface can follow the ratings simply.
+    /// </summary>
     public event EventHandler<Cotation>? CotationRecue;
 
     /// <summary>
-    /// On lit la dernière cotation enregistrée sans fabriquer de prix si l'instrument n'a pas encore été
-    /// reçu.
+    /// The last recorded quote is read without making prices if the instrument has not yet
+    /// been received.
     /// </summary>
     public Cotation? Cotation(string nomInstrument) => _cotations.TryGetValue(nomInstrument, out var c) ? c : null;
 
     /// <summary>
-    /// On retient la médiane des futures fournis par les options fraîches de l'échéance, puis le mark du
-    /// future coté de même date.
+    /// The median of futures provided by the fresh maturity options is retained, followed by
+    /// the mark on the future side of the same date.
     /// </summary>
     /// <returns>Un prix en USD, ou null si aucune donnée de l'échéance n'est disponible.</returns>
     public double? Future(DateTime echeance)
@@ -62,8 +64,8 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
     }
 
     /// <summary>
-    /// On retient la cotation la plus récente, on avance l'horloge et on invalide les smiles avant de
-    /// prévenir les observateurs.
+    /// The most recent rating is retained, the clock is moved forward and the smiles are
+    /// invalidated before warning observers.
     /// </summary>
     public void MettreAJour(Cotation cotation)
     {
@@ -76,8 +78,8 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
     }
 
     /// <summary>
-    /// On fait passer chaque cotation du lot par le même contrôle de date que les messages reçus
-    /// individuellement.
+    /// Each lot rating is passed through the same date check as the individual messages
+    /// received.
     /// </summary>
     public void MettreAJour(IEnumerable<Cotation> cotations)
     {
@@ -85,13 +87,13 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
     }
 
     /// <summary>
-    /// On met à jour l'indice seulement si sa valeur est valide et sa date au moins aussi récente que la
-    /// précédente.
+    /// The index is updated only if its value is valid and its date at least as recent as the
+    /// previous one.
     /// </summary>
     public void DefinirIndice(double indice, DateTime horodatage)
     {
         if (!double.IsFinite(indice) || indice <= 0) return;
-        // On ne laisse pas une ancienne réponse REST remplacer le dernier indice reçu en flux.
+        // An old REST response is not allowed to replace the last index received in flow.
         lock (_verrouIndice)
         {
             if (horodatage < _horodatageIndice) return;
@@ -102,7 +104,7 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
     }
 
     /// <summary>
-    /// On ajoute un observateur sous verrou pour qu'il reçoive les prochaines cotations.
+    /// A locked observer is added to receive the next quotes.
     /// </summary>
     public void AjouterObservateur(IObservateur<Cotation> observateur)
     {
@@ -110,7 +112,7 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
     }
 
     /// <summary>
-    /// On retire l'observateur sous verrou lorsqu'il n'a plus besoin des mises à jour.
+    /// The observer is removed under lock when it no longer needs updates.
     /// </summary>
     public void SupprimerObservateur(IObservateur<Cotation> observateur)
     {
@@ -118,8 +120,8 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
     }
 
     /// <summary>
-    /// On copie les abonnements avant de les appeler pour ne pas garder leur verrou pendant le traitement
-    /// d'une cotation.
+    /// Subscriptions are copied before they are called so that they do not lock during the
+    /// processing of a listing.
     /// </summary>
     private void Notifier(Cotation cotation)
     {
@@ -130,8 +132,8 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
     }
 
     /// <summary>
-    /// On construit les smiles avec notre propre inversion du mark. On essaie d'abord
-    /// l'option hors de la monnaie, puis l'autre type au même strike si sa cotation est inutilisable.
+    /// We build the smiles with our own inversion of the mark. First we try the option out of
+    /// the currency, then the other type in the same strike if its rating is unusable.
     /// </summary>
     public IReadOnlyList<SmileEcheance> Smiles()
     {
@@ -147,7 +149,7 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
             var points = new List<PointSmile>();
             foreach (var paire in Referentiel.Strikes(echeance))
             {
-                // On préfère l'option hors de la monnaie, puis on essaie l'autre si son mark est inutilisable.
+                // We prefer the option out of the money, then we try the other if his mark is unusable.
                 var candidats = paire.Strike >= f ? new[] { paire.Call, paire.Put } : new[] { paire.Put, paire.Call };
                 foreach (var instrument in candidats)
                 {
@@ -167,8 +169,8 @@ public sealed class EtatMarche : IContexteMarche, ISujet<Cotation>
     }
 
     /// <summary>
-    /// On conserve le message le plus récent ; les champs de prix absents de la nouvelle cotation ne sont
-    /// pas repris d'un ancien carnet.
+    /// The most recent message is kept; the price fields missing from the new listing are not
+    /// taken from an old notebook.
     /// </summary>
     private static Cotation Fusionner(Cotation ancienne, Cotation nouvelle) => nouvelle.Horodatage < ancienne.Horodatage
         ? ancienne // On conserve le ticker déjà reçu si le résumé est plus ancien.

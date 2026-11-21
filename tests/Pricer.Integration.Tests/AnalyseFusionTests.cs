@@ -7,8 +7,8 @@ namespace Pricer.Integration.Tests;
 public class AnalyseFusionTests
 {
     /// <summary>
-    /// On vérifie qu'une réponse incomplète ne crée pas de sensibilités nulles qui donneraient une
-    /// fausse neutralité.
+    /// It is verified that an incomplete response does not create zero sensitivities that would
+    /// give false neutrality.
     /// </summary>
     [TestMethod]
     public void Ticker_GrecquesPartielles_ResteIndisponibleSansInventerDesZeros()
@@ -20,7 +20,8 @@ public class AnalyseFusionTests
     }
 
     /// <summary>
-    /// On vérifie que le statut fermé reçu du marché empêche de considérer la quote comme négociable.
+    /// It is verified that the closed status received from the market prevents the quota from
+    /// being considered negotiable.
     /// </summary>
     [TestMethod]
     public void Ticker_MarcheFerme_ConserveSonEtat()

@@ -8,16 +8,16 @@ using Pricer.Infrastructure.Services;
 namespace Pricer.Web.Services;
 
 /// <summary>
-/// On prépare le marché et le book en arrière-plan afin que les pages puissent afficher un état de
-/// chargement dès le lancement. On sauvegarde la session prête lorsque le serveur s'arrête.
-/// On ouvre la source dans le bloc protégé pour signaler un fichier absent sans bloquer l'interface.
+/// The market and book are prepared in the background so that the pages can display a loading
+/// state from the start. You save the ready session when the server stops. You open the source
+/// in the protected block to report an absent file without blocking the interface.
 /// </summary>
 public sealed class DemarrageMarche(IServiceProvider services, EtatApplication etat, ILogger<DemarrageMarche> log)
     : BackgroundService
 {
     /// <summary>
-    /// On charge la source et le book en arrière-plan, puis on signale aux pages si les données sont
-    /// prêtes ou indisponibles.
+    /// The source and the book are loaded in the background, and then the pages are notified if
+    /// the data is ready or unavailable.
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -40,7 +40,8 @@ public sealed class DemarrageMarche(IServiceProvider services, EtatApplication e
     }
 
     /// <summary>
-    /// On sauvegarde la session prête avant de laisser le service en arrière-plan terminer son arrêt.
+    /// Save the ready session before leaving the service in the background to complete its
+    /// shutdown.
     /// </summary>
     public override async Task StopAsync(CancellationToken cancellationToken)
     {

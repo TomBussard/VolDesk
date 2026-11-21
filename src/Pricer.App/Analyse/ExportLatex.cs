@@ -7,24 +7,24 @@ using Pricer.Domaine.Pricing;
 namespace Pricer.App.Analyse;
 
 /// <summary>
-/// On produit les tableaux LaTeX à partir du scénario exécuté, pour que les exemples du rapport
-/// correspondent aux calculs de l'application.
+/// The LaTeX tables are produced from the executed scenario, so that the examples in the report
+/// correspond to the calculation of the application.
 /// </summary>
 public static class ExportLatex
 {
     private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
     /// <summary>
-    /// On formate un nombre en français et on remplace les espaces de groupement par des espaces
-    /// compatibles avec LaTeX.
+    /// We format a number in French and replace the bundling spaces with LaTeX-compatible
+    /// spaces.
     /// </summary>
     private static string N(double x, string f) => x.ToString(f, Fr).Replace("\u202f", "\\,").Replace("\u00a0", "\\,");
     /// <summary>
-    /// On protège les caractères de texte qui ont un rôle particulier dans LaTeX.
+    /// Text characters that have a particular role in LaTeX are protected.
     /// </summary>
     private static string Echapper(string s) => s.Replace("_", "\\_").Replace("&", "\\&").Replace("%", "\\%");
 
     /// <summary>
-    /// On transforme une cotation en tableaux LaTeX avec ses jambes, ses prix et ses sensibilités.
+    /// We turn a quote into LaTeX paintings with its legs, prices and sensitivities.
     /// </summary>
     /// <returns>On renvoie le bloc LaTeX prêt à être inséré dans un document.</returns>
     public static string Cotation(CotationStructure c)
@@ -43,7 +43,7 @@ public static class ExportLatex
         sb.AppendLine("Prix par unité & BTC & USD & Grecques & nous & Deribit \\\\\\midrule");
         double f = c.Future;
         var g = c.Grecques; var gd = c.GrecquesDeribit;
-        // On affiche la grecque publiée par Deribit, ou un tiret lorsque ce détail manque.
+        // The Greek published by Deribit is displayed, or a dash when this detail is missing.
         string D(Func<Grecques, double> champ, string format) => gd is Grecques x ? N(champ(x), format) : "---";
         sb.AppendLine($"Théorique & {N(c.TheoriqueUnitaireBtc, "0.000000")} & {N(c.TheoriqueUnitaireUsd, "#,##0.00")} & Delta & {N(g.Delta, "0.0000")} & {D(x => x.Delta, "0.0000")} \\\\");
         sb.AppendLine($"Exécutable achat & {N(c.PrixExecutableAchatBtc ?? 0, "0.000000")} & {N((c.PrixExecutableAchatBtc ?? 0) * f, "#,##0.00")} & Gamma & {N(g.Gamma, "0.000000")} & {D(x => x.Gamma, "0.000000")} \\\\");
@@ -56,8 +56,8 @@ public static class ExportLatex
     }
 
     /// <summary>
-    /// On construit le tableau LaTeX des scénarios de résultat aujourd’hui et à l’échéance, en BTC et en
-    /// USD.
+    /// The LaTeX table of the results scenarios is constructed today and at maturity, in BTC
+    /// and USD.
     /// </summary>
     public static string Profil(ProfilStructure p)
     {
@@ -75,8 +75,8 @@ public static class ExportLatex
     }
 
     /// <summary>
-    /// On présente en LaTeX l’interpolation, les instruments de couverture et les risques résiduels de
-    /// la proposition OTC.
+    /// Interpolation, hedging instruments and residual risks of the TBT proposal are presented
+    /// in LaTeX.
     /// </summary>
     public static string Couverture(PropositionCouverture p)
     {
@@ -97,7 +97,7 @@ public static class ExportLatex
             sb.AppendLine($"\\code{{{Echapper(l.Nom)}}} & {N(l.QuantiteAvantArrondi, "+0.000;-0.000")} & {N(l.Quantite, "+0.000;-0.000")} & {(l.Nature == NatureJambe.Future ? N(l.PrixExecutable, "#,##0.0") + " USD" : N(l.PrixExecutable, "0.0000"))} & {N(l.CoutBtc, "0.000000")} \\\\");
         sb.AppendLine("\\bottomrule\\end{tabular}\\\\[0.3cm]");
         sb.AppendLine("\\begin{tabular}{lrrrr}\\toprule Grecques & Delta & Gamma & Vega \\$/pt & Theta \\$/j \\\\\\midrule");
-        // On garde le même ordre et les mêmes unités de grecques pour chaque ligne de couverture.
+        // We keep the same order and the same Greek units for each cover line.
         void L(string nom, Grecques x) => sb.AppendLine($"{nom} & {N(x.Delta, "0.0000")} & {N(x.Gamma, "0.000000")} & {N(x.Vega, "0.00")} & {N(x.Theta, "0.00")} \\\\");
         L("Option (desk)", p.GrecquesOption);
         L("Couverture", p.GrecquesCouverture);
@@ -110,7 +110,8 @@ public static class ExportLatex
     }
 
     /// <summary>
-    /// On prépare les tableaux LaTeX des positions et des grecques agrégées du book à un instant donné.
+    /// The LaTeX tables of the aggregate positions and Greeks in the book are prepared at a
+    /// given moment.
     /// </summary>
     public static string Book(EtatBook e)
     {

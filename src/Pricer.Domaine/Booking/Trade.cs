@@ -3,8 +3,7 @@ using Pricer.Domaine.Modeles;
 namespace Pricer.Domaine.Booking;
 
 /// <summary>
-/// On conserve les données de chaque jambe au moment de son exécution pour pouvoir expliquer les résultats
-/// du book.
+/// The data for each leg is kept at the time of execution to explain the results of the book.
 /// </summary>
 public sealed record JambeExecutee
 {
@@ -13,29 +12,39 @@ public sealed record JambeExecutee
     public bool Couverture { get; init; }
     public double PasQuantite { get; init; } = 0.1;
     public double PasNotionnelUsd { get; init; } = 10;
-    /// <summary>On conserve le montant USD signé du future inverse, fixé au trade.</summary>
+    /// <summary>
+    /// The signed USD amount of the future reverse, set to the trade, is retained.
+    /// </summary>
     public double NotionnelUsd { get; init; }
     public required string Instrument { get; init; }
     public required NatureJambe Nature { get; init; }
     public TypeOption? Type { get; init; }
     public double Strike { get; init; }
     public required DateTime Echeance { get; init; }
-    /// <summary>On porte le sens du desk dans le signe de la quantité ; les quantités d'options sont en unités de crypto.</summary>
+    /// <summary>
+    /// We carry the direction of the desk in the quantity sign; the quantities of options are
+    /// in crypto units.
+    /// </summary>
     public required double QuantiteSignee { get; init; }
     /// <summary>
-    /// On enregistre le prix d'une option en crypto et celui d'un future en USD, car leurs cotations n'ont pas
-    /// la même unité.
+    /// The price of a crypto option is recorded and the price of a future in USD is recorded,
+    /// as their quotes do not have the same unit.
     /// </summary>
     public required double PrixExecution { get; init; }
-    /// <summary>On mémorise le future utilisé au moment du trade pour rendre la cotation traçable.</summary>
+    /// <summary>
+    /// We memorize the future used at the time of the trade to make the quote traceable.
+    /// </summary>
     public required double Future { get; init; }
     /// <summary>
-    /// On garde la volatilité en décimale ; on utilise null pour le future, qui n'a pas de volatilité d'option
-    /// à enregistrer.
+    /// We keep the volatility in decimal places; we use null for the future, which has no
+    /// option volatility to record.
     /// </summary>
     public double? Vol { get; init; }
 
-    /// <summary>On compte une prime positive quand le desk paie des cryptos ; un future n'échange pas de prime d'option.</summary>
+    /// <summary>
+    /// A positive bonus is counted when the desk pays cryptos; a future does not exchange an
+    /// option bonus.
+    /// </summary>
     public double PrimeBtc => Nature == NatureJambe.Future ? 0 : QuantiteSignee * PrixExecution;
 }
 
@@ -47,8 +56,8 @@ public enum NatureTrade
 }
 
 /// <summary>
-/// On ajoute un événement pour chaque ouverture, fermeture ou règlement. Le lien avec le trade d'origine
-/// permet de conserver tout l'historique.
+/// An event is added for each opening, closing or settlement. The link with the original trade
+/// keeps the entire history.
 /// </summary>
 public sealed record Trade
 {
@@ -64,6 +73,9 @@ public sealed record Trade
     public Guid? IdTradeOrigine { get; init; }
     public string Devise => Jambes.Any(j => j.Instrument.StartsWith("ETH", StringComparison.OrdinalIgnoreCase)) ? "ETH" : "BTC";
 
-    /// <summary>On additionne les primes signées des jambes ; un total positif correspond à une somme payée par le desk.</summary>
+    /// <summary>
+    /// Adds the signed bonuses from the legs; a positive total corresponds to a sum paid by the
+    /// desk.
+    /// </summary>
     public double PrimeBtc => Jambes.Sum(j => j.PrimeBtc);
 }

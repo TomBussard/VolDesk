@@ -1,4 +1,4 @@
-@* On place côte à côte notre volatilité recalculée et celle de Deribit, puis on signale les écarts supérieurs à 0,1 point. *@
+@* We put our recalculated and Deribit volatility side by side, and then we report the deviations greater than 0.1 points. *@
 <td class="@(C?.Signale == true ? "signale" : "")">
     @if (C is null) { <span class="muet">—</span> }
     else if (!C.Calculee.EstCalculee) { <span class="alerte-txt">@C.Calculee.Libelle</span> }

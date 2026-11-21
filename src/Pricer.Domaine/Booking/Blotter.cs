@@ -7,7 +7,10 @@ using Pricer.Domaine.Utilitaires;
 
 namespace Pricer.Domaine.Booking;
 
-/// <summary>On conserve les ouvertures et leurs fermetures liées ; on suit les quantités par jambe pour gérer les couvertures séparément.</summary>
+/// <summary>
+/// The openings and their fastenings are kept; the amounts per leg are monitored to manage the
+/// covers separately.
+/// </summary>
 public sealed class Blotter
 {
     public const double PasQuantite = 0.1;
@@ -18,7 +21,7 @@ public sealed class Blotter
     public IReadOnlyList<Trade> Trades { get { lock (_verrou) return _trades.ToList(); } }
     public IReadOnlyList<Trade> Ouvertures => Trades.Where(t => t.Nature == NatureTrade.Ouverture).ToList();
     /// <summary>
-    /// On retrouve un trade par son identifiant et on signale explicitement une référence inconnue.
+    /// A trade is found by its identifier and an unknown reference is explicitly reported.
     /// </summary>
     public Trade Obtenir(Guid id)
     {
@@ -26,15 +29,16 @@ public sealed class Blotter
             : throw new SaisieInvalideException(CodeErreurSaisie.TradeInconnu, "Trade introuvable.");
     }
     /// <summary>
-    /// On retrouve les débouclages et règlements associés à une ouverture pour reconstituer sa position.
+    /// We find the debunkings and regulations associated with an opening to reconstitute its
+    /// position.
     /// </summary>
     public IReadOnlyList<Trade> TradesLies(Guid id)
     {
         lock (_verrou) return _trades.Where(t => t.IdTradeOrigine == id).ToList();
     }
     /// <summary>
-    /// On additionne la quantité initiale et les fermetures liées à cette jambe pour retrouver son solde
-    /// signé.
+    /// The initial amount and the closures linked to this leg are added together to return its
+    /// signed balance.
     /// </summary>
     /// <returns>Le solde dans les unités de la jambe d'origine ; les très petits résidus numériques sont ramenés à zéro.</returns>
     public double QuantiteOuverteJambe(Guid id, Guid idJambe)
@@ -45,8 +49,8 @@ public sealed class Blotter
         return Math.Abs(q) < 1e-9 ? 0 : q;
     }
     /// <summary>
-    /// On déduit la quantité de structure restante du solde de sa jambe principale ; les couvertures sont
-    /// suivies séparément.
+    /// The remaining amount of structure is deducted from the balance of his main leg; the
+    /// covers are followed separately.
     /// </summary>
     public double QuantiteOuverte(Guid id)
     {
@@ -55,17 +59,20 @@ public sealed class Blotter
         return o.Quantite * Math.Abs(QuantiteOuverteJambe(id, j.Id) / j.QuantiteSignee);
     }
     /// <summary>
-    /// On vérifie si une jambe reste vivante, y compris une couverture après le règlement de l'OTC.
+    /// Check to see if a leg remains alive, including a blanket after CTA regulation.
     /// </summary>
     public bool ADesJambesOuvertes(Guid id) => Obtenir(id).Jambes.Any(j => QuantiteOuverteJambe(id, j.Id) != 0);
     /// <summary>
-    /// On exécute une lecture sous le verrou du blotter pour empêcher un booking de modifier les quantités
-    /// pendant le calcul.
+    /// A reading under the lock of the float is performed to prevent a booking from changing
+    /// the quantities during calculation.
     /// </summary>
     /// <returns>Le résultat de la lecture, obtenu sur un historique stable.</returns>
     internal T Lire<T>(Func<T> lecture) { lock (_verrou) return lecture(); }
 
-    /// <summary>On enregistre les jambes aux prix exécutables de la cotation, après les contrôles de quantité et de chronologie.</summary>
+    /// <summary>
+    /// The legs are recorded at the executable prices of the quote, after quantity and
+    /// chronology checks.
+    /// </summary>
     public Trade Booker(CotationStructure c)
     {
         lock (_verrou)
@@ -105,13 +112,16 @@ public sealed class Blotter
             });
         }
     }
-    /// <summary>On enregistre l’OTC et sa couverture dans un même trade pour garder leur lien et leurs paramètres d’entrée.</summary>
+    /// <summary>
+    /// The CTA and its hedge are recorded in the same trade to keep their link and input
+    /// parameters.
+    /// </summary>
     public Trade BookerSurMesure(PropositionCouverture p, DateTime horodatage)
     {
         lock (_verrou)
         {
             VerifierChronologie(horodatage);
-            // On limite le booking à 08:00 UTC : le prix officiel utilisé au règlement est quotidien, pas horaire.
+            // The booking is limited to 08:00 UTC: the official price used in the regulation is daily, not hourly.
             if (p.Option.Echeance.TimeOfDay != TimeSpan.FromHours(8))
                 throw new PricerException("Le règlement Deribit quotidien est à 08:00 UTC : une autre heure reste une simulation, sans booking.");
             double pas = p.Lignes.FirstOrDefault(l => l.Nature == NatureJambe.OptionCotee)?.PasQuantite ?? PasQuantite;
@@ -153,7 +163,10 @@ public sealed class Blotter
             });
         }
     }
-    /// <summary>On ferme une quantité aux prix courants et on arrondit chaque couverture à son propre pas, sans dépasser son solde ouvert.</summary>
+    /// <summary>
+    /// We close a quantity at current prices and round each cover to its own pace, without
+    /// exceeding its open balance.
+    /// </summary>
     public Trade Deboucler(Guid idOrigine, double quantite, IContexteMarche contexte)
     {
         lock (_verrou)
@@ -162,7 +175,7 @@ public sealed class Blotter
             var o = Obtenir(idOrigine);
             if (o.Nature != NatureTrade.Ouverture) throw new PricerException("Seule une ouverture peut être débouclée.");
             double ouverte = QuantiteOuverte(idOrigine);
-            // On autorise quantité zéro uniquement pour fermer les couvertures qui restent après la disparition du contrat principal.
+            // Zero quantity is allowed only to close the blankets that remain after the termination of the main contract.
             bool residu = ouverte == 0 && quantite == 0 && ADesJambesOuvertes(idOrigine);
             if (!residu) ValidateurStructure.ValiderQuantite(quantite, o.Jambes.First(j => !j.Couverture).PasQuantite);
             if (quantite > ouverte + 1e-9) throw new SaisieInvalideException(CodeErreurSaisie.QuantiteDebouclageExcessive, $"Seulement {ouverte} restent ouverts.");
@@ -176,7 +189,7 @@ public sealed class Blotter
                 double q = total ? -reste : -j.QuantiteSignee * quantite / o.Quantite;
                 if (j.Nature == NatureJambe.Future)
                 {
-                    // On arrondit le montant USD du future avant de retrouver ses unités d'origine.
+                    // The dollar amount of the future is rounded up before returning to its original units.
                     double montant = total ? -NotionnelInitial(j) * reste / j.QuantiteSignee
                         : (-NotionnelInitial(j) * quantite / o.Quantite).ArrondirAuPas(j.PasNotionnelUsd);
                     q = montant / j.PrixExecution;
@@ -191,7 +204,10 @@ public sealed class Blotter
             return Ajouter(Fermeture(o, NatureTrade.Debouclage, contexte.Maintenant, quantite, jambes, $"Débouclage {quantite}/{o.Quantite} de {o.Description}"));
         }
     }
-    /// <summary>On règle seulement les jambes de la date concernée, au prix officiel reçu ; les autres échéances restent ouvertes.</summary>
+    /// <summary>
+    /// Only the legs of the date concerned are adjusted to the official prize received; the
+    /// other expiries remain open.
+    /// </summary>
     public Trade Regler(Guid idOrigine, double prixReglement, DateTime horodatage)
     {
         lock (_verrou)
@@ -223,7 +239,8 @@ public sealed class Blotter
         }
     }
     /// <summary>
-    /// On crée l'événement de fermeture avec le lien vers l'ouverture, sans modifier le trade initial.
+    /// The closing event is created with the link to the opening, without changing the initial
+    /// trade.
     /// </summary>
     private static Trade Fermeture(Trade o, NatureTrade nature, DateTime date, double q, IReadOnlyList<JambeExecutee> jambes, string description) => new()
     {
@@ -238,7 +255,10 @@ public sealed class Blotter
         Jambes = jambes,
         IdTradeOrigine = o.Id
     };
-    /// <summary>On contrôle toute la sauvegarde avant de remplacer le blotter, afin de conserver le book en mémoire si le fichier est incohérent.</summary>
+    /// <summary>
+    /// The entire backup is checked before replacing the float, in order to keep the book in
+    /// memory if the file is inconsistent.
+    /// </summary>
     public void Charger(IEnumerable<Trade> trades)
     {
         lock (_verrou)
@@ -258,7 +278,7 @@ public sealed class Blotter
                 !double.IsFinite(j.PasQuantite) || j.PasQuantite <= 0 || !double.IsFinite(j.PasNotionnelUsd) || j.PasNotionnelUsd <= 0 ||
                 (j.Nature == NatureJambe.Future && j.PrixExecution == 0))))
                 throw new PricerException("La sauvegarde contient une jambe ou un prix invalide.");
-            // On rattache les anciennes sauvegardes qui ne possédaient pas encore de lien par jambe.
+            // Old backups that did not yet have a link per leg are attached.
             for (int i = 0; i < liste.Count; i++)
             {
                 var t = liste[i];
@@ -286,27 +306,26 @@ public sealed class Blotter
         }
     }
     /// <summary>
-    /// On retrouve le montant USD signé du future ; les anciennes sauvegardes le reconstituent avec quantité
-    /// et prix d'entrée.
+    /// We find the signed USD amount of the future; the old backups reconstitute it with
+    /// quantity and entry price.
     /// </summary>
     /// <returns>Le notionnel USD fixé à l'ouverture du future.</returns>
     internal static double NotionnelInitial(JambeExecutee j) => j.NotionnelUsd != 0 ? j.NotionnelUsd : j.QuantiteSignee * j.PrixExecution;
     /// <summary>
-    /// On refuse un trade antérieur au dernier événement enregistré pour ne pas utiliser un book situé dans
-    /// le futur du rejeu.
+    /// We refuse a trade prior to the last recorded event to not use a book located in the
+    /// future of the game.
     /// </summary>
     private void VerifierChronologie(DateTime date)
     {
         if (_trades.Count > 0 && date < _trades.Max(t => t.Horodatage)) throw new PricerException("Le marché précède le dernier trade : nouveau book ou reprise à sa dernière date requis.");
     }
     /// <summary>
-    /// On ajoute le trade à l'historique et à l'index, puis on avertit les services chargés de la
-    /// sauvegarde.
+    /// Trade is added to history and index, and the backup services are notified.
     /// </summary>
     private Trade Ajouter(Trade t) { _trades.Add(t); _parId.Add(t.Id, t); TradeAjoute?.Invoke(this, t); return t; }
     /// <summary>
-    /// On crée la contre-opération de la jambe au prix courant : bid/ask pour le coté, valeur interpolée
-    /// pour l'OTC.
+    /// The counteroperation of the leg is created at the current price: bid/ask for the side,
+    /// interpolated value for the CTA.
     /// </summary>
     /// <returns>Une nouvelle jambe liée à celle d'origine, avec les paramètres utilisés pour la fermeture.</returns>
     private static JambeExecutee FermerJambe(JambeExecutee j, double q, IContexteMarche contexte)

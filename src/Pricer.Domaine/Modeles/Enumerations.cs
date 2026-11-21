@@ -1,6 +1,8 @@
 namespace Pricer.Domaine.Modeles;
 
-/// <summary>On distingue le call et le put pour appliquer leur formule de prix et leur payoff respectifs.</summary>
+/// <summary>
+/// The call and the put are distinguished to apply their respective price formula and payoff.
+/// </summary>
 public enum TypeOption
 {
     Call,
@@ -8,8 +10,8 @@ public enum TypeOption
 }
 
 /// <summary>
-/// On utilise la valeur numérique du sens comme signe dans les sommes de jambes, afin de traiter achat et
-/// vente avec le même calcul.
+/// The numerical value of the meaning is used as a sign in the leg amounts, in order to process
+/// purchase and sale with the same calculation.
 /// </summary>
 public enum Sens
 {
@@ -17,7 +19,10 @@ public enum Sens
     Vente = -1
 }
 
-/// <summary>On énumère les structures proposées par l'application pour éviter des noms saisis librement dans le moteur.</summary>
+/// <summary>
+/// The structures proposed by the application are listed to avoid freely entered names in the
+/// engine.
+/// </summary>
 public enum TypeStructure
 {
     CallSpread,
@@ -31,7 +36,10 @@ public enum TypeStructure
     OptionSimple
 }
 
-/// <summary>On choisit la source de données par configuration pour changer de mode sans réécrire les calculs.</summary>
+/// <summary>
+/// The data source is selected by configuration to change the mode without rewriting the
+/// calculations.
+/// </summary>
 public enum ModeDonnees
 {
     Live,
@@ -41,8 +49,8 @@ public enum ModeDonnees
 }
 
 /// <summary>
-/// On distingue les options cotées, les options OTC et les futures pour appliquer leurs règles de
-/// valorisation et de règlement.
+/// Listed options, TBT options and future options are distinguished for applying their
+/// valuation and settlement rules.
 /// </summary>
 public enum NatureJambe
 {

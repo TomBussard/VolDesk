@@ -11,7 +11,7 @@
     }
     <line class="zero" x1="76" x2="742" y1="@P(_y.Vers(0))" y2="@P(_y.Vers(0))" />
     <line class="future" x1="@P(_x.Vers(Profil.Future))" x2="@P(_x.Vers(Profil.Future))" y1="20" y2="268" />
-    <g><text x="@P(_x.Vers(Profil.Future)+4)" y="30">Marché actuel</text></g>
+    <g><text x="@P(_x.Vers(Profil.Future)+4)" y="30">Current market</text></g>
     <polyline class="courbe-echeance" points="@Courbe" />
     @foreach (var point in Profil.Points)
     {
@@ -30,17 +30,17 @@
     private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
     private Echelle _x = default!, _y = default!;
     /// <summary>
-    /// On sélectionne la sensibilité demandée pour réutiliser le même tracé pour le delta et le vega.
+    /// The sensitivity required to re-use the same route for the delta and vega is selected.
     /// </summary>
     private double Valeur(PointProfil p) => Vega ? p.Vega : p.Delta;
     /// <summary>
-    /// On conserve un point décimal dans les coordonnées du dessin SVG.
+    /// A decimal point is kept in the coordinates of the SVG drawing.
     /// </summary>
     private static string P(double x) => Echelle.P(x);
     private string Courbe => string.Join(" ", Profil.Points.Select(p => $"{P(_x.Vers(p.SousJacent))},{P(_y.Vers(Valeur(p)))}"));
     /// <summary>
-    /// On adapte les axes aux nouveaux scénarios et on inclut zéro pour repérer le changement de signe
-    /// du risque.
+    /// The axes are adapted to the new scenarios and zero is included to identify the change in
+    /// risk sign.
     /// </summary>
     protected override void OnParametersSet()
     {

@@ -4,7 +4,9 @@ using Pricer.Domaine.Structures;
 
 namespace Pricer.Domaine.Pricing;
 
-/// <summary>On conserve le résultat et les sensibilités d'un scénario pour alimenter les courbes et leur tableau.</summary>
+/// <summary>
+/// The result and sensitivities of a scenario are retained to feed the curves and their table.
+/// </summary>
 /// <param name="Variation">La variation décimale par rapport au niveau de référence.</param>
 /// <param name="SousJacent">Le prix du sous-jacent du scénario en USD.</param>
 /// <param name="PnlEcheanceUsd">Le P&amp;L terminal en USD, après prise en compte de la prime crypto.</param>
@@ -19,13 +21,15 @@ public readonly record struct PointProfil(
     double PnlAujourdhuiUsd, double PnlAujourdhuiBtc,
     double Delta = 0, double Vega = 0);
 
-/// <summary>On regroupe les scénarios, la prime et les bornes globales pour expliquer le profil de la structure.</summary>
+/// <summary>
+/// Scenarios, bonus and global boundaries are grouped to explain the structure profile.
+/// </summary>
 public sealed record ProfilStructure
 {
     public required IReadOnlyList<PointProfil> Points { get; init; }
     public required double PrimeBtc { get; init; }
     public required double PrimeUsd { get; init; }
-    // On garde le nom historique pour les composants : le repère du scénario est l'indice courant.
+    // The historical name for the components is retained: the scenario marker is the current index.
     public required double Future { get; init; }
     public double? GainMaxUsd { get; init; }
     public double? PerteMaxUsd { get; init; }
@@ -34,8 +38,8 @@ public sealed record ProfilStructure
     public required IReadOnlyList<double> PointsMorts { get; init; }
 
     /// <summary>
-    /// On rassemble les points dans une matrice pour réutiliser le profil sans dépendre d'un composant
-    /// graphique.
+    /// The points are gathered in a matrix to reuse the profile without depending on a
+    /// graphical component.
     /// </summary>
     /// <returns>Les colonnes contiennent le sous-jacent USD, le P&amp;L terminal USD et le P&amp;L aujourd'hui USD.</returns>
     public double[,] EnMatrice()
@@ -51,12 +55,15 @@ public sealed record ProfilStructure
     }
 }
 
-/// <summary>On conserve la prime en crypto, comme dans le blotter, et on convertit le résultat au prix du scénario.</summary>
+/// <summary>
+/// We keep the bonus in crypto, as in the float, and we convert the result at the price of the
+/// scenario.
+/// </summary>
 public static class ProfilPnL
 {
     /// <summary>
-    /// On réévalue les jambes à volatilité et durée fixes, puis on recherche les points morts et les bornes
-    /// terminales au-delà de la grille.
+    /// The legs are re-evaluated with fixed volatility and duration, and the dead points and
+    /// terminal terminals are searched beyond the grid.
     /// </summary>
     /// <param name="cotation">La structure cotée avec ses quantités signées du point de vue du desk.</param>
     /// <param name="contexte">Le marché courant, notamment l'indice qui sert de référence aux chocs.</param>
@@ -77,7 +84,7 @@ public static class ProfilPnL
             ?? throw new InvalidOperationException("Un prix exécutable ou client est nécessaire pour le profil de P&L.");
         var lignes = cotation.Lignes;
         double Payoff(double s) => lignes.Sum(l => l.QuantiteSignee * l.Jambe.PayoffUsd(s));
-        // On conserve la prime en crypto : sa contre-valeur USD dépend donc elle aussi du prix du scénario.
+        // The premium is kept in crypto, so its USD value also depends on the price of the scenario.
         double PnlUsd(double s) => Payoff(s) - prime * s;
         var points = new List<PointProfil>();
         int n = (int)Math.Floor((variationMax - variationMin) / pas + 1e-9);
@@ -98,7 +105,7 @@ public static class ProfilPnL
                 (aujourdHui - prime) * s, aujourdHui - prime, grecques.Delta, grecques.Vega));
         }
 
-        // On résout le P&L sur tous les intervalles, y compris au-delà de la grille de l'écran.
+        // The P&L is resolved at all intervals, including beyond the screen grid.
         var strikes = lignes.Select(l => l.Jambe.Strike).Distinct().OrderBy(k => k).ToList();
         var noeuds = new List<double> { 0 };
         noeuds.AddRange(strikes);
@@ -122,7 +129,7 @@ public static class ProfilPnL
             double zero = -constante / pente;
             if (zero > 0 && zero >= a - 1e-7 && zero <= b + 1e-7 && !racines.Any(r => Math.Abs(r - zero) < 1e-5)) racines.Add(zero);
         }
-        // On ajoute les limites en zéro et à l’infini pour trouver les bornes globales, au-delà de la grille affichée.
+        // The limits in zero and infinity are added to find the global terminals, beyond the displayed grid.
         var valeursCrypto = strikes.Select(k => Payoff(k) / k - prime).ToList();
         double putsConstante = lignes.Where(l => l.Jambe.Type == TypeOption.Put).Sum(l => l.QuantiteSignee * l.Jambe.Strike);
         double putsPente = -lignes.Where(l => l.Jambe.Type == TypeOption.Put).Sum(l => l.QuantiteSignee);
@@ -143,8 +150,8 @@ public static class ProfilPnL
     }
 
     /// <summary>
-    /// On construit le scénario de l'OTC seul du point de vue du desk, avec sa prime client et sans ajouter
-    /// les instruments de couverture.
+    /// The CTA's only scenario is built from the desk's point of view, with its customer
+    /// premium and without adding the cover instruments.
     /// </summary>
     public static ProfilStructure PourOptionSurMesure(PropositionCouverture p, IContexteMarche contexte,
         double minimum = -0.30, double maximum = 0.30, double pas = 0.05)

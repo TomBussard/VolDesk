@@ -4,20 +4,23 @@ using Pricer.Domaine.Structures;
 
 namespace Pricer.Domaine.Pricing;
 
-/// <summary>On compare notre volatilité inversée à celle publiée par Deribit pour rendre les écarts visibles.</summary>
+/// <summary>
+/// We compare our reverse volatility to that published by Deribit to make the deviations
+/// visible.
+/// </summary>
 public sealed record ComparaisonVol(ResultatVol Calculee, double? Deribit)
 {
     /// <summary>
-    /// On exprime la différence en points de volatilité : notre sigma décimal est multiplié par 100 avant la
-    /// comparaison.
+    /// The difference in volatility points is expressed: our decimal sigma is multiplied by 100
+    /// before the comparison.
     /// </summary>
     public double? EcartPoints => Calculee.EstCalculee && Deribit is double d ? Calculee.Sigma!.Value * 100 - d : null;
     public bool Signale => EcartPoints is double e && Math.Abs(e) > PricerStructure.SeuilEcartVolPoints;
 }
 
 /// <summary>
-/// On regroupe le calcul et la cotation d'une jambe afin d'afficher les prix, les IV et leurs écarts sur la
-/// même ligne.
+/// The calculation and quote of a leg is grouped together to display prices, IVs and their
+/// deviations on the same line.
 /// </summary>
 public sealed record LigneJambe
 {
@@ -37,8 +40,8 @@ public sealed record LigneJambe
 }
 
 /// <summary>
-/// On conserve le résultat complet de la structure pour un sens et une quantité donnés, avec ses jambes et
-/// son horodatage.
+/// The complete result of the structure is retained for a given meaning and quantity, with its
+/// legs and time stamping.
 /// </summary>
 public sealed record CotationStructure
 {
@@ -50,47 +53,50 @@ public sealed record CotationStructure
     public required double Future { get; init; }
 
     /// <summary>
-    /// On additionne les prix crypto pondérés par les ratios pour obtenir le prix théorique d'une unité de
-    /// structure achetée.
+    /// The ratio weighted crypto prices are added together to obtain the theoretical price of a
+    /// unit of structure purchased.
     /// </summary>
     public double TheoriqueUnitaireBtc => Lignes.Sum(l => l.Jambe.Ratio * l.Theorique.PrixBtc);
     public double TheoriqueUnitaireUsd => Lignes.Sum(l => l.Jambe.Ratio * l.Theorique.PrixUsd);
     public double? MarkUnitaireBtc => Lignes.All(l => l.Cotation?.Mark is not null) ? Lignes.Sum(l => l.Jambe.Ratio * l.Cotation!.Mark!.Value) : null;
 
     /// <summary>
-    /// On rend la structure négociable uniquement si chaque jambe possède un carnet valide et une cotation
-    /// récente.
+    /// The structure is made negotiable only if each leg has a valid notebook and a recent
+    /// listing.
     /// </summary>
     public bool Traitable => Lignes.All(l => l.Traitable);
 
     /// <summary>
-    /// On paie l'ask des jambes achetées et on reçoit le bid des jambes vendues lorsque l'on achète une unité
-    /// de structure.
+    /// You pay for the legs you bought and you get the bid from the legs you sold when you buy
+    /// a structural unit.
     /// </summary>
     public double? PrixExecutableAchatBtc => Traitable
         ? Lignes.Sum(l => l.Jambe.Ratio > 0 ? l.Jambe.Ratio * l.Cotation!.Ask!.Value : l.Jambe.Ratio * l.Cotation!.Bid!.Value)
         : null;
 
     /// <summary>
-    /// On inverse les côtés du carnet à la vente : on reçoit le bid des jambes positives et on paie l'ask des
-    /// jambes négatives.
+    /// The sides of the notebook are reversed at the sale: you receive the bid of the positive
+    /// legs and you pay the ask of the negative legs.
     /// </summary>
     public double? PrixExecutableVenteBtc => Traitable
         ? Lignes.Sum(l => l.Jambe.Ratio > 0 ? l.Jambe.Ratio * l.Cotation!.Bid!.Value : l.Jambe.Ratio * l.Cotation!.Ask!.Value)
         : null;
 
     /// <summary>
-    /// On mesure la fourchette de la structure par la différence entre son exécutable à l'achat et son
-    /// exécutable à la vente.
+    /// The range of the structure is measured by the difference between its executable on
+    /// purchase and its executable on sale.
     /// </summary>
     public double? FourchetteBtc => PrixExecutableAchatBtc - PrixExecutableVenteBtc;
 
-    /// <summary>On retient le côté exécutable correspondant au sens demandé, sans changer le calcul des jambes.</summary>
+    /// <summary>
+    /// The executable side corresponding to the required direction is retained, without
+    /// changing the calculation of the legs.
+    /// </summary>
     public double? PrixExecutableBtc => Sens == Sens.Achat ? PrixExecutableAchatBtc : PrixExecutableVenteBtc;
 
     /// <summary>
-    /// On calcule la prime signée de toute la quantité ; une valeur positive correspond à une prime payée par
-    /// le desk.
+    /// The signed premium of the entire quantity is calculated; a positive value is a premium
+    /// paid by the desk.
     /// </summary>
     public double? PrimeTotaleBtc => PrixExecutableBtc * (int)Sens * Quantite;
 
@@ -102,8 +108,8 @@ public sealed record CotationStructure
 }
 
 /// <summary>
-/// On cote les jambes avec Black-76, puis on regroupe leurs prix, leurs IV recalculées et leurs grecques.
-/// On sépare le prix théorique du prix réellement exécutable.
+/// We score the legs with Black-76, then we group their prices, their recalculated IVs and
+/// their Greeks. We separate the theoretical price from the actually executable price.
 /// </summary>
 public static class PricerStructure
 {
@@ -111,8 +117,8 @@ public static class PricerStructure
     public const double SeuilEcartVolPoints = 0.1;
 
     /// <summary>
-    /// On valide les quantités, on cote chaque jambe avec son ratio et le sens du desk, puis on rassemble le
-    /// résultat de la structure.
+    /// We validate the quantities, we rate each leg with its ratio and the direction of the
+    /// desk, then gather the result of the structure.
     /// </summary>
     public static CotationStructure Coter(Structure structure, Sens sens, double quantite, IContexteMarche contexte)
     {
@@ -133,8 +139,8 @@ public static class PricerStructure
     }
 
     /// <summary>
-    /// On calcule le théorique et les IV d'une jambe cotée ; pour l'OTC, on garde seulement les paramètres
-    /// interpolés et le modèle.
+    /// The theory and IV of a sided leg are calculated; for the CTA, only the interpolated
+    /// parameters and the model are kept.
     /// </summary>
     public static LigneJambe CoterJambe(Jambe jambe, double quantiteSignee, IContexteMarche contexte)
     {

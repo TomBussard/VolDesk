@@ -20,15 +20,17 @@ public enum MethodeVol
 }
 
 /// <summary>
-/// On renvoie un statut quand une IV ne peut pas être calculée, car un bid absent ou un prix hors bornes
-/// est une situation de marché attendue. On réserve les exceptions aux paramètres incohérents.
+/// A status is returned when an IV cannot be calculated, because an absent bid or an out-of-
+/// bound price is an expected market situation. Exceptions to inconsistent parameters are
+/// reserved.
 /// </summary>
 public sealed record ResultatVol(double? Sigma, StatutVol Statut, MethodeVol Methode, int Iterations)
 {
     public bool EstCalculee => Statut == StatutVol.Calculee;
 
     /// <summary>
-    /// On garde la cause de l'échec sans attribuer une volatilité arbitraire au prix reçu.
+    /// We keep the cause of failure without attributing arbitrary volatility to the price
+    /// received.
     /// </summary>
     public static ResultatVol Echec(StatutVol statut) => new(null, statut, MethodeVol.Aucune, 0);
 
@@ -44,9 +46,8 @@ public sealed record ResultatVol(double? Sigma, StatutVol Statut, MethodeVol Met
 }
 
 /// <summary>
-/// On inverse Black-76 : Newton démarre à 50 % et s'arrête à 10^-6 USD d'erreur. On
-/// utilise la dichotomie dans [0,01 % ; 500 %] si le vega devient trop faible ou si Newton sort de
-/// l'intervalle.
+/// On reverse Black-76: Newton starts at 50% and stops at USD 10^-6 error. Dichotomy is used in
+/// [0.01%; 500 %] if the vega becomes too weak or if Newton exits the interval.
 /// </summary>
 public static class VolImplicite
 {
@@ -58,15 +59,15 @@ public static class VolImplicite
     private const int IterationsMaxDichotomie = 200;
 
     /// <summary>
-    /// On convertit d'abord le prix crypto en USD en le multipliant par le future F, puis on cherche sa
-    /// volatilité.
+    /// We first convert the crypto price into USD by multiplying it by the future F, then we
+    /// look for its volatility.
     /// </summary>
     public static ResultatVol CalculerDepuisBtc(double? prixBtc, double future, double strike, double maturite, TypeOption type) =>
         prixBtc is double p ? Calculer(p * future, future, strike, maturite, type) : ResultatVol.Echec(StatutVol.PrixAbsent);
 
     /// <summary>
-    /// On cherche la volatilité d'un prix USD admissible avec Newton, puis on utilise la dichotomie si
-    /// l'itération devient inutilisable.
+    /// We look for volatility of an eligible USD price with Newton, then we use dichotomy if
+    /// iteration becomes unusable.
     /// </summary>
     /// <param name="prixUsd">Le prix de marché de l'option, déjà converti en USD.</param>
     /// <param name="future">Le future de l'échéance en USD.</param>
@@ -82,7 +83,7 @@ public static class VolImplicite
         if (maturite <= 0) return ResultatVol.Echec(StatutVol.MaturiteNulle);
         if (!RespecteBornes(prixUsd, future, strike, type)) return ResultatVol.Echec(StatutVol.HorsBornesArbitrage);
 
-        // On essaie Newton en premier, car le vega permet de corriger rapidement la volatilité.
+        // We try Newton first, because the vega quickly corrects volatility.
         double sigma = double.IsFinite(sigma0) ? Math.Clamp(sigma0, VolMin, VolMax) : 0.5;
         for (int i = 1; i <= IterationsMaxNewton; i++)
         {
@@ -94,21 +95,21 @@ public static class VolImplicite
             if (sigma < VolMin || sigma > VolMax) break;
         }
 
-        // On garde la dichotomie en secours : le prix croît avec la volatilité sur l'intervalle retenu.
+        // The dichotomy is kept in relief: the price increases with volatility over the chosen interval.
         return Dichotomie(prixUsd, future, strike, maturite, type);
     }
 
     /// <summary>
-    /// On exige un prix strictement entre les bornes de non-arbitrage pour qu'une volatilité implicite soit
-    /// recherchée.
+    /// A price is strictly required between the non-arbitration terminals for implicit
+    /// volatility to be sought.
     /// </summary>
     public static bool RespecteBornes(double prixUsd, double future, double strike, TypeOption type) => type == TypeOption.Call
         ? prixUsd > Math.Max(future - strike, 0) && prixUsd < future
         : prixUsd > Math.Max(strike - future, 0) && prixUsd < strike;
 
     /// <summary>
-    /// On encadre la volatilité entre les bornes autorisées et on divise cet intervalle jusqu'à atteindre la
-    /// tolérance de prix.
+    /// Volatility between the authorized terminals is framed and this interval is divided until
+    /// price tolerance is reached.
     /// </summary>
     private static ResultatVol Dichotomie(double prixUsd, double future, double strike, double maturite, TypeOption type)
     {

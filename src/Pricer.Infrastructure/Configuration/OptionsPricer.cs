@@ -3,8 +3,8 @@ using Pricer.Domaine.Modeles;
 namespace Pricer.Infrastructure.Configuration;
 
 /// <summary>
-/// On regroupe les réglages dans la section Pricer pour changer de source ou de devise sans modifier le
-/// code.
+/// The settings are grouped in the Pricer section to change source or currency without changing
+/// the code.
 /// </summary>
 public sealed class OptionsPricer
 {
@@ -14,34 +14,39 @@ public sealed class OptionsPricer
     public string Devise { get; set; } = "BTC";
     public string UrlRest { get; set; } = "https://www.deribit.com/api/v2/";
     public string UrlWebSocket { get; set; } = "wss://www.deribit.com/ws/api/v2";
-    /// <summary>On indique ici le fichier JSON Lines qui recevra les données de la session enregistrée.</summary>
+    /// <summary>
+    /// This is the JSON Lines file that will receive the recorded session data.
+    /// </summary>
     public string FichierEnregistrement { get; set; } = "data/replays/session.jsonl";
-    /// <summary>On choisit ici le fichier à relire lorsque l'application fonctionne sans connexion.</summary>
+    /// <summary>
+    /// Here you choose the file you want to read again when the application works without a
+    /// connection.
+    /// </summary>
     public string FichierRejeu { get; set; } = "data/replays/demo.jsonl.gz";
     /// <summary>
-    /// On utilise 1 pour le rythme d'origine, 10 pour un rythme dix fois plus rapide et 0 pour une lecture
-    /// sans attente.
+    /// 1 is used for the original rhythm, 10 for a ten times faster rhythm and 0 for an
+    /// unanticipated reading.
     /// </summary>
     public double VitesseRejeu { get; set; } = 1;
     /// <summary>
-    /// On limite les appels REST avec un seau à jetons pour respecter le débit autorisé sans bloquer les
-    /// petits lots de requêtes.
+    /// REST calls are limited with a token bucket to respect the authorized flow without
+    /// blocking small batches of queries.
     /// </summary>
     public double RequetesParSeconde { get; set; } = 5;
     public int Rafale { get; set; } = 10;
     /// <summary>
-    /// On actualise périodiquement le résumé des options pour disposer de smiles récents, même pour les
-    /// instruments non suivis à l'écran.
+    /// The summary of options to have recent smiles, even for untracked instruments, is updated
+    /// periodically.
     /// </summary>
     public int IntervalleResumeSecondes { get; set; } = 15;
     /// <summary>
-    /// On choisit l'intervalle des tickers WebSocket, par exemple 100ms ou agg2, selon le rythme de mise à
-    /// jour souhaité.
+    /// The WebSocket ticker range is chosen, for example 100ms or agg2, according to the
+    /// desired update rate.
     /// </summary>
     public string IntervalleTicker { get; set; } = "100ms";
     /// <summary>
-    /// On exprime la marge commerciale en points de volatilité pour la convertir avec le vega de l'option
-    /// sur mesure.
+    /// The trade margin is expressed in points of volatility to convert it with the vega of the
+    /// custom option.
     /// </summary>
     public double MargeVolPoints { get; set; } = 0.5;
     public string DossierExports { get; set; } = "exports";
@@ -51,25 +56,24 @@ public sealed class OptionsPricer
     public DateTime? ReprendreAu { get; set; }
     public string? AvertissementSession { get; set; }
     /// <summary>
-    /// On limite le nombre d'échéances suivies pendant une capture pour conserver un fichier exploitable
-    /// sans enregistrer tout le marché.
+    /// The number of expiries followed during a capture is limited to keep a workable file
+    /// without saving the entire market.
     /// </summary>
     public int EcheancesEnregistrees { get; set; } = 4;
     /// <summary>
-    /// On enregistre les strikes proches du future dans cette bande relative ; 0,25 correspond à plus ou
-    /// moins 25 %.
+    /// Strikes close to the future are recorded in this relative band; 0.25 corresponds to more
+    /// or less 25%.
     /// </summary>
     public double LargeurEnregistrement { get; set; } = 0.25;
 
     /// <summary>
-    /// On rattache les chemins relatifs à la racine de la solution lorsqu'on la trouve. On peut ainsi
-    /// lancer l'application depuis la racine ou depuis un sous-projet sans déplacer les fichiers de
-    /// données.
+    /// The path to the root of the solution is attached when found. This allows you to run the
+    /// application from the root or from a subproject without moving the data files.
     /// </summary>
     public OptionsPricer ResoudreChemins()
     {
         string racine = TrouverRacine(Directory.GetCurrentDirectory()) ?? Directory.GetCurrentDirectory();
-        // On rattache un chemin relatif à la racine trouvée tout en conservant un chemin déjà absolu.
+        // A path relative to the found root is attached while maintaining an already absolute path.
         string Absolu(string chemin) => Path.IsPathRooted(chemin) ? chemin : Path.GetFullPath(Path.Combine(racine, chemin));
         FichierEnregistrement = Absolu(FichierEnregistrement);
         FichierRejeu = Absolu(FichierRejeu);
@@ -80,7 +84,7 @@ public sealed class OptionsPricer
     }
 
     /// <summary>
-    /// On remonte les dossiers à partir du chemin fourni pour retrouver le fichier de solution.
+    /// The folders are retrieved from the path provided to find the solution file.
     /// </summary>
     /// <returns>On renvoie la racine trouvée, ou null si aucun dossier parent ne correspond.</returns>
     private static string? TrouverRacine(string depart)

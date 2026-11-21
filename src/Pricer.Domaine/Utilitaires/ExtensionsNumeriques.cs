@@ -3,16 +3,16 @@ using System.Globalization;
 namespace Pricer.Domaine.Utilitaires;
 
 /// <summary>
-/// On regroupe les arrondis et les formats réutilisés par les calculs pour conserver les mêmes conventions
-/// partout.
+/// Rounds and formats used by calculations are grouped together to maintain the same
+/// conventions everywhere.
 /// </summary>
 public static class ExtensionsNumeriques
 {
     private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
 
     /// <summary>
-    /// On arrondit au multiple le plus proche du pas. On utilise decimal pour éviter qu'une imprécision binaire
-    /// transforme 0,1 fois 3 en une quantité hors pas.
+    /// Rounding to the nearest multiple of steps. Decimal is used to prevent binary
+    /// inaccuracies from turning 0.1 times 3 into an out-of-step amount.
     /// </summary>
     public static double ArrondirAuPas(this double valeur, double pas)
     {
@@ -22,7 +22,10 @@ public static class ExtensionsNumeriques
         return (double)(n * p);
     }
 
-    /// <summary>On vérifie que la quantité est un multiple du pas en tenant compte de la petite tolérance numérique.</summary>
+    /// <summary>
+    /// It is verified that the quantity is a multiple step taking into account the small
+    /// numerical tolerance.
+    /// </summary>
     public static bool EstMultipleDe(this double valeur, double pas)
     {
         decimal ratio = (decimal)valeur / (decimal)pas;
@@ -30,21 +33,21 @@ public static class ExtensionsNumeriques
     }
 
     /// <summary>
-    /// On formate un montant BTC avec six décimales et son unité pour les sorties qui utilisent
-    /// explicitement cette devise.
+    /// A BTC amount is formatted with six decimal places and its unit for outputs that
+    /// explicitly use this currency.
     /// </summary>
     public static string EnBtc(this double valeur) => valeur.ToString("0.000000", Fr) + " BTC";
     /// <summary>
-    /// On formate un montant USD avec deux décimales et les séparateurs français pour les sorties
-    /// textuelles.
+    /// A USD amount is formatted with two decimal places and the French separators are
+    /// formatted for text output.
     /// </summary>
     public static string EnUsd(this double valeur) => valeur.ToString("#,##0.00", Fr) + " $";
     /// <summary>
-    /// On passe d'une volatilité décimale à un affichage en pourcentage avec deux décimales.
+    /// From a decimal volatility to a percentage display with two decimal places.
     /// </summary>
     public static string EnPointsDeVol(this double vol) => (vol * 100).ToString("0.00", Fr) + " %";
     /// <summary>
-    /// On affiche une variation décimale en pourcentage entier en conservant son signe.
+    /// Decimal percentage variation is displayed by keeping the sign.
     /// </summary>
     public static string EnPourcentage(this double x) => (x * 100).ToString("+0;-0;0", Fr) + " %";
 }

@@ -27,8 +27,8 @@ public enum ChoixMenu
 }
 
 /// <summary>
-/// On organise la console autour d'un menu principal et d'écrans qui suivent les données. On utilise une
-/// énumération pour relier chaque choix à l'action correspondante.
+/// The console is organized around a main menu and screens that follow the data. A list is used
+/// to link each choice to the corresponding action.
 /// </summary>
 /// <param name="marche">On utilise ce service pour suivre les données et gérer les règlements.</param>
 /// <param name="blotter">On enregistre ici les ouvertures et les fermetures demandées dans les écrans.</param>
@@ -51,8 +51,8 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
     private EtatMarche Etat => marche.EtatCourant;
 
     /// <summary>
-    /// On affiche le menu, on exécute l’écran choisi et on présente les erreurs métier sans arrêter
-    /// toute la console. On sauvegarde le blotter à la sortie.
+    /// The menu is displayed, the selected screen is executed and business errors are presented
+    /// without stopping the entire console.
     /// </summary>
     public async Task ExecuterAsync(CancellationToken ct)
     {
@@ -90,8 +90,8 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
     }
 
     /// <summary>
-    /// On propose seulement les échéances du référentiel chargé pour éviter une sélection sans
-    /// instruments disponibles.
+    /// Only the expiries of the loaded repository are proposed to avoid selection without
+    /// available instruments.
     /// </summary>
     /// <returns>On renvoie l’échéance sélectionnée par l’utilisateur.</returns>
     private DateTime ChoisirEcheance() =>
@@ -100,7 +100,7 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
             .AddChoices(Etat.Referentiel.Echeances.Where(e => e > Etat.Maintenant)));
 
     /// <summary>
-    /// On laisse choisir une échéance puis on affiche côte à côte ses calls et ses puts.
+    /// We let a expiry be chosen and then we show his calles and his puts side by side.
     /// </summary>
     private void EcranReferentiel()
     {
@@ -109,8 +109,8 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
     }
 
     /// <summary>
-    /// On recueille les paramètres de la structure, on suit ses instruments et on affiche sa cotation
-    /// avant de proposer les scénarios et le booking.
+    /// We collect the parameters of the structure, follow its instruments and display its
+    /// rating before proposing scenarios and booking.
     /// </summary>
     private async Task EcranPricerAsync(CancellationToken ct)
     {
@@ -154,8 +154,8 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
     }
 
     /// <summary>
-    /// On saisit une option OTC, on calcule sa couverture avec la paire choisie ou recherchée
-    /// automatiquement, puis on propose de traiter l’ensemble.
+    /// One enters an OTC option, calculates its hedge with the chosen or automatically
+    /// searched pair, and then proposes to process the set.
     /// </summary>
     private async Task EcranSurMesureAsync(CancellationToken ct)
     {
@@ -171,7 +171,7 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
         PropositionCouverture proposition;
         if (AnsiConsole.Prompt(new SelectionPrompt<string>().Title("Options de couverture :").AddChoices("Choix automatique (recommandé)", "Choisir la paire")) == "Choisir la paire")
         {
-            // On fait choisir une option réellement cotée pour construire la paire de couverture demandée.
+            // A really rated option is chosen to build the requested cover pair.
             Instrument ChoisirOption(string titre)
             {
                 var e = ChoisirEcheance();
@@ -205,8 +205,8 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
     }
 
     /// <summary>
-    /// On suit les instruments du book, on règle les jambes échues lorsque leur prix officiel est
-    /// disponible et on actualise la valorisation affichée.
+    /// We follow the instruments of the book, we adjust the fallen legs when their official
+    /// price is available and update the displayed valuation.
     /// </summary>
     private async Task EcranBookAsync(CancellationToken ct)
     {
@@ -220,8 +220,8 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
     }
 
     /// <summary>
-    /// On affiche les opérations puis on permet de déboucler une quantité d’une ouverture encore active
-    /// aux prix courants.
+    /// The operations are displayed and then allowed to unwind a quantity of an opening still
+    /// active at current prices.
     /// </summary>
     private async Task EcranBlotterAsync(CancellationToken ct)
     {
@@ -239,8 +239,7 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
     }
 
     /// <summary>
-    /// On évalue une fois le book puis on exporte cet état et le blotter dans chacun des formats
-    /// disponibles.
+    /// Once the book is evaluated, it is exported and floated in each of the available formats.
     /// </summary>
     private void EcranExports()
     {
@@ -251,12 +250,12 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
     }
 
     /// <summary>
-    /// On actualise l'écran toutes les 500 ms jusqu'à une touche de l'utilisateur ou une demande
-    /// d'annulation. On conserve le dernier affichage en quittant le suivi.
+    /// The screen is updated every 500 ms up to a touch of the user or a request for
+    /// cancellation. The last display is retained after leaving the tracking.
     /// </summary>
     private static async Task AfficherEnContinuAsync(Func<IRenderable> construire, CancellationToken ct)
     {
-        // On reconstruit l’écran et on affiche une erreur métier dans la zone de suivi si le calcul échoue.
+        // The screen is rebuilt and a business error is displayed in the tracking area if the calculation fails.
         IRenderable Ecran()
         {
             try { return new Rows(construire(), new Markup("[grey]Mise à jour en continu — appuyez sur une touche pour continuer.[/]")); }

@@ -12,8 +12,8 @@ using Pricer.Infrastructure.Transport;
 namespace Pricer.Infrastructure.Services;
 
 /// <summary>
-/// On coordonne le chargement des instruments, les cotations et les règlements dans ce service. On sépare
-/// ces tâches de l'interface pour garder le même fonctionnement en direct et en rejeu.
+/// Instrument loading, ratings and regulations are coordinated in this service. These tasks are
+/// separated from the interface to keep the same operation live and in play.
 /// </summary>
 public sealed class ServiceMarche : IAsyncDisposable
 {
@@ -27,7 +27,7 @@ public sealed class ServiceMarche : IAsyncDisposable
     private Dictionary<DateOnly, double> _prixReglement = new();
 
     /// <summary>
-    /// On relie la source, les réglages et l’horloge qui seront partagés par les mises à jour du marché.
+    /// The source, settings and clock are linked to be shared by the market updates.
     /// </summary>
     /// <param name="possedeSource">On libère nous-mêmes la source uniquement lorsque ce service en est responsable.</param>
     public ServiceMarche(ISourceMarche source, OptionsPricer options, IHorloge horloge, ILogger<ServiceMarche>? log = null, bool possedeSource = false)
@@ -49,7 +49,7 @@ public sealed class ServiceMarche : IAsyncDisposable
     public string? ErreurFlux { get; private set; }
 
     /// <summary>
-    /// On demande l’arrêt des boucles et on attend leur terminaison avant d’effacer leur liste.
+    /// We ask for the loops to stop and wait for their termination before deleting their list.
     /// </summary>
     public async Task ArreterSessionAsync()
     {
@@ -60,13 +60,13 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On arrête la session précédente, on remplace sa source et on recharge le marché avec un nouveau
-    /// signal d’arrêt.
+    /// We stop the previous session, replace its source and reload the market with a new stop
+    /// signal.
     /// </summary>
     /// <returns>On renvoie l’état initialisé avec la nouvelle source.</returns>
     public async Task<EtatMarche> RedemarrerAsync(ISourceMarche source, CancellationToken ct = default)
     {
-        // On attend l'arrêt des anciennes boucles avant de remplacer la source, pour qu'elles n'écrivent pas dans le nouveau marché.
+        // We wait until the old loops stop before replacing the source, so that they do not write in the new market.
         await ArreterSessionAsync().ConfigureAwait(false);
         if (_possedeSource) await _source.DisposeAsync().ConfigureAwait(false);
         _source = source;
@@ -81,8 +81,8 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On charge d'abord le référentiel et un premier état du marché pour éviter un écran partiellement
-    /// initialisé, puis on lance les mises à jour en arrière-plan.
+    /// First load the repository and a first state of the market to avoid a partially
+    /// initialized screen, then launch the updates in the background.
     /// </summary>
     public async Task<EtatMarche> DemarrerAsync(CancellationToken ct = default)
     {
@@ -96,7 +96,7 @@ public sealed class ServiceMarche : IAsyncDisposable
         await RafraichirResumeAsync(ct).ConfigureAwait(false);
         await ChargerReglementsAsync(ct).ConfigureAwait(false);
 
-        // On suit les futures utiles à la couverture du delta et, pendant une capture, les options des échéances choisies pour enrichir le rejeu.
+        // Futures useful for delta cover are monitored and, during capture, options for timing chosen to enrich the game.
         var suivis = futures.Select(f => f.Nom).ToList();
         if (_options.Mode == ModeDonnees.Enregistrement)
             suivis.AddRange(EcheancesAEnregistrer(etat)
@@ -112,8 +112,8 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On choisit plusieurs maturités réparties dans le temps, en évitant une échéance trop proche. Le
-    /// fichier reste ainsi utile pour vérifier la structure par terme, l'interpolation et la couverture.
+    /// We select several maturities spread over time, avoiding too close a maturities. The file
+    /// remains useful for checking the structure by term, interpolation and hedge.
     /// </summary>
     private IEnumerable<DateTime> EcheancesAEnregistrer(EtatMarche etat)
     {
@@ -128,8 +128,8 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On suit les instruments utiles à la cotation ou au book et on demande leur ticker complet, pour
-    /// disposer des détails absents du résumé de marché.
+    /// The instruments used in the listing or book are monitored and their full ticker is
+    /// requested to provide the missing details of the contract summary.
     /// </summary>
     public async Task SuivreAsync(IEnumerable<string> instruments, CancellationToken ct = default)
     {
@@ -143,8 +143,8 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On recharge les résumés des options et des futures, puis l’indice USD, pour rafraîchir l’ensemble
-    /// du marché.
+    /// Summaries of options and futures are reloaded, followed by the USD index, to refresh the
+    /// entire market.
     /// </summary>
     public async Task RafraichirResumeAsync(CancellationToken ct = default)
     {
@@ -156,8 +156,7 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On recharge les prix officiels des trente dernières journées et on les indexe par date de
-    /// règlement.
+    /// Official prices for the last 30 days are charged and indexed by settlement date.
     /// </summary>
     public async Task ChargerReglementsAsync(CancellationToken ct = default)
     {
@@ -166,8 +165,8 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On recherche les jambes échues encore ouvertes et on charge les prix officiels nécessaires avant de
-    /// demander leur règlement au book.
+    /// We look for the fallen legs still open and charge the necessary official prices before
+    /// asking for their settlement in the book.
     /// </summary>
     public async Task<IReadOnlyList<Trade>> ReglerEcheancesAsync(Book book, CancellationToken ct = default)
     {
@@ -179,8 +178,8 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On applique chaque cotation reçue à l’état du marché et on compte les messages. On conserve
-    /// l’erreur si le flux s’interrompt.
+    /// Each quote received is applied to the state of the market and messages are counted.
+    /// Error is retained if the flow is interrupted.
     /// </summary>
     private async Task BoucleFluxAsync(CancellationToken ct)
     {
@@ -201,8 +200,8 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On vérifie périodiquement les échéances du book suivi et on attend le prix officiel si le
-    /// règlement ne peut pas encore être effectué.
+    /// The expiries for the follow-up book are periodically checked and the official price is
+    /// expected if the settlement cannot be completed.
     /// </summary>
     private async Task BoucleReglementsAsync(CancellationToken ct)
     {
@@ -220,8 +219,8 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On fait avancer l’heure réelle en direct pour que les cotations vieillissent même pendant une
-    /// coupure. On laisse le rejeu piloter son propre temps.
+    /// We move the real hour live so that the ratings get older even during a break. We let the
+    /// replay pilot its own time.
     /// </summary>
     private async Task BoucleHorlogeAsync(CancellationToken ct)
     {
@@ -230,7 +229,7 @@ public sealed class ServiceMarche : IAsyncDisposable
             while (!ct.IsCancellationRequested)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
-                // On laisse vieillir les cotations si la connexion live est perdue.
+                // We let the ratings get older if the live connection is lost.
                 if (_options.Mode is ModeDonnees.Live or ModeDonnees.Enregistrement) _horloge.Synchroniser(DateTime.UtcNow);
             }
         }
@@ -238,8 +237,8 @@ public sealed class ServiceMarche : IAsyncDisposable
     }
 
     /// <summary>
-    /// On actualise les résumés à intervalle régulier en direct et on réessaie au cycle suivant après
-    /// une erreur de chargement.
+    /// The summaries are updated at regular intervals on-line and the next cycle is re-tested
+    /// after a loading error.
     /// </summary>
     private async Task BoucleResumeAsync(CancellationToken ct)
     {
@@ -248,7 +247,7 @@ public sealed class ServiceMarche : IAsyncDisposable
             try
             {
                 await Task.Delay(TimeSpan.FromSeconds(_options.IntervalleResumeSecondes), ct).ConfigureAwait(false);
-                // On laisse le fichier piloter son temps en rejeu : un ancien résumé REST ne doit pas faire bouger un marché en pause.
+                // We let the file control its time in replay: an old REST summary must not move a market on pause.
                 if (_options.Mode is ModeDonnees.Rejeu or ModeDonnees.Demonstration) continue;
                 await RafraichirResumeAsync(ct).ConfigureAwait(false);
             }
@@ -263,8 +262,8 @@ public sealed class ServiceMarche : IAsyncDisposable
     private bool _libere;
 
     /// <summary>
-    /// On arrête les boucles puis on libère le signal d’arrêt et, si nécessaire, la source détenue par
-    /// le service.
+    /// The loops shall be stopped and the signal shall be released and, if necessary, the
+    /// source held by the service.
     /// </summary>
     public async ValueTask DisposeAsync()
     {

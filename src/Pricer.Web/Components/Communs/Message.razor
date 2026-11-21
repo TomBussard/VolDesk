@@ -2,7 +2,7 @@
 {
     <div class="message message-@Type">
         <span>@Texte</span>
-        <button class="fermer" @onclick="Fermer">×</button>
+        <button class="fermer" @onclick="Fermer" aria-label="Dismiss message">Dismiss</button>
     </div>
 }
 
@@ -12,7 +12,7 @@
     [Parameter] public EventCallback<string?> TexteChanged { get; set; }
 
     /// <summary>
-    /// On signale au parent que le message est fermé pour qu'il efface son texte.
+    /// The parent is advised that the message is closed so that it erases the text.
     /// </summary>
     private Task Fermer() => TexteChanged.InvokeAsync(null);
 }

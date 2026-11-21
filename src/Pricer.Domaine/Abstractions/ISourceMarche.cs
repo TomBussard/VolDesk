@@ -3,37 +3,41 @@ using Pricer.Domaine.Modeles;
 namespace Pricer.Domaine.Abstractions;
 
 /// <summary>
-/// On utilise le même contrat pour le direct, le rejeu et la démonstration. Les calculs reçoivent le
-/// référentiel, les cotations et les règlements sans connaître leur mode de chargement.
+/// Live quotes, replay files and the offline demo supply the pricing engine through this interface.
 /// </summary>
 public interface ISourceMarche : IAsyncDisposable
 {
     /// <summary>
-    /// On charge les caractéristiques des options de la devise pour construire le référentiel.
+    /// Load the option contracts listed for the selected currency.
     /// </summary>
     Task<IReadOnlyList<Instrument>> ChargerOptionsAsync(string devise, CancellationToken ct = default);
     /// <summary>
-    /// On charge les futures et leurs pas de négociation pour choisir une couverture réellement cotée.
+    /// Load listed futures and their trade sizes so the simulated hedge can be rounded to an available contract.
     /// </summary>
     Task<IReadOnlyList<InstrumentFuture>> ChargerFuturesAsync(string devise, CancellationToken ct = default);
-    /// <summary>On charge les résumés d'une devise en un appel afin d'éviter une requête par option.</summary>
+    /// <summary>
+    /// The abstracts of a currency are loaded in one call to avoid one request per option.
+    /// </summary>
     Task<IReadOnlyList<Cotation>> ChargerResumeAsync(string devise, string type, CancellationToken ct = default);
     /// <summary>
-    /// On demande une cotation détaillée pour compléter les champs absents du résumé de marché.
+    /// Detailed quotes are requested to complete the fields missing from the contract
+    /// summary.
     /// </summary>
     Task<Cotation> ObtenirTickerAsync(string instrument, CancellationToken ct = default);
     /// <summary>
-    /// On lit l'indice spot et sa date pour convertir le résultat du book en USD.
+    /// We read the spot index and its date to convert the book result to USD.
     /// </summary>
     Task<(double Prix, DateTime Horodatage)> ObtenirIndiceAsync(string devise, CancellationToken ct = default);
     /// <summary>
-    /// On récupère les derniers prix officiels de livraison pour régler les jambes échues.
+    /// We are getting the latest official delivery prices to adjust the fallen legs.
     /// </summary>
     Task<IReadOnlyList<PrixReglement>> ObtenirPrixReglementAsync(string devise, int nombre = 10, CancellationToken ct = default);
-    /// <summary>On demande le suivi des instruments utiles au pricer ou aux positions ouvertes.</summary>
+    /// <summary>
+    /// Follow-up is required on instruments useful to the pricer or open positions.
+    /// </summary>
     Task SuivreAsync(IEnumerable<string> instruments, CancellationToken ct = default);
     /// <summary>
-    /// On expose les cotations au fur et à mesure de leur arrivée, jusqu'à l'annulation de la lecture.
+    /// Ratings are displayed as they arrive, until the reading is cancelled.
     /// </summary>
     IAsyncEnumerable<Cotation> FluxCotationsAsync(CancellationToken ct);
     bool FluxTermine { get; }

@@ -1,8 +1,8 @@
 namespace Pricer.Web.Services;
 
 /// <summary>
-/// On partage l'état de démarrage entre les pages pour afficher le chargement ou une erreur avant
-/// d'utiliser les données du marché.
+/// Start-up status is shared between pages to display the load or error before using market
+/// data.
 /// </summary>
 public sealed class EtatApplication
 {
@@ -13,8 +13,8 @@ public sealed class EtatApplication
     public event Action? Change;
 
     /// <summary>
-    /// On rend les données accessibles et on notifie les pages en effaçant une éventuelle erreur de
-    /// démarrage.
+    /// The data is made accessible and the pages are notified by deleting a possible start-up
+    /// error.
     /// </summary>
     public void MarquerPret()
     {
@@ -24,7 +24,8 @@ public sealed class EtatApplication
     }
 
     /// <summary>
-    /// On rend le marché indisponible et on transmet le message aux pages pour permettre une reprise.
+    /// The market is rendered unavailable and the message is sent to the pages to allow a
+    /// resumption.
     /// </summary>
     public void MarquerErreur(string message)
     {
@@ -34,7 +35,7 @@ public sealed class EtatApplication
     }
 
     /// <summary>
-    /// On place les pages en attente pendant le remplacement ou le chargement de la source de données.
+    /// The pages are placed on hold during replacement or loading of the data source.
     /// </summary>
     public void MarquerChargement()
     {

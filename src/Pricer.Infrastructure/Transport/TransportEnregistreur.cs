@@ -5,14 +5,14 @@ using System.Text.Json;
 namespace Pricer.Infrastructure.Transport;
 
 /// <summary>
-/// On enregistre chaque échange sur une ligne JSON avec son heure, son type et sa clé pour le retrouver
-/// pendant le rejeu.
+/// We record every exchange on a JSON line with his hour, his type and his key to find him
+/// during the replay.
 /// </summary>
 public sealed record LigneEnregistree(DateTime T, string Type, string Cle, JsonElement Donnees);
 
 /// <summary>
-/// On ajoute l'enregistrement autour d'un transport existant : les données continuent de circuler
-/// normalement et une copie horodatée est conservée dans le fichier JSON Lines.
+/// We add the recording around an existing transport: the data continues to circulate normally
+/// and a timed copy is kept in the JSON Lines file.
 /// </summary>
 public sealed class TransportEnregistreur : ITransportDeribit
 {
@@ -22,8 +22,8 @@ public sealed class TransportEnregistreur : ITransportDeribit
     private readonly SemaphoreSlim _verrou = new(1, 1);
 
     /// <summary>
-    /// On entoure le transport fourni d’un fichier de capture neuf, avec compression si son nom se
-    /// termine par .gz.
+    /// We surround the transport provided by a new capture file, with compression if its name
+    /// ends with .gz.
     /// </summary>
     /// <param name="fichier">On refuse d’écraser un fichier existant afin de conserver les captures précédentes.</param>
     public TransportEnregistreur(ITransportDeribit interne, string fichier)
@@ -31,7 +31,7 @@ public sealed class TransportEnregistreur : ITransportDeribit
         _interne = interne;
         string? dossier = Path.GetDirectoryName(Path.GetFullPath(fichier));
         if (dossier is not null) Directory.CreateDirectory(dossier);
-        // On compresse au fil de l'écriture lorsque le nom se termine par .gz, afin de réduire la taille des captures JSON.
+        // We compress as we write when the name ends with .gz, in order to reduce the size of JSON catches.
         Stream flux = new FileStream(fichier, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
         if (fichier.EndsWith(".gz", StringComparison.OrdinalIgnoreCase)) flux = new GZipStream(flux, CompressionLevel.Optimal);
         _ecrivain = new StreamWriter(flux) { AutoFlush = false };
@@ -41,8 +41,8 @@ public sealed class TransportEnregistreur : ITransportDeribit
     public bool FluxTermine => _interne.FluxTermine;
 
     /// <summary>
-    /// On exécute l’appel REST puis on enregistre sa réponse avec une clé stable avant de la rendre à
-    /// l’appelant.
+    /// Run the REST call and then record the answer with a stable key before returning it to
+    /// the appellant.
     /// </summary>
     public async Task<ReponseRest> AppelerAsync(string methode, IReadOnlyDictionary<string, string> parametres, CancellationToken ct = default)
     {
@@ -52,14 +52,14 @@ public sealed class TransportEnregistreur : ITransportDeribit
     }
 
     /// <summary>
-    /// On laisse le transport interne gérer les abonnements ; les messages effectivement reçus seront
-    /// enregistrés lors de leur lecture.
+    /// Internal transport is allowed to manage subscriptions; messages actually received will
+    /// be recorded when they are read.
     /// </summary>
     public Task SouscrireAsync(IEnumerable<string> canaux, CancellationToken ct = default) => _interne.SouscrireAsync(canaux, ct);
 
     /// <summary>
-    /// On écrit chaque message WebSocket dans la capture avant de le transmettre au consommateur du
-    /// flux.
+    /// We write every WebSocket message in the capture before transmitting it to the consumer
+    /// of the stream.
     /// </summary>
     public async IAsyncEnumerable<MessageFlux> LireFluxAsync([EnumeratorCancellation] CancellationToken ct)
     {
@@ -71,8 +71,8 @@ public sealed class TransportEnregistreur : ITransportDeribit
     }
 
     /// <summary>
-    /// On protège les écritures concurrentes et on vide périodiquement le tampon pour conserver une
-    /// capture cohérente.
+    /// Competing writings are protected and the buffer is emptied periodically to maintain
+    /// consistent capture.
     /// </summary>
     private async Task EcrireAsync(LigneEnregistree ligne)
     {
@@ -88,8 +88,8 @@ public sealed class TransportEnregistreur : ITransportDeribit
     private bool _libere;
 
     /// <summary>
-    /// On ferme le transport puis on termine l’écriture et la compression du fichier avant de libérer le
-    /// verrou.
+    /// We close the transport and then finish writing and compression the file before releasing
+    /// the lock.
     /// </summary>
     public async ValueTask DisposeAsync()
     {

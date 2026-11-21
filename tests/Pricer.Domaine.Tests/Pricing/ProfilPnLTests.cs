@@ -9,7 +9,8 @@ namespace Pricer.Domaine.Tests.Pricing;
 public class ProfilPnLTests
 {
     /// <summary>
-    /// On vérifie le nombre, l'ordre et les bornes des scénarios proposés au premier affichage.
+    /// The number, order, and boundaries of the scenarios proposed in the first display are
+    /// checked.
     /// </summary>
     [TestMethod]
     public void Calculer_GrilleParDefaut_13PointsDeMoins30APlus30()
@@ -26,7 +27,7 @@ public class ProfilPnLTests
     }
 
     /// <summary>
-    /// On vérifie les limites globales et les zéros du résultat avec le financement de prime en crypto.
+    /// The overall limits and zeros of the result are checked with the funding of crypto bonus.
     /// </summary>
     [TestMethod]
     public void Calculer_CallSpreadAchete_ExtremesEtPointMortAnalytiques()
@@ -45,8 +46,8 @@ public class ProfilPnLTests
     }
 
     /// <summary>
-    /// On vérifie que les bornes USD et crypto suivent la convention de prime au lieu d'être déduites
-    /// du seul payoff.
+    /// It is checked that the USD and crypto terminals follow the bonus agreement instead of
+    /// being deducted from the payoff alone.
     /// </summary>
     [TestMethod]
     public void Calculer_CallSimpleAchete_GainIllimite()
@@ -61,7 +62,7 @@ public class ProfilPnLTests
     }
 
     /// <summary>
-    /// On vérifie la borne de perte d'un call vendu avec une prime conservée en crypto.
+    /// We are checking the loss terminal of a call sold with a cryptographic premium.
     /// </summary>
     [TestMethod]
     public void Calculer_CallVenduSeul_PerteIllimitee()
@@ -72,7 +73,7 @@ public class ProfilPnLTests
     }
 
     /// <summary>
-    /// On vérifie que tous les zéros du résultat sont trouvés entre les branches du payoff.
+    /// We check that all zeros of the result are found between the payoff branches.
     /// </summary>
     [TestMethod]
     public void Calculer_Butterfly_DeuxPointsMortsFinancementCrypto()
@@ -89,8 +90,8 @@ public class ProfilPnLTests
     }
 
     /// <summary>
-    /// On vérifie que l'absence de choc de marché retrouve la valeur théorique nette de la prime
-    /// exécutée.
+    /// It is verified that the absence of a market shock returns to the net theoretical value
+    /// of the premium executed.
     /// </summary>
     [TestMethod]
     public void Calculer_AujourdhuiAuFutureCourant_EgalValeurTheoriqueMoinsPrime()
@@ -106,7 +107,7 @@ public class ProfilPnLTests
     }
 
     /// <summary>
-    /// On vérifie la conversion du payoff en crypto avant la déduction de la prime.
+    /// The conversion of the payoff to crypto is checked before the deduction of the premium.
     /// </summary>
     [TestMethod]
     public void Calculer_PnlBtcEcheance_PayoffInverseMoinsPrimeBtc()

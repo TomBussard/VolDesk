@@ -12,15 +12,15 @@ using Spectre.Console;
 namespace Pricer.App.Ecrans;
 
 /// <summary>
-/// On conserve le nombre de trades, les exports et le book obtenus afin que le test de bout en bout puisse
-/// vérifier le scénario.
+/// The number of trades, exports and books obtained are retained so that the end-to-end test
+/// can verify the scenario.
 /// </summary>
 public sealed record ResultatDemo(int Trades, IReadOnlyList<string> Fichiers, int ErreursDeSaisieDetectees, EtatBook Book);
 
 /// <summary>
-/// On déroule un parcours complet sans saisie : référentiel, structures proposées, contrôles, profils,
-/// OTC couvert, booking, débouclage et exports. On utilise le même scénario pour la démonstration et pour
-/// vérifier l'application de bout en bout.
+/// We run a complete course without input: reference, proposed structures, controls, profiles,
+/// covered OTC, booking, debubbing and exports. The same scenario is used for demonstration and
+/// for checking end-to-end application.
 /// </summary>
 /// <param name="marche">On alimente le scénario avec la source choisie pour la session.</param>
 /// <param name="blotter">On conserve les opérations produites par la démonstration.</param>
@@ -28,35 +28,37 @@ public sealed record ResultatDemo(int Trades, IReadOnlyList<string> Fichiers, in
 /// <param name="options">On utilise les réglages de la session, notamment son dossier d’exports.</param>
 public sealed class ScenarioDemo(ServiceMarche marche, Blotter blotter, Book book, OptionsPricer options)
 {
-    /// <summary>On peut renseigner ce dossier pour écrire les exemples chiffrés du scénario dans exemples.tex.</summary>
+    /// <summary>
+    /// This file can be found in examples.tex to write the encrypted examples of the scenario.
+    /// </summary>
     public string? DossierLatex { get; set; }
 
     /// <summary>
-    /// On déroule la démonstration avec le même moteur que la console : cotations, contrôles, booking,
-    /// débouclage et exports.
+    /// The demonstration is carried out with the same engine as the console: ratings, controls,
+    /// booking, debubbling and exports.
     /// </summary>
     /// <returns>On renvoie les opérations, les fichiers générés, les contrôles de saisie et l’état final du book.</returns>
     public async Task<ResultatDemo> ExecuterAsync(CancellationToken ct)
     {
         var latex = new System.Text.StringBuilder();
         var etat = marche.EtatCourant;
-        // On attend quelques cotations pour commencer le scénario avec un marché déjà alimenté.
+        // We are waiting for a few quotes to start the scenario with an already fed market.
         for (int i = 0; i < 20 && marche.MessagesRecus < 50 && !marche.FluxTermine; i++) await Task.Delay(100, ct);
 
         var echeances = etat.Referentiel.Echeances.Where(e => (e - etat.Maintenant).TotalDays > 1.5).ToList();
-        // On privilégie une échéance avec des tickers complets pour pouvoir montrer la comparaison des grecques avec Deribit.
+        // A expiry with complete tickers is preferred to show the comparison of Greeks with Deribit.
         bool TickersComplets(DateTime e) => etat.Referentiel.Strikes(e).Any(p => p.Call is not null && etat.Cotation(p.Call.Nom)?.GrecquesDeribit is not null);
         var echeance = echeances.FirstOrDefault(e => etat.Smiles().Any(s => s.Echeance == e) && TickersComplets(e));
         if (echeance == default) echeance = echeances.First(e => etat.Smiles().Any(s => s.Echeance == e));
         double f = etat.Future(echeance) ?? throw new DonneesIndisponiblesException("Pas de future pour l'échéance de démonstration.");
         var strikes = etat.Referentiel.Strikes(echeance).Select(p => p.Strike).ToList();
-        // On choisit l’instrument disponible le plus proche du strike recherché.
+        // The available instrument is chosen as close as possible to the desired strike.
         double Proche(double cible) => strikes.OrderBy(k => Math.Abs(k - cible)).First();
 
         Titre("1. Référentiel");
         AnsiConsole.Write(Rendu.Referentiel(etat, echeance));
 
-        // On choisit des strikes cotés autour du future et des ailes symétriques pour construire un butterfly cohérent.
+        // Strikes around the future and symmetrical wings are chosen to build a coherent butterfly.
         double centre = Proche(f);
         double aile = strikes.Where(k => k > centre).Select(k => k - centre).Where(d => strikes.Contains(centre - d)).OrderBy(d => d).Skip(1).FirstOrDefault();
         if (aile == 0) aile = strikes.Where(k => k > centre).Select(k => k - centre).Where(d => strikes.Contains(centre - d)).Min();
@@ -84,7 +86,7 @@ public sealed class ScenarioDemo(ServiceMarche marche, Blotter blotter, Book boo
             catch (PricerException ex)
             {
                 erreurs++;
-                AnsiConsole.MarkupLine($"[red]✗ {Markup.Escape(ex.GetType().Name)}[/] : {Markup.Escape(ex.Message)}");
+                AnsiConsole.MarkupLine($"[red] {Markup.Escape(ex.GetType().Name)}[/] : {Markup.Escape(ex.Message)}");
             }
         }
 
@@ -110,7 +112,7 @@ public sealed class ScenarioDemo(ServiceMarche marche, Blotter blotter, Book boo
         Titre("5. Option sur mesure et couverture");
         try
         {
-            // On place l'OTC entre deux échéances suffisamment espacées pour illustrer l'interpolation en temps.
+            // The CTA is placed between two maturities sufficiently spaced to illustrate time interpolation.
             var cotees = etat.Smiles().Select(s => s.Echeance).Where(e => e >= echeance).OrderBy(e => e).ToList();
             var paire = cotees.Zip(cotees.Skip(1)).FirstOrDefault(p => (p.Second - p.First).TotalDays >= 3);
             if (paire != default)
@@ -138,7 +140,7 @@ public sealed class ScenarioDemo(ServiceMarche marche, Blotter blotter, Book boo
         AnsiConsole.Write(Rendu.Blotter(blotter.Trades));
 
         Titre("7. Book");
-        // On laisse arriver de nouvelles données avant de valoriser le book pour montrer son suivi dans le temps.
+        // We let new data arrive before valuing the book to show its follow-up over time.
         for (int i = 0; i < 10 && !marche.FluxTermine; i++) await Task.Delay(200, ct);
         var etatBook = book.Evaluer(etat);
         AnsiConsole.Write(Rendu.Book(etatBook));
@@ -163,8 +165,8 @@ public sealed class ScenarioDemo(ServiceMarche marche, Blotter blotter, Book boo
     }
 
     /// <summary>
-    /// On sépare les étapes du scénario par un titre pour rendre la sortie de démonstration plus facile
-    /// à parcourir.
+    /// The stages of the scenario are separated by a title to make the demonstration output
+    /// easier to navigate.
     /// </summary>
     private static void Titre(string texte) => AnsiConsole.Write(new Rule($"[bold yellow]{texte}[/]").LeftJustified());
 }

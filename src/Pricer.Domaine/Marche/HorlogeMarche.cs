@@ -3,9 +3,9 @@ using Pricer.Domaine.Abstractions;
 namespace Pricer.Domaine.Marche;
 
 /// <summary>
-/// On partage une seule horloge de marché dans l'application et on protège ses accès concurrents. On
-/// l'expose derrière une interface pour la remplacer facilement dans les tests ; en rejeu, elle avance avec
-/// les données enregistrées.
+/// We share a single market clock in the application and protect its competing accesses. We
+/// expose it behind an interface to easily replace it in tests; in replay, it advances with
+/// recorded data.
 /// </summary>
 public sealed class HorlogeMarche : IHorloge
 {
@@ -14,8 +14,8 @@ public sealed class HorlogeMarche : IHorloge
     private DateTime? _dernierHorodatage;
 
     /// <summary>
-    /// On réserve la création de l'horloge à Instance pour partager le même temps de marché dans
-    /// l'application.
+    /// We reserve the creation of the clock to Instance to share the same market time in the
+    /// application.
     /// </summary>
     private HorlogeMarche() { }
 
@@ -27,8 +27,8 @@ public sealed class HorlogeMarche : IHorloge
     }
 
     /// <summary>
-    /// On avance l'heure partagée avec un horodatage plus récent ; un message reçu en retard ne fait pas
-    /// reculer les calculs.
+    /// The time shared with a more recent time stamp is advanced; a message received late does
+    /// not reduce the calculations.
     /// </summary>
     public void Synchroniser(DateTime horodatageMarche)
     {
@@ -40,8 +40,8 @@ public sealed class HorlogeMarche : IHorloge
     }
 
     /// <summary>
-    /// On remet l'horloge à zéro quand on change de session, pour ne pas mélanger les dates de deux
-    /// enregistrements.
+    /// We reset the clock to zero when we change session, so we don't mix the dates of two
+    /// recordings.
     /// </summary>
     public void Reinitialiser()
     {
@@ -49,14 +49,17 @@ public sealed class HorlogeMarche : IHorloge
     }
 }
 
-/// <summary>On utilise une horloge contrôlée dans les tests pour choisir précisément l'instant du calcul.</summary>
+/// <summary>
+/// A controlled clock is used in the tests to select precisely the moment of calculation.
+/// </summary>
 /// <param name="maintenant">L'instant initial de marché que l'on veut utiliser dans le scénario.</param>
 public sealed class HorlogeFixe(DateTime maintenant) : IHorloge
 {
     public DateTime Maintenant { get; private set; } = maintenant;
 
     /// <summary>
-    /// On avance l'horloge de test à l'instant demandé, sans revenir avant la date déjà atteinte.
+    /// We move the test clock at the requested moment, without returning before the date
+    /// already reached.
     /// </summary>
     public void Synchroniser(DateTime horodatageMarche)
     {

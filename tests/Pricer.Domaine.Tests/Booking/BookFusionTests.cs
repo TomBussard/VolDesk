@@ -12,8 +12,8 @@ public class BookFusionTests
 {
     private static readonly DateTime Otc = MarcheDeTest.E1.AddDays(7);
     /// <summary>
-    /// On prépare un OTC et ses couvertures à plusieurs dates pour vérifier le suivi indépendant des
-    /// jambes.
+    /// A TCO and its blankets are prepared on several dates to verify independent leg
+    /// monitoring.
     /// </summary>
     private static (Blotter Blotter, Book Book, Trade Trade) PositionOtc()
     {
@@ -46,8 +46,8 @@ public class BookFusionTests
     }
 
     /// <summary>
-    /// On replace les cotations du marché de test à la date choisie pour contrôler la fraîcheur sans
-    /// changer les prix.
+    /// The quotes of the test market are placed on the date chosen to check freshness
+    /// without changing prices.
     /// </summary>
     private static EtatMarche MarcheA(DateTime date)
     {
@@ -58,8 +58,8 @@ public class BookFusionTests
     }
 
     /// <summary>
-    /// On vérifie que chaque jambe sort à sa propre échéance et que le réalisé reste conservé après le
-    /// règlement de l'OTC.
+    /// It is verified that each leg comes out at its own time and that the result remains
+    /// retained after the CTA regulation.
     /// </summary>
     [TestMethod]
     public void Regler_ChaqueJambeASaDate_ConserveLesCouverturesApresOtc()
@@ -92,7 +92,8 @@ public class BookFusionTests
     }
 
     /// <summary>
-    /// On vérifie qu'une petite clôture respecte les pas des options et du notionnel USD du future.
+    /// It is verified that a small fence follows the steps of the options and the notional USD
+    /// of the future.
     /// </summary>
     [TestMethod]
     public void Deboucler_PetitProrata_RespectePasOptionsEtMontantFuture()
@@ -112,8 +113,8 @@ public class BookFusionTests
     }
 
     /// <summary>
-    /// On vérifie que les instruments de couverture encore ouverts restent débouclables après la
-    /// disparition de l'OTC.
+    /// It is verified that the cover instruments still open remain debunkable after the CTA has
+    /// disappeared.
     /// </summary>
     [TestMethod]
     public void Deboucler_ApresReglementOtc_FermeLaCouvertureResiduelle()
@@ -128,8 +129,8 @@ public class BookFusionTests
     }
 
     /// <summary>
-    /// On vérifie qu'un prix de règlement invalide laisse la position ouverte pour attendre une donnée
-    /// utilisable.
+    /// It is verified that an invalid settlement price leaves the position open to wait for
+    /// usable data.
     /// </summary>
     [DataTestMethod]
     [DataRow(double.NaN)]
@@ -147,8 +148,8 @@ public class BookFusionTests
     }
 
     /// <summary>
-    /// On vérifie qu'une valeur au mark manquante reste indisponible et distincte de la valeur de
-    /// modèle.
+    /// It is verified that a missing mark value remains unavailable and separate from the model
+    /// value.
     /// </summary>
     [TestMethod]
     public void Evaluer_MarkAbsent_NeSubstitueNiZeroNiTheorique()
@@ -167,8 +168,8 @@ public class BookFusionTests
     }
 
     /// <summary>
-    /// On vérifie que le P&amp;L et le delta du future suivent son notionnel USD lorsque le prix du
-    /// marché change.
+    /// It is verified that the P&amp;L and the delta of the future follow its notional USD when
+    /// the market price changes.
     /// </summary>
     [TestMethod]
     public void FutureInverse_PrixBouge_NotionnelConstantPnlEtDeltaCorrects()
@@ -188,7 +189,7 @@ public class BookFusionTests
     }
 
     /// <summary>
-    /// On vérifie qu'une fermeture incohérente ne remplace pas le portefeuille déjà chargé.
+    /// It is verified that an inconsistent closure does not replace the already loaded wallet.
     /// </summary>
     [TestMethod]
     public void Charger_FermetureCorrompue_RefuseSansRemplacerLeBookCourant()

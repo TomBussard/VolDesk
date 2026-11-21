@@ -6,10 +6,10 @@ namespace Pricer.Domaine.Tests.Pricing;
 [TestClass]
 public class Black76Tests
 {
-    // On compare les résultats à des valeurs numériques calculées indépendamment du moteur testé.
+    // The results are compared to numerical values calculated independently of the engine tested.
     /// <summary>
-    /// On vérifie un prix et ses sensibilités sur des valeurs numériques connues pour détecter une
-    /// erreur de formule ou d'unité.
+    /// A price and its sensitivities are checked on numerical values known to detect a formula
+    /// or unit error.
     /// </summary>
     [TestMethod]
     public void Calculer_CallHorsDeLaMonnaie_PrixEtGrecquesDeReference()
@@ -25,7 +25,8 @@ public class Black76Tests
     }
 
     /// <summary>
-    /// On vérifie le cas du put dans la monnaie, notamment le signe et l'amplitude de son delta.
+    /// The case of the put is checked in the currency, including the sign and amplitude of its
+    /// delta.
     /// </summary>
     [TestMethod]
     public void Calculer_PutDansLaMonnaie_PrixEtDeltaDeReference()
@@ -37,7 +38,8 @@ public class Black76Tests
     }
 
     /// <summary>
-    /// On vérifie une relation d'arbitrage entre call et put sur plusieurs strikes et durées.
+    /// An arbitration relationship between call and put is verified over several strikes and
+    /// durations.
     /// </summary>
     [TestMethod]
     public void Calculer_ParitéCallPutATauxNul_CMoinsPEgalFMoinsK()
@@ -54,8 +56,8 @@ public class Black76Tests
     }
 
     /// <summary>
-    /// On vérifie les grecques avec des perturbations de prix, de vol et de temps indépendantes des
-    /// formules analytiques.
+    /// Greeks are checked with price, volatility and time disruptions independent of analytical
+    /// formulas.
     /// </summary>
     [TestMethod]
     public void Calculer_GrecquesComparéesAuxDifférencesFinies_Concordent()
@@ -67,12 +69,12 @@ public class Black76Tests
         Assert.AreEqual((P(f + hF, t, s) - P(f - hF, t, s)) / (2 * hF), r.Grecques.Delta, 1e-7);
         Assert.AreEqual((P(f + hF, t, s) - 2 * P(f, t, s) + P(f - hF, t, s)) / (hF * hF), r.Grecques.Gamma, 1e-8);
         Assert.AreEqual((P(f, t, s + hS) - P(f, t, s - hS)) / (2 * hS) / 100, r.Grecques.Vega, 1e-5);
-        // On fait diminuer T pour mesurer le theta par jour de temps calendaire écoulé.
+        // T is reduced to measure the theta per day of elapsed calendar time.
         Assert.AreEqual(-(P(f, t + hT, s) - P(f, t - hT, s)) / (2 * hT) / 365, r.Grecques.Theta, 1e-3);
     }
 
     /// <summary>
-    /// On vérifie le sens économique des variations du prix pour des paramètres de marché valides.
+    /// The economic meaning of price changes is checked for valid market parameters.
     /// </summary>
     [TestMethod]
     public void Calculer_PrixCroissantAvecLaVolEtDecroissantAvecLeStrike()
@@ -89,7 +91,7 @@ public class Black76Tests
     }
 
     /// <summary>
-    /// On vérifie qu'une option échue est évaluée sans division par une durée nulle.
+    /// It is verified that a failed option is evaluated without division by zero duration.
     /// </summary>
     [TestMethod]
     public void Calculer_MaturiteNulle_RenvoieLaValeurIntrinseque()
@@ -104,7 +106,8 @@ public class Black76Tests
     }
 
     /// <summary>
-    /// On vérifie qu'un sous-jacent invalide est rejeté avant les logarithmes du modèle.
+    /// It is verified that an invalid underlying is rejected before the logarithms of the
+    /// model.
     /// </summary>
     [TestMethod]
     public void Calculer_FutureNegatif_LeveArgumentOutOfRangeException()
@@ -113,8 +116,8 @@ public class Black76Tests
     }
 
     /// <summary>
-    /// On vérifie que les deux points d'entrée du calcul partagent exactement la même convention de
-    /// prix.
+    /// It is verified that the two entry points of the calculation share exactly the same price
+    /// agreement.
     /// </summary>
     [TestMethod]
     public void Prix_SurchargeAvecParametres_EgaleCalculer()

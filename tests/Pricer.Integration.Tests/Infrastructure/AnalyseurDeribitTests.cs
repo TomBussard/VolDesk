@@ -7,7 +7,7 @@ namespace Pricer.Integration.Tests.Infrastructure;
 [TestClass]
 public class AnalyseurDeribitTests
 {
-    // On conserve une réponse ticker avec un bid inexploitable et une bid_iv nulle pour vérifier leur lecture.
+    // A ticker response is retained with an untapped bid and a null bid_iv to check their reading.
     private const string Ticker = """
     {"timestamp":1794413218961,"state":"open","greeks":{"delta":-0.98855,"gamma":1e-05,"vega":1.8925,"theta":-14.44349,"rho":-5.77311},
      "index_price":73854.89,"instrument_name":"BTC-14NOV26-80000-P","mark_price":0.0829,"best_ask_price":0.0845,"best_bid_price":0.081,
@@ -20,8 +20,7 @@ public class AnalyseurDeribitTests
     """;
 
     /// <summary>
-    /// On vérifie les conversions de prix, de volatilité, d'heure et de grecques à la lecture d'un
-    /// ticker.
+    /// Price, volatility, hour, and Greek conversions are checked when reading a ticker.
     /// </summary>
     [TestMethod]
     public void Ticker_ChampsDeribit_ConvertisDansLaCotation()
@@ -40,7 +39,7 @@ public class AnalyseurDeribitTests
     }
 
     /// <summary>
-    /// On vérifie qu'un bid nul sans liquidité n'est pas conservé comme une offre acheteuse valide.
+    /// It is verified that a null bid without liquidity is not retained as a valid buyer offer.
     /// </summary>
     [TestMethod]
     public void Ticker_BidAZeroSansQuantite_BidAbsent()
@@ -50,8 +49,8 @@ public class AnalyseurDeribitTests
     }
 
     /// <summary>
-    /// On vérifie que les caractéristiques de négociation et d'échéance du contrat sont chargées
-    /// ensemble.
+    /// It is verified that the negotiation and maturity characteristics of the contract are
+    /// loaded together.
     /// </summary>
     [TestMethod]
     public void Option_ReferentielDeribit_InstrumentComplet()
@@ -65,7 +64,7 @@ public class AnalyseurDeribitTests
     }
 
     /// <summary>
-    /// On vérifie la lecture de la date et du prix utilisés ensuite pour les règlements du book.
+    /// We check the date and price used for the book's regulations.
     /// </summary>
     [TestMethod]
     public void Reglement_DateEtPrix()

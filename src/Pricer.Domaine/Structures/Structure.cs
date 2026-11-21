@@ -4,15 +4,16 @@ using Pricer.Domaine.Modeles;
 namespace Pricer.Domaine.Structures;
 
 /// <summary>
-/// On rassemble les jambes d'une même échéance dans une structure pour appliquer leur recette et leur sens
-/// de façon cohérente.
+/// The legs of the same maturity are grouped together in a structure to apply their recipe and
+/// meaning in a coherent way.
 /// </summary>
 public sealed class Structure
 {
     private readonly List<Jambe> _jambes;
 
     /// <summary>
-    /// On copie les jambes et on refuse une liste vide avant de retenir le type et l'échéance de la structure.
+    /// We copy the legs and reject an empty list before we retain the type and maturity of the
+    /// structure.
     /// </summary>
     internal Structure(TypeStructure type, IEnumerable<Jambe> jambes)
     {
@@ -32,7 +33,7 @@ public sealed class Structure
         + string.Join("/", _jambes.Select(j => string.Create(CultureInfo.InvariantCulture, $"{j.Strike:0}{(j.Type == TypeOption.Call ? "C" : "P")}")));
 
     /// <summary>
-    /// On réutilise la description commune pour identifier la structure dans les messages et les tableaux.
+    /// The common description is re-used to identify the structure in messages and tables.
     /// </summary>
     public override string ToString() => Description;
 }

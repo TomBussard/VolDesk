@@ -14,14 +14,15 @@ using Spectre.Console;
 namespace Pricer.App;
 
 /// <summary>
-/// On prépare les services de la console au même endroit : on lit la configuration, on ouvre le journal et
-/// on relie les dépendances. On garde ainsi les écrans séparés du choix de la source de données.
+/// The console services are prepared in the same place: the configuration is read, the log is
+/// opened and the dependencies are connected, so the screens are kept separate from the data
+/// source choice.
 /// </summary>
 public static class Programme
 {
     /// <summary>
-    /// On associe les arguments courts aux réglages de l'application, par exemple --mode Rejeu --fichier
-    /// x.jsonl --vitesse 10.
+    /// Short arguments are associated with the application settings, e.g. --Replay mode --file
+    /// x.jsonl --speed 10.
     /// </summary>
     private static readonly Dictionary<string, string> Raccourcis = new()
     {
@@ -34,8 +35,8 @@ public static class Programme
     };
 
     /// <summary>
-    /// On choisit le parcours demandé en ligne de commande, on initialise le marché et on lance la
-    /// console, la démonstration ou l’export de statistiques.
+    /// We select the route requested in the command line, initialize the market and launch the
+    /// console, demonstration or export of statistics.
     /// </summary>
     /// <param name="args">On reçoit les réglages et les options du parcours, par exemple --mode Rejeu ou --demo.</param>
     /// <returns>On renvoie zéro à la fin du parcours, ou un si le chargement initial du marché échoue.</returns>
@@ -82,7 +83,7 @@ public static class Programme
 
         if (dossierStatistiques is not null)
         {
-            // On termine la lecture accélérée avant de comparer les dernières données disponibles aux champs Deribit.
+            // The accelerated reading is completed before comparing the latest available data to the Deribit fields.
             while (!marche.FluxTermine && !arret.IsCancellationRequested) await Task.Delay(200);
             var lignes = Analyse.AnalyseMarche.Valider(marche.EtatCourant);
             Analyse.AnalyseMarche.Ecrire(lignes, dossierStatistiques);
@@ -92,7 +93,7 @@ public static class Programme
 
         if (dureeSecondes is int duree)
         {
-            // On peut limiter la durée d'une capture sans ouvrir les menus, ce qui facilite les enregistrements de validation.
+            // The duration of a capture can be limited without opening menus, which facilitates validation records.
             await AnsiConsole.Status().StartAsync($"Session {options.Mode} pendant {duree} s…", async ctx =>
             {
                 var fin = DateTime.UtcNow.AddSeconds(duree);
@@ -120,8 +121,8 @@ public static class Programme
     }
 
     /// <summary>
-    /// On combine la configuration JSON et les arguments de commande, puis on relie les services qui
-    /// partagent le marché et le book.
+    /// The JSON configuration is combined with the command arguments, and then the services
+    /// that share the market and the book are linked.
     /// </summary>
     /// <param name="options">On renvoie aussi les options résolues pour accéder aux chemins et au mode réellement utilisés.</param>
     /// <returns>On renvoie le conteneur à libérer en fin de session.</returns>
@@ -140,7 +141,7 @@ public static class Programme
             var niveau = Enum.TryParse<LogLevel>(configuration["Logging:NiveauMinimal"], out var n) ? n : LogLevel.Information;
             b.SetMinimumLevel(niveau);
         });
-        // On laisse le conteneur fermer le journal à la fin de chaque session.
+        // We let the container close the log at the end of each session.
         services.AddSingleton<ILoggerProvider>(_ => new JournalFichierProvider(
             configuration["Logging:Fichier"] ?? "logs/pricer.log",
             Enum.TryParse<LogLevel>(configuration["Logging:NiveauMinimal"], out var niveau) ? niveau : LogLevel.Information));

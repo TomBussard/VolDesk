@@ -1,8 +1,8 @@
 namespace Pricer.Infrastructure.Transport;
 
 /// <summary>
-/// On utilise un seau à jetons pour autoriser une courte rafale, puis limiter le nombre d'appels par
-/// seconde. On injecte la mesure du temps pour tester ce mécanisme sans attendre réellement.
+/// A token bucket is used to allow a short burst, then limit the number of calls per second.
+/// Time measurement is injected to test this mechanism without actually waiting.
 /// </summary>
 public sealed class LimiteurDebit
 {
@@ -14,8 +14,7 @@ public sealed class LimiteurDebit
     private TimeSpan _dernier;
 
     /// <summary>
-    /// On prépare une réserve pleine de jetons pour autoriser une rafale initiale, puis un débit
-    /// régulier.
+    /// A reserve full of chips is prepared to allow an initial gust, then a regular flow.
     /// </summary>
     /// <param name="parSeconde">On ajoute ce nombre de jetons par seconde écoulée.</param>
     /// <param name="rafale">On limite à cette valeur le nombre de jetons disponibles simultanément.</param>
@@ -37,8 +36,8 @@ public sealed class LimiteurDebit
     }
 
     /// <summary>
-    /// On consomme un jeton lorsqu'une requête peut partir. Sinon, on calcule le délai nécessaire avant de
-    /// réessayer.
+    /// One consumes a token when a request can go. Otherwise, one calculates the necessary time
+    /// before trying again.
     /// </summary>
     /// <param name="attente">On indique le délai avant le prochain jeton si la réserve est insuffisante.</param>
     /// <returns>On renvoie vrai lorsqu’un jeton a été consommé, faux si l’appelant doit encore attendre.</returns>
@@ -59,7 +58,7 @@ public sealed class LimiteurDebit
     }
 
     /// <summary>
-    /// On attend qu’un jeton puisse être consommé avant de laisser partir une requête REST.
+    /// We wait until a token can be consumed before letting go a REST request.
     /// </summary>
     public async Task AttendreAsync(CancellationToken ct = default)
     {
@@ -68,7 +67,7 @@ public sealed class LimiteurDebit
     }
 
     /// <summary>
-    /// On ajoute les jetons gagnés depuis le dernier contrôle sans dépasser la capacité de rafale.
+    /// We add the tokens won since the last control without exceeding the gust capacity.
     /// </summary>
     private void Remplir()
     {

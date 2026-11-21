@@ -11,8 +11,8 @@ namespace Pricer.Domaine.Tests.Booking;
 public class BookTests
 {
     /// <summary>
-    /// On ouvre un spread sur le marché de test et on renvoie les objets nécessaires aux assertions du
-    /// book.
+    /// We open a spread on the test market and return the necessary objects to the book
+    /// assertions.
     /// </summary>
     private static (Blotter, Pricer.Domaine.Booking.Book, Marche.EtatMarche, Trade) BookerCallSpread(double quantite = 2)
     {
@@ -23,7 +23,7 @@ public class BookTests
     }
 
     /// <summary>
-    /// On vérifie que l'historique retient les côtés bid/ask réellement utilisés pour chaque jambe.
+    /// It is checked that the history retains the actually used Bid/ask sides for each leg.
     /// </summary>
     [TestMethod]
     public void Booker_EnregistreLesJambesAuxPrixExecutables()
@@ -41,7 +41,8 @@ public class BookTests
     }
 
     /// <summary>
-    /// On vérifie qu'une cote indicative incomplète ne peut pas devenir une exécution enregistrée.
+    /// It is verified that an incomplete indicative rating cannot become a registered
+    /// execution.
     /// </summary>
     [TestMethod]
     public void Booker_StructureNonTraitable_Refusee()
@@ -55,8 +56,8 @@ public class BookTests
     }
 
     /// <summary>
-    /// On vérifie que la valorisation initiale tient compte de la prime exécutée, donc du coût de
-    /// fourchette.
+    /// It is verified that the initial valuation takes into account the premium paid, i.e. the
+    /// range cost.
     /// </summary>
     [TestMethod]
     public void Evaluer_JusteApresLeTrade_PnlLatentEgalAuMarkMoinsPrime()
@@ -74,8 +75,8 @@ public class BookTests
     }
 
     /// <summary>
-    /// On vérifie qu'une clôture partielle répartit correctement la prime entre le reliquat et le
-    /// résultat réalisé.
+    /// It is verified that a partial closure correctly allocates the premium between the
+    /// balance remaining and the result achieved.
     /// </summary>
     [TestMethod]
     public void Deboucler_Moitie_QuantiteOuverteEtPnlRealise()
@@ -89,14 +90,14 @@ public class BookTests
         Assert.AreEqual(1, blotter.QuantiteOuverte(t.Id), 1e-12);
         Assert.AreEqual(-1, d.Jambes[0].QuantiteSignee, 1e-12);
         var p = book.Evaluer(etat).Positions.Single();
-        // On retrouve le coût de fourchette sur la moitié débouclée, sans mouvement du marché.
+        // We find the cost of fork on the debunked half, without movement of the market.
         Assert.AreEqual(-d.PrimeBtc - 0.5 * t.PrimeBtc, p.PnlRealiseBtc, 1e-12);
         Assert.IsTrue(p.PnlRealiseBtc < 0);
     }
 
     /// <summary>
-    /// On vérifie qu'une clôture ne peut pas créer une position opposée en dépassant la quantité
-    /// disponible.
+    /// It is verified that a fence cannot create an opposite position by exceeding the
+    /// available quantity.
     /// </summary>
     [TestMethod]
     public void Deboucler_PlusQueLaQuantiteOuverte_Refuse()
@@ -109,7 +110,7 @@ public class BookTests
     }
 
     /// <summary>
-    /// On vérifie qu'un débouclage complet ne conserve aucune position ouverte pour le trade.
+    /// It is verified that a full de-coupling does not retain an open position for the trade.
     /// </summary>
     [TestMethod]
     public void Deboucler_Total_PositionSortDuBook()
@@ -124,7 +125,8 @@ public class BookTests
     }
 
     /// <summary>
-    /// On vérifie que le règlement utilise le payoff officiel et le transfère au résultat réalisé.
+    /// It is verified that the settlement uses the official payoff and transfers it to the
+    /// realized result.
     /// </summary>
     [TestMethod]
     public void ReglerEcheances_OptionEchue_PayoffSurPrixDeReglementDansLeRealise()
@@ -145,8 +147,8 @@ public class BookTests
     }
 
     /// <summary>
-    /// On vérifie que les sensibilités de maturités différentes restent séparées avant l'agrégation
-    /// totale.
+    /// It is verified that the sensitivities of different maturities remain separate before
+    /// total aggregation.
     /// </summary>
     [TestMethod]
     public void Evaluer_DeuxEcheances_GrecquesGroupeesParEcheance()
@@ -165,7 +167,8 @@ public class BookTests
     }
 
     /// <summary>
-    /// On vérifie que l'OTC et ses couvertures enregistrées donnent les résidus attendus dans le book.
+    /// It is verified that the CTA and its registered covers give the expected residues in the
+    /// book.
     /// </summary>
     [TestMethod]
     public void BookerSurMesure_AvecCouverture_GrecquesDuBookQuasiNeutres()
@@ -185,7 +188,8 @@ public class BookTests
     }
 
     /// <summary>
-    /// On vérifie que plusieurs positions sur le même instrument ne créent pas d'abonnements dupliqués.
+    /// It is verified that several positions on the same instrument do not create duplicate
+    /// subscriptions.
     /// </summary>
     [TestMethod]
     public void InstrumentsSuivis_SansDoublons()

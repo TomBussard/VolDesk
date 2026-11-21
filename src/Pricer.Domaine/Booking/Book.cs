@@ -5,7 +5,10 @@ using Pricer.Domaine.Structures;
 
 namespace Pricer.Domaine.Booking;
 
-/// <summary>On rassemble les valeurs, le risque et le statut d’une ouverture, y compris les couvertures encore vivantes.</summary>
+/// <summary>
+/// The values, the risk and the status of an opening, including still alive covers, are grouped
+/// together.
+/// </summary>
 public sealed record PositionStructure
 {
     public required Trade Origine { get; init; }
@@ -27,7 +30,10 @@ public sealed record PositionStructure
     public bool EstOuverte => QuantiteOuverte > 0 || JambesOuvertes.Count > 0;
 }
 
-/// <summary>On présente un état cohérent du book à un instant, avec les risques regroupés par échéance.</summary>
+/// <summary>
+/// A consistent statement of the book is presented at a moment, with the risks grouped by
+/// maturity.
+/// </summary>
 public sealed record EtatBook
 {
     public string Devise { get; init; } = "BTC";
@@ -48,19 +54,22 @@ public sealed record EtatBook
     public Grecques GrecquesTotales => GrecquesParEcheance.Values.Aggregate(Grecques.Zero, (a, g) => a + g);
 }
 
-/// <summary>On valorise l’historique du blotter sans supprimer les opérations réglées, pour conserver leur résultat réalisé.</summary>
+/// <summary>
+/// The history of the float is valued without removing the settled operations, to keep their
+/// realized result.
+/// </summary>
 /// <param name="blotter">L'historique partagé dont on lit les positions et les événements de fermeture.</param>
 public sealed class Book(Blotter blotter)
 {
     public Blotter Blotter { get; } = blotter;
     /// <summary>
-    /// On valorise le book sous le verrou du blotter pour garder les positions et les résultats cohérents
-    /// pendant la lecture.
+    /// We value the book under the lock of the float to keep positions and results consistent
+    /// during playback.
     /// </summary>
     public EtatBook Evaluer(IContexteMarche contexte) => Blotter.Lire(() => EvaluerCoherent(contexte));
     /// <summary>
-    /// On réunit les positions évaluées et leurs risques par échéance, puis on convertit le P&amp;L total
-    /// avec l'indice courant.
+    /// The positions assessed and their risks by maturity are combined and then converted to
+    /// the total P&amp;L with current index.
     /// </summary>
     private EtatBook EvaluerCoherent(IContexteMarche contexte)
     {
@@ -77,23 +86,22 @@ public sealed class Book(Blotter blotter)
         };
     }
     /// <summary>
-    /// On liste les instruments cotés encore ouverts pour demander leurs mises à jour lors du chargement du
-    /// book.
+    /// List the listed instruments still open to request their updates when loading the book.
     /// </summary>
     public HashSet<string> InstrumentsSuivis() => Blotter.Ouvertures.SelectMany(o => o.Jambes
         .Where(j => j.Nature != NatureJambe.OptionSurMesure && Blotter.QuantiteOuverteJambe(o.Id, j.Id) != 0))
         .Select(j => j.Instrument).ToHashSet();
 
     /// <summary>
-    /// On recherche les jambes échues sous le verrou du blotter et on ne les règle que si leur prix officiel
-    /// est disponible.
+    /// We look for the fallen legs under the lock of the float and we only settle them if their
+    /// official price is available.
     /// </summary>
     /// <returns>Les événements de règlement créés pour les échéances disposant d'un prix valide.</returns>
     public IReadOnlyList<Trade> ReglerEcheances(DateTime maintenant, IReadOnlyDictionary<DateOnly, double> prixReglement) =>
         Blotter.Lire(() => ReglerCoherent(maintenant, prixReglement));
     /// <summary>
-    /// On parcourt les dates échues de chaque ouverture et on règle chaque date séparément pour conserver
-    /// les autres jambes.
+    /// Timed dates of each opening are reviewed and each date is set separately to keep the
+    /// other legs.
     /// </summary>
     private IReadOnlyList<Trade> ReglerCoherent(DateTime maintenant, IReadOnlyDictionary<DateOnly, double> prixReglement)
     {
@@ -102,7 +110,7 @@ public sealed class Book(Blotter blotter)
             foreach (var date in o.Jambes.Where(j => j.Echeance <= maintenant && Blotter.QuantiteOuverteJambe(o.Id, j.Id) != 0)
                 .Select(j => j.Echeance).Distinct().OrderBy(d => d))
             {
-                // On règle chaque échéance séparément, sans fermer les couvertures encore vivantes.
+                // Each maturity is settled separately, without closing the still alive hedges.
                 if (prixReglement.TryGetValue(DateOnly.FromDateTime(date), out double prix) && double.IsFinite(prix) && prix > 0)
                     resultat.Add(Blotter.Regler(o.Id, prix, date));
             }
@@ -110,21 +118,21 @@ public sealed class Book(Blotter blotter)
     }
 
     /// <summary>
-    /// On sépare le réalisé des fermetures et la valeur des jambes encore ouvertes ; une donnée absente rend
-    /// la valorisation incomplète.
+    /// We separate the realization from the closures and the value of the legs still open; a
+    /// lack of data makes the valorisation incomplete.
     /// </summary>
     private PositionStructure EvaluerPosition(Trade o, IContexteMarche contexte)
     {
         var ouvertes = o.Jambes.Select(j => (Jambe: j, QuantiteOuverte: Blotter.QuantiteOuverteJambe(o.Id, j.Id)))
             .Where(j => j.QuantiteOuverte != 0).ToList();
         double realise = 0, mark = 0, theo = 0;
-        // On rattache chaque résultat réalisé à sa jambe d’origine, même si plusieurs trades portent sur le même instrument.
+        // Each result is attached to its original leg, even if several trades are related to the same instrument.
         foreach (var fermeture in Blotter.TradesLies(o.Id).SelectMany(t => t.Jambes))
         {
             var j = o.Jambes.Single(j => j.Id == fermeture.IdJambeOrigine);
             if (j.Nature == NatureJambe.Future)
             {
-                // On utilise le notionnel USD fermé et les inverses de prix, conformément au règlement crypto du future.
+                // The notional closed USD and the price inverses are used in accordance with the crypto settlement of the future.
                 double montantFerme = fermeture.NotionnelUsd != 0 ? fermeture.NotionnelUsd : fermeture.QuantiteSignee * j.PrixExecution;
                 realise += -montantFerme * (1 / j.PrixExecution - 1 / fermeture.PrixExecution);
             }
@@ -147,7 +155,7 @@ public sealed class Book(Blotter blotter)
             }
             catch (Exception ex) when (ex is PricerException or ArgumentException or InvalidOperationException)
             {
-                // On ne remplace jamais une valeur de marché absente par zéro ou par le prix d'entrée.
+                // An absent market value is never replaced by zero or the entry price.
                 valeurComplete = false; risqueComplet = false; alertes.Add(ex.Message);
             }
         }
@@ -174,15 +182,15 @@ public sealed class Book(Blotter blotter)
     }
 
     /// <summary>
-    /// On valorise une unité dans les conventions de la jambe : modèle pour l'OTC, mark pour le coté et
-    /// P&amp;L inverse pour le future.
+    /// One unit is valued in the leg conventions: model for the CTA, mark for the side and
+    /// reverse P&amp;L for the future.
     /// </summary>
     /// <returns>La valeur au mark, la valeur théorique et les grecques ; les valeurs sont en crypto, les grecques suivent les conventions USD.</returns>
     private static (double Mark, double Theorique, Grecques Grecques) ValeurUnitaire(JambeExecutee j, IContexteMarche contexte)
     {
         if (j.Nature == NatureJambe.OptionSurMesure)
         {
-            // On utilise explicitement le modèle pour l’OTC, puisqu’aucun mark Deribit de ce contrat n’existe.
+            // The model is explicitly used for the CTA, as there is no Deribit mark in this contract.
             var r = new JambeSurMesure(j.Type!.Value, j.Strike, j.Echeance, 1).Evaluer(contexte);
             return (r.PrixBtc, r.PrixBtc, r.Grecques);
         }

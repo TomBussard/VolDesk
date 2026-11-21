@@ -1,9 +1,9 @@
 namespace Pricer.Domaine.Modeles;
 
 /// <summary>
-/// On représente un message de marché sans modifier ses valeurs après réception. Les prix d'options sont en
-/// crypto, les futures et l'indice en USD, et les IV en pourcentage comme dans l'API. On garde null quand
-/// un prix manque.
+/// We represent a market message without changing its values after receipt. Options prices are
+/// in crypto, futures and index in USD, and IVs in percentage as in API. We keep null when a
+/// price is missing.
 /// </summary>
 public sealed record Cotation
 {
@@ -16,13 +16,15 @@ public sealed record Cotation
     public double? MarkIv { get; init; }
     public double? AskIv { get; init; }
     /// <summary>
-    /// On conserve le future de même échéance publié dans underlying_price, car Black-76 ne doit pas utiliser
-    /// le spot à sa place.
+    /// Deribit supplies the expiry-specific forward in underlying_price. Black-76 uses that forward as its underlying.
     /// </summary>
     public double? Future { get; init; }
     public double? Indice { get; init; }
     public Grecques? GrecquesDeribit { get; init; }
-    /// <summary>On distingue un ticker complet d'un résumé pour savoir quels champs ont réellement été transmis.</summary>
+    /// <summary>
+    /// A complete ticker is distinguished from a summary to find out which fields have
+    /// actually been transmitted.
+    /// </summary>
     public bool EstComplete { get; init; } = true;
 
     public string Etat { get; init; } = "open";
@@ -31,13 +33,14 @@ public sealed record Cotation
     public double? Mid => FourchetteValide ? (Ask!.Value + Bid!.Value) / 2 : null;
 
     /// <summary>
-    /// On accepte un âge de moins cinq à trente secondes pour tolérer un léger décalage d'horloge et refuser
-    /// les prix périmés.
+    /// We accept an age of less than five to thirty seconds to tolerate a slight clock shift
+    /// and refuse expired prices.
     /// </summary>
     public bool EstFraiche(DateTime maintenant) => (maintenant - Horodatage).TotalSeconds is >= -5 and <= 30;
 
     /// <summary>
-    /// On bloque le calcul avec un message explicite lorsque la cotation sort de la fenêtre de fraîcheur.
+    /// The calculation is blocked with an explicit message when the rating comes out of the
+    /// cool window.
     /// </summary>
     public void VerifierFraicheur(DateTime maintenant)
     {
@@ -46,5 +49,7 @@ public sealed record Cotation
     }
 }
 
-/// <summary>On associe le prix officiel de livraison à sa date pour régler uniquement les jambes concernées.</summary>
+/// <summary>
+/// The official delivery price is linked to its date to adjust only the legs concerned.
+/// </summary>
 public sealed record PrixReglement(DateOnly Date, double Prix);

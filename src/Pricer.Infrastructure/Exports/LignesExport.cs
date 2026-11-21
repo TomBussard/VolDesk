@@ -4,8 +4,8 @@ using Pricer.Domaine.Modeles;
 namespace Pricer.Infrastructure.Exports;
 
 /// <summary>
-/// On présente chaque jambe du blotter sur une ligne pour conserver ses paramètres dans un export
-/// facilement relisible.
+/// Each leg of the float is presented on a line to keep its parameters in an easily rereadable
+/// export.
 /// </summary>
 public sealed record LigneBlotter
 {
@@ -31,8 +31,8 @@ public sealed record LigneBlotter
 }
 
 /// <summary>
-/// On regroupe sur une ligne les valeurs et le résultat d'une structure d'origine pour lire l'état du book
-/// dans les exports.
+/// The values and the result of an original structure are grouped together on a line to read
+/// the status of the book in exports.
 /// </summary>
 public sealed record LigneBook
 {
@@ -58,27 +58,31 @@ public sealed record LigneBook
 }
 
 /// <summary>
-/// On rassemble les grecques d'une échéance pour distinguer les risques portés par les différentes
-/// maturités.
+/// Greeks are brought together from a expiry to distinguish between the risks posed by
+/// different maturities.
 /// </summary>
 public sealed record LigneGrecques(string Echeance, double Delta, double Gamma, double Vega, double Theta, string Statut = "Complet");
-/// <summary>On détaille le solde d’une jambe ouverte, son notionnel éventuel et son statut dans le book.</summary>
+/// <summary>
+/// We detail the balance of an open leg, its possible notional and its status in the book.
+/// </summary>
 public sealed record LignePositionJambe(string IdTrade, Guid IdJambe, string Instrument, string Nature,
     string Echeance, double QuantiteRestante, double? NotionnelRestantUsd, double PrixEntree, string Statut);
-/// <summary>On associe chaque mesure globale à son unité et à sa disponibilité dans l’export de synthèse.</summary>
+/// <summary>
+/// Each global measure is associated with its unit and its availability in synthesis export.
+/// </summary>
 public sealed record LigneSynthese(string Mesure, string Unite, double? Valeur, string Statut);
 
 /// <summary>
-/// On prépare les lignes des exports dans des méthodes d'extension pour partager la même présentation
-/// entre les formats.
+/// Export lines are prepared in extension methods to share the same presentation between
+/// formats.
 /// </summary>
 public static class ExtensionsExport
 {
     private const string FormatDate = "yyyy-MM-dd HH:mm:ss";
 
     /// <summary>
-    /// On produit une ligne par jambe d’une opération en conservant les références qui relient les
-    /// fermetures à leur ouverture.
+    /// One line per leg of an operation is produced by keeping the references that link the
+    /// closures to their opening.
     /// </summary>
     public static IEnumerable<LigneBlotter> VersLignes(this Trade t) => t.Jambes.Select(j => new LigneBlotter
     {
@@ -104,8 +108,8 @@ public static class ExtensionsExport
     });
 
     /// <summary>
-    /// On exporte une ligne par position et on laisse les valorisations indisponibles vides au lieu
-    /// d’écrire un nombre trompeur.
+    /// We export one line per position and leave unavailable valuations empty instead of
+    /// writing a misleading number.
     /// </summary>
     public static IEnumerable<LigneBook> VersLignes(this EtatBook e) => e.Positions.Select(p => new LigneBook
     {
@@ -131,16 +135,16 @@ public static class ExtensionsExport
     });
 
     /// <summary>
-    /// On exporte les sensibilités par échéance puis leur total, en précisant si le risque calculé est
-    /// partiel.
+    /// Sensitivities are exported by maturity and then totals, specifying whether the
+    /// calculated risk is partial.
     /// </summary>
     public static IEnumerable<LigneGrecques> VersLignesGrecques(this EtatBook e) =>
         e.GrecquesParEcheance.Select(kv => new LigneGrecques(kv.Key.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), kv.Value.Delta, kv.Value.Gamma, kv.Value.Vega, kv.Value.Theta, e.RisqueComplet ? "Complet" : "Partiel"))
          .Append(new LigneGrecques("TOTAL", e.GrecquesTotales.Delta, e.GrecquesTotales.Gamma, e.GrecquesTotales.Vega, e.GrecquesTotales.Theta, e.RisqueComplet ? "Complet" : "Partiel"));
 
     /// <summary>
-    /// On détaille les soldes encore ouverts et le notionnel restant des futures pour suivre les
-    /// couvertures résiduelles.
+    /// The remaining balances and the remaining notional of the futures are detailed to track
+    /// residual hedges.
     /// </summary>
     public static IEnumerable<LignePositionJambe> VersJambesOuvertes(this EtatBook e) => e.Positions.SelectMany(p =>
         p.JambesOuvertes.Select(x => new LignePositionJambe(p.Origine.Id.ToString(), x.Jambe.Id, x.Jambe.Instrument,
@@ -149,8 +153,8 @@ public static class ExtensionsExport
             x.Jambe.PrixExecution, p.Statut)));
 
     /// <summary>
-    /// On produit les mesures globales avec leur unité et leur statut pour garder un export lisible même
-    /// si une donnée manque.
+    /// Global measurements are produced with their unit and status to keep an export legible
+    /// even if data is missing.
     /// </summary>
     public static IEnumerable<LigneSynthese> VersSynthese(this EtatBook e)
     {
@@ -169,8 +173,8 @@ public static class ExtensionsExport
         yield return new("Theta", "USD / jour", e.GrecquesTotales.Theta, risque);
     }
     /// <summary>
-    /// On remplace une valeur non finie par une valeur absente, afin que les exports ne présentent pas
-    /// une valorisation invalide comme un résultat.
+    /// An unfinished value is replaced by an absent value, so that exports do not show invalid
+    /// valuation as a result.
     /// </summary>
     private static double? Disponible(double x) => double.IsFinite(x) ? x : null;
 }

@@ -6,7 +6,8 @@ namespace Pricer.Domaine.Tests.Pricing;
 public class LoiNormaleTests
 {
     /// <summary>
-    /// On vérifie la fonction normale sur des valeurs tabulées pour contrôler la précision du pricing.
+    /// The normal function is checked on tabulated values to control the accuracy of the
+    /// pricing.
     /// </summary>
     [DataTestMethod]
     [DataRow(0.0, 0.5)]
@@ -18,7 +19,7 @@ public class LoiNormaleTests
     }
 
     /// <summary>
-    /// On vérifie la symétrie de la loi normale de part et d'autre de zéro.
+    /// We check the symmetry of normal law on both sides of zero.
     /// </summary>
     [TestMethod]
     public void Cdf_Symetrie_NxPlusNmoinsxEgal1()
@@ -28,7 +29,8 @@ public class LoiNormaleTests
     }
 
     /// <summary>
-    /// On vérifie que les cas extrêmes ne produisent pas de probabilité négative ou supérieure à un.
+    /// It is verified that extreme cases do not produce a negative probability or greater than
+    /// one.
     /// </summary>
     [TestMethod]
     public void Cdf_QueuesExtremes_RestentDansZeroUn()
@@ -38,7 +40,7 @@ public class LoiNormaleTests
     }
 
     /// <summary>
-    /// On vérifie la normalisation de la densité utilisée dans les grecques.
+    /// The normalization of the density used in Greeks is checked.
     /// </summary>
     [TestMethod]
     public void Densite_EnZero_Vaut1SurRacineDe2Pi()

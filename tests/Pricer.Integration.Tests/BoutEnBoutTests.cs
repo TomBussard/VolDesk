@@ -3,16 +3,15 @@ using Pricer.App;
 namespace Pricer.Integration.Tests;
 
 /// <summary>
-/// Test de bout en bout (E2E) : l'application complète démarre en mode rejeu sur l'enregistrement
-/// de démonstration, sans réseau, exécute le scénario (cotations, refus de saisie, couverture,
-/// booking, débouclage, book) et produit ses exports.
+/// End-to-end test (E2E): the full application starts in replay mode on the demo record,
+/// without network, executes the scenario (rating, refusal to enter, cover, booking, debunking,
+/// book) and produces its exports.
 /// </summary>
 [TestClass]
 public class BoutEnBoutTests
 {
     /// <summary>
-    /// On remonte jusqu'à la solution pour retrouver les données du test sans imposer un dossier de
-    /// lancement.
+    /// We go back to the solution to retrieve the test data without imposing a launch file.
     /// </summary>
     private static string RacineDepot()
     {
@@ -22,8 +21,8 @@ public class BoutEnBoutTests
     }
 
     /// <summary>
-    /// On vérifie qu'un parcours console complet peut traiter les structures et produire les fichiers
-    /// sans connexion.
+    /// We check that a complete console path can process structures and produce files without a
+    /// connection.
     /// </summary>
     [TestMethod]
     [Timeout(120_000)]
@@ -56,8 +55,8 @@ public class BoutEnBoutTests
     }
 
     /// <summary>
-    /// On vérifie qu'un fichier absent produit un échec expliqué au lieu d'arrêter brutalement
-    /// l'application.
+    /// A missing file is checked for failure explained instead of abruptly stopping the
+    /// application.
     /// </summary>
     [TestMethod]
     public async Task Main_FichierDeRejeuAbsent_CodeRetour1SansException()
@@ -66,4 +65,3 @@ public class BoutEnBoutTests
         Assert.AreEqual(1, code);
     }
 }
-

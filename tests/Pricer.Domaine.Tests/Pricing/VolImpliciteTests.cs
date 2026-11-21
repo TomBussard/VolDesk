@@ -7,7 +7,7 @@ namespace Pricer.Domaine.Tests.Pricing;
 public class VolImpliciteTests
 {
     /// <summary>
-    /// On vérifie l'inversion du prix sur plusieurs strikes, durées et volatilités connues.
+    /// Price reversal is verified on several known strikes, durations and volatilitys.
     /// </summary>
     [TestMethod]
     public void Calculer_AllerRetourSurUneGrille_RetrouveLaVol()
@@ -20,17 +20,17 @@ public class VolImpliciteTests
                         double prix = Black76.Prix(74000, k, t, s, type);
                         var r = VolImplicite.Calculer(prix, 74000, k, t, type);
                         if (r.Statut != StatutVol.Calculee) continue; // valeur temps sous la précision machine
-                        // On exige la tolérance de prix même lorsque l'inversion de la vol est sensible.
+                        // Price tolerance is required even when the inversion of the volatility is sensitive.
                         Assert.AreEqual(prix, Black76.Prix(74000, k, t, r.Sigma!.Value, type), 1e-6);
-                        // On compare aussi la vol lorsque le vega permet de l'identifier avec précision.
+                        // Volatility is also compared when the vega accurately identifies it.
                         if (Black76.Calculer(74000, k, t, s, type).VegaBrut > 1)
                             Assert.AreEqual(s, r.Sigma!.Value, 1e-5, $"{type} K={k} T={t} σ={s}");
                     }
     }
 
     /// <summary>
-    /// On vérifie que Newton converge rapidement lorsque le vega permet une inversion bien
-    /// conditionnée.
+    /// We check that Newton converges quickly when the vega allows a well conditioned
+    /// inversion.
     /// </summary>
     [TestMethod]
     public void Calculer_ATM_ConvergeParNewtonEnPeuDIterations()
@@ -45,7 +45,8 @@ public class VolImpliciteTests
     }
 
     /// <summary>
-    /// On vérifie qu'un prix sous sa borne d'arbitrage n'est pas transformé en volatilité.
+    /// It is verified that a price below its arbitration point is not transformed into
+    /// volatility.
     /// </summary>
     [TestMethod]
     public void Calculer_PrixSousLaValeurIntrinseque_NonCalculable()
@@ -56,7 +57,7 @@ public class VolImpliciteTests
     }
 
     /// <summary>
-    /// On vérifie que la borne supérieure du call est contrôlée avant de chercher une racine.
+    /// It is checked that the upper terminal of the call is checked before looking for a root.
     /// </summary>
     [TestMethod]
     public void Calculer_PrixSuperieurAuFuture_NonCalculable()
@@ -66,7 +67,8 @@ public class VolImpliciteTests
     }
 
     /// <summary>
-    /// On vérifie qu'un prix inexploitable donne un statut explicite plutôt qu'une volatilité inventée.
+    /// It is verified that an untapped price gives an explicit status rather than invented
+    /// volatility.
     /// </summary>
     [TestMethod]
     public void Calculer_PrixNulOuNegatif_NonCalculable()
@@ -75,12 +77,12 @@ public class VolImpliciteTests
     }
 
     /// <summary>
-    /// On vérifie que le secours par encadrement reste utilisable lorsque Newton manque de sensibilité.
+    /// It is checked that frame rescue remains usable when Newton lacks sensitivity.
     /// </summary>
     [TestMethod]
     public void Calculer_OptionTresHorsDeLaMonnaieVegaInfime_BasculeSurDichotomie()
     {
-        // On choisit un strike très éloigné et une durée courte pour rendre le vega initial presque nul.
+        // We choose a very distant strike and a short duration to make the initial vega almost void.
         double prix = Black76.Prix(74000, 150000, 0.05, 1.5, TypeOption.Call);
         var r = VolImplicite.Calculer(prix, 74000, 150000, 0.05, TypeOption.Call);
 
@@ -90,8 +92,8 @@ public class VolImpliciteTests
     }
 
     /// <summary>
-    /// On vérifie qu'une solution hors de la plage autorisée est signalée au lieu d'être acceptée
-    /// silencieusement.
+    /// It is verified that a solution outside the authorized range is reported instead of being
+    /// accepted silently.
     /// </summary>
     [TestMethod]
     public void Calculer_VolAuDelaDe500Pourcent_HorsIntervalle()
@@ -101,7 +103,8 @@ public class VolImpliciteTests
     }
 
     /// <summary>
-    /// On vérifie qu'une option sans durée restante ne passe pas par l'inversion numérique.
+    /// It is checked that an option with no remaining duration does not involve digital
+    /// inversion.
     /// </summary>
     [TestMethod]
     public void Calculer_MaturiteEchue_NonCalculable()
@@ -110,7 +113,8 @@ public class VolImpliciteTests
     }
 
     /// <summary>
-    /// On vérifie que l'inversion d'un prix crypto utilise bien le future pour retrouver le prix USD.
+    /// We are checking that the reversal of a crypto price is using the future to find the USD
+    /// price.
     /// </summary>
     [TestMethod]
     public void CalculerDepuisBtc_ConvertitEnUsdAvantInversion()

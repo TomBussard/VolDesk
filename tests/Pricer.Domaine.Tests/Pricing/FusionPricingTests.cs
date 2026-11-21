@@ -11,8 +11,8 @@ namespace Pricer.Domaine.Tests.Pricing;
 public class FusionPricingTests
 {
     /// <summary>
-    /// On vérifie que le scénario sans choc retrouve la cote courante pour toutes les recettes
-    /// proposées.
+    /// It is verified that the shock-free scenario returns to the current rating for all
+    /// proposed revenues.
     /// </summary>
     [DataTestMethod]
     [DataRow(TypeStructure.CallSpread)]
@@ -42,7 +42,8 @@ public class FusionPricingTests
     }
 
     /// <summary>
-    /// On vérifie que changer le sens de la structure inverse ses sensibilités sur toute la grille.
+    /// It is checked that changing the direction of the structure inverses its sensitivities
+    /// throughout the grid.
     /// </summary>
     [TestMethod]
     public void Profil_Vente_InverseDeltaEtVega()
@@ -59,8 +60,8 @@ public class FusionPricingTests
     }
 
     /// <summary>
-    /// On vérifie que le profil OTC montre le contrat du desk et sa prime, sans y mélanger les
-    /// couvertures.
+    /// We check that the OTC profile shows the desk's contract and premium, without mixing the
+    /// covers.
     /// </summary>
     [TestMethod]
     public void Profil_OTC_ContientOptionDeskSansCouverture()
@@ -76,7 +77,8 @@ public class FusionPricingTests
     }
 
     /// <summary>
-    /// On vérifie qu'une grille invalide ou trop grande est rejetée avant de lancer ses calculs.
+    /// It is checked that an invalid or too large grid is rejected before starting its
+    /// calculations.
     /// </summary>
     [DataTestMethod]
     [DataRow(-1.0, 0.3, 0.05)]
@@ -90,7 +92,8 @@ public class FusionPricingTests
     }
 
     /// <summary>
-    /// On vérifie que l'état du marché et la cohérence bid/ask conditionnent réellement le traitement.
+    /// It is verified that market conditions and consistency bid/ask really condition the
+    /// treatment.
     /// </summary>
     [TestMethod]
     public void Coter_CarnetCroiseOuFerme_NonTraitable()
@@ -105,8 +108,8 @@ public class FusionPricingTests
     }
 
     /// <summary>
-    /// On vérifie qu'une ancienne quote ne reste pas négociable simplement parce qu'elle est encore en
-    /// mémoire.
+    /// It is verified that an old quota does not remain negotiable simply because it is still
+    /// in memory.
     /// </summary>
     [TestMethod]
     public void Coter_CotationPerimee_Refusee()
@@ -118,8 +121,8 @@ public class FusionPricingTests
     }
 
     /// <summary>
-    /// On vérifie qu'un future absent n'est pas remplacé arbitrairement par un contrat d'une autre
-    /// échéance.
+    /// It is verified that a future absentee is not arbitrarily replaced by a contract of
+    /// another maturity.
     /// </summary>
     [TestMethod]
     public void Coter_FutureAbsent_NeLeRemplacePasParAutreInstrument()
@@ -131,7 +134,8 @@ public class FusionPricingTests
     }
 
     /// <summary>
-    /// On vérifie que la neutralisation du delta exige elle aussi une fourchette de marché exploitable.
+    /// It is verified that the neutralization of the delta also requires an exploitable market
+    /// range.
     /// </summary>
     [TestMethod]
     public void Couvrir_FuturesSansBidAsk_Refuse()
@@ -142,7 +146,8 @@ public class FusionPricingTests
     }
 
     /// <summary>
-    /// On vérifie le choix d'un future assez long et le calcul du delta après l'arrondi des options.
+    /// We check the choice of a fairly long future and the calculation of the delta after
+    /// rounding the options.
     /// </summary>
     [TestMethod]
     public void Couvrir_FutureApresOtcEtDeltaApresArrondiOptions()
@@ -156,8 +161,8 @@ public class FusionPricingTests
     }
 
     /// <summary>
-    /// On vérifie qu'une baisse de variance totale entre les échéances bloque une interpolation
-    /// incohérente.
+    /// A decrease in total variance between maturities is verified to block inconsistent
+    /// interpolation.
     /// </summary>
     [TestMethod]
     public void Interpoler_VarianceDecroissante_Refuse()
@@ -168,7 +173,8 @@ public class FusionPricingTests
     }
 
     /// <summary>
-    /// On vérifie qu'un mark inutilisable permet d'essayer le call ou put alternatif au même strike.
+    /// It is checked that an unusable mark allows to try the call or put alternative to the
+    /// same strike.
     /// </summary>
     [TestMethod]
     public void Smile_MarkOtmInutilisable_EssaieAutreOptionDuStrike()
@@ -179,4 +185,3 @@ public class FusionPricingTests
         Assert.IsTrue(e.Smiles().Single(s => s.Echeance == MarcheDeTest.E1).Points.Any(p => p.Strike == 76000));
     }
 }
-

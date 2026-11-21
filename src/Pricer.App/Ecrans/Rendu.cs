@@ -10,36 +10,36 @@ using Spectre.Console.Rendering;
 namespace Pricer.App.Ecrans;
 
 /// <summary>
-/// On présente les résultats du domaine avec Spectre.Console. On garde les calculs dans les services
-/// métier pour que l'affichage ne change pas les résultats.
+/// The results of the domain are presented with Spectre.Console. We keep the calculations in
+/// the business services so that the display does not change the results.
 /// </summary>
 public static class Rendu
 {
     private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
 
     /// <summary>
-    /// On formate un nombre avec la précision demandée et on affiche un tiret si sa valeur est
-    /// absente ou non finie.
+    /// A number is formatted with the requested accuracy and a dash is displayed if its value
+    /// is missing or not finished.
     /// </summary>
     /// <param name="x">On reçoit la valeur à afficher ; son unité est indiquée dans le tableau appelant.</param>
     /// <param name="format">On utilise ce format numérique pour choisir la précision affichée.</param>
     public static string Btc(double? x, string format = "0.000000") => x is double v && double.IsFinite(v) ? v.ToString(format, Fr) : "[grey]—[/]";
     /// <summary>
-    /// On affiche une valeur USD avec deux décimales et des séparateurs de milliers.
+    /// A USD value is displayed with two decimal places and thousands of separators.
     /// </summary>
     public static string Usd(double? x) => Btc(x, "#,##0.00");
     /// <summary>
-    /// On réutilise le formatage commun pour les quantités et les sensibilités de la console.
+    /// Common formatting is reused for console quantities and sensitivities.
     /// </summary>
     public static string Nombre(double x, string format) => Btc(x, format);
     /// <summary>
-    /// On garde le même format de date et d’heure pour identifier les échéances dans tous les tableaux.
+    /// The same date and time format is used to identify expiries in all tables.
     /// </summary>
     public static string Echeance(DateTime e) => e.ToString("ddMMMyy HH:mm", CultureInfo.InvariantCulture).ToUpperInvariant();
 
     /// <summary>
-    /// On arrondit le nombre avant de l'afficher avec son signe pour éviter un zéro négatif qui pourrait
-    /// être mal interprété.
+    /// The number is rounded before displaying it with its sign to avoid a negative zero that
+    /// could be misinterpreted.
     /// </summary>
     public static string AvecSigne(double v, int decimales)
     {
@@ -51,31 +51,31 @@ public static class Rendu
     }
 
     /// <summary>
-    /// On affiche un écart signé et on le met en évidence lorsque le contrôle a déclenché une alerte.
+    /// A signed deviation is displayed and highlighted when the control triggered an alert.
     /// </summary>
     public static string Signe(double? x, string format, bool alerte)
     {
         if (x is not double v) return "[grey]—[/]";
         string texte = AvecSigne(v, format.Length - 2);
-        return alerte ? $"[bold red]{texte} ⚠[/]" : $"[green]{texte}[/]";
+        return alerte ? $"[bold red]{texte} [/]" : $"[green]{texte}[/]";
     }
 
     /// <summary>
-    /// On rapproche notre volatilité implicite de celle de Deribit et on signale leur écart, ou la
-    /// raison d’un calcul indisponible.
+    /// We bring our implicit volatility closer to that of Deribit and report their deviation,
+    /// or the reason for an unavailable calculation.
     /// </summary>
     public static string Vol(ComparaisonVol? c)
     {
         if (c is null) return "[grey]—[/]";
         string notre = c.Calculee.EstCalculee ? (c.Calculee.Sigma!.Value * 100).ToString("0.00", Fr) : $"[yellow]{c.Calculee.Libelle}[/]";
         string deribit = c.Deribit is double d ? d.ToString("0.00", Fr) : "—";
-        string ecart = c.EcartPoints is double e ? (c.Signale ? $"[bold red]{AvecSigne(e, 2)}⚠[/]" : $"[green]{AvecSigne(e, 2)}[/]") : "";
+        string ecart = c.EcartPoints is double e ? (c.Signale ? $"[bold red]{AvecSigne(e, 2)}[/]" : $"[green]{AvecSigne(e, 2)}[/]") : "";
         return $"{notre} [grey]/ {deribit}[/] {ecart}";
     }
 
     /// <summary>
-    /// On rassemble les cotations call et put d’une échéance par strike et on repère les strikes proches
-    /// du future.
+    /// The call quotes are grouped together and a strike-by-strike expiry is put
+    /// together, and the strikes close to the future are identified.
     /// </summary>
     public static Table Referentiel(EtatMarche etat, DateTime echeance)
     {
@@ -96,7 +96,8 @@ public static class Rendu
     }
 
     /// <summary>
-    /// On assemble les tableaux de jambes, de prix et de grecques sans refaire les calculs métier.
+    /// The legs, price and Greek tables are assembled without repeating the business
+    /// calculations.
     /// </summary>
     public static IRenderable Cotation(CotationStructure c)
     {
@@ -128,7 +129,7 @@ public static class Rendu
         var g = c.Grecques;
         var gd = c.GrecquesDeribit;
         var grecques = new Table().Border(TableBorder.Simple).AddColumns("Grecques", "Black-76 (nous)", "Deribit", "Écart");
-        // On conserve un format commun pour chaque ligne du tableau de sensibilités.
+        // A common format is maintained for each line of the sensitivities table.
         void Ligne(string nom, double nous, double? deribit, string format) =>
             grecques.AddRow(nom, Nombre(nous, format), deribit is double d ? Nombre(d, format) : "—", deribit is double dd ? Nombre(nous - dd, format) : "—");
         Ligne("Delta", g.Delta, gd?.Delta, "0.0000");
@@ -140,8 +141,8 @@ public static class Rendu
     }
 
     /// <summary>
-    /// On présente les scénarios de résultat dans un tableau et un graphique, puis on ajoute les bornes
-    /// et les points morts calculés.
+    /// The result scenarios are presented in a table and graph, followed by the calculated
+    /// bounds and dead points.
     /// </summary>
     public static IRenderable Profil(ProfilStructure p)
     {
@@ -165,8 +166,8 @@ public static class Rendu
     }
 
     /// <summary>
-    /// On affiche les paramètres interpolés, le prix client, les couvertures arrondies et les risques
-    /// globaux de la proposition OTC.
+    /// The interpolated parameters, customer price, rounded covers and overall risks of the TBT
+    /// proposal are displayed.
     /// </summary>
     public static IRenderable Couverture(PropositionCouverture p)
     {
@@ -190,7 +191,7 @@ public static class Rendu
         lignes.AddRow("[bold]Total coût de couverture[/]", "", "", "", "", $"[bold]{Btc(p.CoutCouvertureBtc)}[/]");
 
         var g = new Table().Border(TableBorder.Simple).AddColumns("Grecques", "Delta", "Gamma", "Vega $/pt", "Theta $/j");
-        // On conserve un format commun pour chaque ligne du tableau de sensibilités.
+        // A common format is maintained for each line of the sensitivities table.
         void Ligne(string nom, Grecques x) => g.AddRow(nom, Nombre(x.Delta, "0.0000"), Nombre(x.Gamma, "0.000000"), Nombre(x.Vega, "0.00"), Nombre(x.Theta, "0.00"));
         Ligne("Option sur mesure (desk)", p.GrecquesOption);
         Ligne("Couverture", p.GrecquesCouverture);
@@ -200,8 +201,8 @@ public static class Rendu
     }
 
     /// <summary>
-    /// On montre la valorisation des positions et la répartition des sensibilités par échéance, avec les
-    /// statuts de disponibilité.
+    /// We show the valuation of positions and the distribution of sensitivities by maturity,
+    /// with the status of availability.
     /// </summary>
     public static IRenderable Book(EtatBook e)
     {
@@ -226,8 +227,8 @@ public static class Rendu
     }
 
     /// <summary>
-    /// On conserve une ligne par opération dans l’affichage et on détaille ses jambes pour retrouver les
-    /// ouvertures et leurs fermetures.
+    /// One line per operation is kept in the display and the legs are detailed to find the
+    /// openings and closures.
     /// </summary>
     public static Table Blotter(IReadOnlyList<Trade> trades)
     {
@@ -242,8 +243,8 @@ public static class Rendu
     }
 
     /// <summary>
-    /// On utilise une couleur différente pour distinguer visuellement les gains et les pertes tout en
-    /// conservant le texte fourni.
+    /// A different color is used to visually distinguish gains and losses while retaining the
+    /// text provided.
     /// </summary>
     private static string Couleur(double x, string texte) => x >= 0 ? $"[green]{texte}[/]" : $"[red]{texte}[/]";
 }

@@ -7,7 +7,7 @@ namespace Pricer.Domaine.Tests.Pricing;
 public class ChronologieIndiceTests
 {
     /// <summary>
-    /// On vérifie qu'une réponse REST retardée ne fait pas reculer l'indice reçu du flux.
+    /// It is verified that a delayed REST response does not reverse the received flow index.
     /// </summary>
     [TestMethod]
     public void Indice_UneAncienneReponseRestNeRemplacePasLeFluxRecent()

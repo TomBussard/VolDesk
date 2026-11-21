@@ -6,12 +6,14 @@ using Pricer.Domaine.Pricing;
 
 namespace Pricer.Infrastructure.Transport;
 
-/// <summary>On construit un marché fictif reproductible, avec des paramètres propres à BTC ou ETH.</summary>
+/// <summary>
+/// A reproducible fictitious market is constructed, with parameters specific to BTC or ETH.
+/// </summary>
 public static class GenerateurDemonstration
 {
     /// <summary>
-    /// On écrit une session JSONL compressée contenant un référentiel, des réponses REST et des
-    /// cotations fictives reproductibles.
+    /// We write a compressed JSONL session containing a repository, REST responses and
+    /// replicable fictitious quotes.
     /// </summary>
     /// <param name="fichier">On crée ou remplace ce fichier gzip avec les données de démonstration.</param>
     /// <param name="devise">On accepte BTC ou ETH et on adapte les prix, les volatilités et les pas de quantité.</param>
@@ -28,11 +30,11 @@ public static class GenerateurDemonstration
             for (int k = 6; k <= 14; k++)
                 foreach (var type in new[] { TypeOption.Call, TypeOption.Put })
                     options.Add(($"{devise}-{date.ToString("dMMMyy", CultureInfo.InvariantCulture).ToUpperInvariant()}-{spot * k / 10:0}-{(type == TypeOption.Call ? "C" : "P")}", spot * k / 10, date, type));
-        // On construit les noms des futures fictifs avec le même format de date que les instruments.
+        // Future fictitious names are built with the same date format as the instruments.
         string NomFuture(DateTime date) => $"{devise}-{date.ToString("dMMMyy", CultureInfo.InvariantCulture).ToUpperInvariant()}";
-        // On fait légèrement évoluer le future fictif et on ajoute un portage lié à sa maturité.
+        // The fictitious future is slightly changed and a portage linked to its maturity is added.
         double Future(DateTime date, int n) => spot * (1 + 0.004 * Math.Sin(n / 7.0)) * (1 + 0.03 * (date - debut).TotalDays / 365);
-        // On calcule des prix et des sensibilités cohérents entre eux avant de leur ajouter une fourchette fictive.
+        // Consistent prices and sensitivities are calculated before adding a fictitious range.
         Dictionary<string, object?> Ticker(string nom, DateTime date, double strike, TypeOption? type, int n)
         {
             DateTime maintenant = debut.AddSeconds(3 * n);
@@ -63,13 +65,13 @@ public static class GenerateurDemonstration
         using var brut = File.Create(fichier);
         using var zip = new GZipStream(brut, CompressionLevel.Fastest);
         using var writer = new StreamWriter(zip);
-        // On écrit une donnée horodatée par ligne JSON pour conserver le format attendu par le rejeu.
+        // A timed data per JSON line is written to keep the format expected by the replay.
         void Ecrire(DateTime t, string type, string cle, object donnees) => writer.WriteLine(JsonSerializer.Serialize(new { t, type, cle, donnees }));
-        // On associe chaque réponse REST fictive à la même clé que celle construite lors des appels.
+        // Each fictional REST response is associated with the same key that was built during calls.
         void Rest(string methode, Dictionary<string, string> p, object d) => Ecrire(debut, "rest", CleRequete.Construire(methode, p), d);
         Rest("public/get_instruments", new() { { "currency", devise }, { "kind", "option" }, { "expired", "false" } }, options.Select(o => new { instrument_name = o.Nom, base_currency = devise, strike = o.Strike, expiration_timestamp = new DateTimeOffset(o.Date).ToUnixTimeMilliseconds(), option_type = o.Type == TypeOption.Call ? "call" : "put", contract_size = 1, min_trade_amount = pas, tick_size = 0.0001, is_active = true }));
         Rest("public/get_instruments", new() { { "currency", devise }, { "kind", "future" }, { "expired", "false" } }, dates.Select(d => new { instrument_name = NomFuture(d), base_currency = devise, expiration_timestamp = new DateTimeOffset(d).ToUnixTimeMilliseconds(), settlement_period = "month", contract_size = lotFuture, min_trade_amount = lotFuture, is_active = true }));
-        // On reprend le ticker fictif en lui donnant aussi les noms de champs attendus dans le résumé REST.
+        // The fictitious ticker is repeated by also giving it the field names expected in the REST summary.
         Dictionary<string, object?> Resume(Dictionary<string, object?> t)
         {
             t["bid_price"] = t["best_bid_price"]; t["ask_price"] = t["best_ask_price"]; t["creation_timestamp"] = t["timestamp"]; return t;

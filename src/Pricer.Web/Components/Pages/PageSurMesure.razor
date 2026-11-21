@@ -4,7 +4,7 @@
 @inject Blotter BlotterDesk
 @inject OptionsPricer Options
 
-<PageTitle>Option sur mesure · Pricer Deribit</PageTitle>
+<PageTitle>Customized option · Pricer Deribit</PageTitle>
 
 @{
     var etat = Marche.EtatCourant;
@@ -13,8 +13,8 @@
 
 <div class="entete">
     <div>
-        <h1>Option sur mesure et couverture</h1>
-        <div class="muet">Strike et échéance libres · future et vol interpolés · couverture neutre en delta, gamma et vega avec deux options cotées et un future.</div>
+        <h1>Customized option and hedge</h1>
+        <div class="muet">Strike and free maturity · future and interpolated volatility · neutral hedge in delta, gamma and vega with two listed options and one future.</div>
     </div>
 </div>
 
@@ -30,12 +30,12 @@
             </div>
         </div>
         <div class="champ"><label>Strike (libre)</label><input type="number" step="100" @bind="_strike" @bind:after="Invalider" /></div>
-        <div class="champ"><label>Échéance (libre)</label><input type="date" @bind="_date" @bind:after="Invalider" /></div>
-        <div class="champ"><label>Heure UTC (règlement)</label><input type="time" @bind="_heure" @bind:after="Invalider" /></div>
+        <div class="champ"><label>Maturity (free)</label><input type="date" @bind="_date" @bind:after="Invalider" /></div>
+        <div class="champ"><label>UTC time (Regulation)</label><input type="time" @bind="_heure" @bind:after="Invalider" /></div>
         <div class="champ">
-            <label>Le client</label>
+            <label>The client</label>
             <div class="segmente">
-                <button class="@(_sensClient == Sens.Achat ? "actif achat" : "")" @onclick="() => { _sensClient = Sens.Achat; Invalider(); }">achète</button>
+                <button class="@(_sensClient == Sens.Achat ? "actif achat" : "")" @onclick="() => { _sensClient = Sens.Achat; Invalider(); }">buy</button>
                 <button class="@(_sensClient == Sens.Vente ? "actif vente" : "")" @onclick="() => { _sensClient = Sens.Vente; Invalider(); }">vend</button>
             </div>
         </div>
@@ -43,12 +43,12 @@
         <div class="champ">
             <label>Couverture</label>
             <div class="segmente">
-                <button class="@(_auto ? "actif" : "")" @onclick="() => { _auto = true; Invalider(); }">Choix automatique</button>
+                <button class="@(_auto ? "actif" : "")" @onclick="() => { _auto = true; Invalider(); }">Automatic selection</button>
                 <button class="@(!_auto ? "actif" : "")" @onclick="() => { _auto = false; Invalider(); }">Paire manuelle</button>
             </div>
         </div>
     </div>
-    <p class="muet" style="margin-top:12px">L’heure peut être simulée librement. Le traitement est disponible à 08:00 UTC, heure du prix de règlement quotidien Deribit utilisé par le book.</p>
+    <p class="muet" style="margin-top:12px">The time can be simulated freely. The processing is available at 08:00 UTC, time of the daily Deribit settlement price used by the book.</p>
     @if (!_auto)
     {
         <div class="formulaire" style="margin-top:14px">
@@ -84,10 +84,10 @@
 {
     var i = p.Interpolation;
     <div class="grille g4">
-        <div class="kpi"><div class="libelle">Vol interpolée</div><div class="valeur">@Format.Pct(i.Sigma)</div><div class="detail">σ₁ @Format.Pct(i.Sigma1)@(i.Sigma2 is double s2 ? " · σ₂ " + Format.Pct(s2) : "")</div></div>
-        <div class="kpi"><div class="libelle">Future interpolé</div><div class="valeur">@Format.Usd(i.Future)</div><div class="detail">k = ln(K/F) = @Format.Nombre(i.LogMoneyness, "0.0000")</div></div>
-        <div class="kpi"><div class="libelle">Prix théorique</div><div class="valeur">@Format.Btc(p.ValeurOption.PrixBtc) @etat.Referentiel.Devise</div><div class="detail">@Format.Usd(p.ValeurOption.PrixUsd) $ par unité</div></div>
-        <div class="kpi" style="border-color:var(--alerte)"><div class="libelle">Prix proposé au client</div><div class="valeur alerte-txt">@Format.Btc(p.PrixClientBtc) @etat.Referentiel.Devise</div><div class="detail">@Format.Usd(p.PrixClientUsd) $ · coût @Format.Btc(p.CoutCouvertureBtc) + marge @Format.Btc(p.MargeBtc)/u</div></div>
+        <div class="kpi"><div class="libelle">Interpolated volatility</div><div class="valeur">@Format.Pct(i.Sigma)</div><div class="detail">σ₁ @Format.Pct(i.Sigma1)@(i.Sigma2 is double s2 ? " · σ₂ " + Format.Pct(s2) : "")</div></div>
+        <div class="kpi"><div class="libelle">Future interpolated</div><div class="valeur">@Format.Usd(i.Future)</div><div class="detail">k = ln(K/F) = @Format.Nombre(i.LogMoneyness, "0.0000")</div></div>
+        <div class="kpi"><div class="libelle">Theoretical price</div><div class="valeur">@Format.Btc(p.ValeurOption.PrixBtc) @etat.Referentiel.Devise</div><div class="detail">@Format.Usd(p.ValeurOption.PrixUsd) $ par unité</div></div>
+        <div class="kpi" style="border-color:var(--alerte)"><div class="libelle">Price offered to the customer</div><div class="valeur alerte-txt">@Format.Btc(p.PrixClientBtc) @etat.Referentiel.Devise</div><div class="detail">@Format.Usd(p.PrixClientUsd) $ · coût @Format.Btc(p.CoutCouvertureBtc) + marge @Format.Btc(p.MargeBtc)/u</div></div>
     </div>
 
     <div class="grille @(i.Echeance2 is null ? "" : "g2")" style="margin-top:16px">
@@ -106,9 +106,9 @@
 
     <div class="grille g2">
         <div class="carte">
-            <h2>Couverture proposée <span class="muet">— déterminant normalisé @Format.Nombre(p.DeterminantNormalise, "0.000")</span></h2>
+            <h2>Proposed hedge<span class="muet">— déterminant normalisé @Format.Nombre(p.DeterminantNormalise, "0.000")</span></h2>
             <table>
-                <thead><tr><th>Instrument</th><th>Qté brute</th><th>Qté arrondie</th><th>Exécutable</th><th>Mid</th><th>Coût @etat.Referentiel.Devise</th></tr></thead>
+                <thead><tr><th>Instrument</th><th>Gross quantity</th><th>Qty rounded</th><th>Execute</th><th>Mid</th><th>Coût @etat.Referentiel.Devise</th></tr></thead>
                 <tbody>
                     @foreach (var l in p.Lignes)
                     {
@@ -121,7 +121,7 @@
                             <td>@Format.Btc(l.CoutBtc)</td>
                         </tr>
                     }
-                    <tr class="total"><td>Coût de couverture</td><td></td><td></td><td></td><td></td><td>@Format.Btc(p.CoutCouvertureBtc)</td></tr>
+                    <tr class="total"><td>Cover cost</td><td></td><td></td><td></td><td></td><td>@Format.Btc(p.CoutCouvertureBtc)</td></tr>
                 </tbody>
             </table>
         </div>
@@ -130,7 +130,7 @@
             <table>
                 <thead><tr><th></th><th>Delta</th><th>Gamma</th><th>Vega $/pt</th><th>Theta $/j</th></tr></thead>
                 <tbody>
-                    <tr><td class="texte">Option sur mesure (desk)</td><td>@Format.Nombre(p.GrecquesOption.Delta, "0.0000")</td><td>@Format.Nombre(p.GrecquesOption.Gamma, "0.000000")</td><td>@Format.Nombre(p.GrecquesOption.Vega, "N2")</td><td>@Format.Nombre(p.GrecquesOption.Theta, "N2")</td></tr>
+                    <tr><td class="texte">Custom option (desk)</td><td>@Format.Nombre(p.GrecquesOption.Delta, "0.0000")</td><td>@Format.Nombre(p.GrecquesOption.Gamma, "0.000000")</td><td>@Format.Nombre(p.GrecquesOption.Vega, "N2")</td><td>@Format.Nombre(p.GrecquesOption.Theta, "N2")</td></tr>
                     <tr><td class="texte">Couverture</td><td>@Format.Nombre(p.GrecquesCouverture.Delta, "0.0000")</td><td>@Format.Nombre(p.GrecquesCouverture.Gamma, "0.000000")</td><td>@Format.Nombre(p.GrecquesCouverture.Vega, "N2")</td><td>@Format.Nombre(p.GrecquesCouverture.Theta, "N2")</td></tr>
                     <tr class="total"><td class="texte">Position globale</td><td>@Format.Nombre(p.GrecquesGlobales.Delta, "0.0000")</td><td>@Format.Nombre(p.GrecquesGlobales.Gamma, "0.000000")</td><td>@Format.Nombre(p.GrecquesGlobales.Vega, "N2")</td><td>@Format.Nombre(p.GrecquesGlobales.Theta, "N2")</td></tr>
                     <tr class="muet"><td class="texte">Globale avant arrondi</td><td>@Format.Nombre(p.GrecquesGlobalesAvantArrondi.Delta, "0.0000")</td><td>@Format.Nombre(p.GrecquesGlobalesAvantArrondi.Gamma, "0.000000")</td><td>@Format.Nombre(p.GrecquesGlobalesAvantArrondi.Vega, "N2")</td><td>@Format.Nombre(p.GrecquesGlobalesAvantArrondi.Theta, "N2")</td></tr>
@@ -168,12 +168,12 @@
     private string? _message, _typeMessage = "info";
 
     /// <summary>
-    /// On prépare une date et un strike dans la plage de marché pour permettre une première
+    /// A date and a strike are being prepared in the market range to allow for a first
     /// interpolation.
     /// </summary>
     protected override void OnInitialized()
     {
-        // On propose une échéance entre deux maturités cotées et un strike proche du future pour donner un premier exemple d'interpolation exploitable.
+        // A expiry between two listed maturities and a strike close to the future is proposed to give a first example of exploitable interpolation.
         var etat = Marche.EtatCourant;
         var cotees = etat.Smiles().Select(s => s.Echeance).OrderBy(e => e).ToList();
         var paire = cotees.Zip(cotees.Skip(1)).FirstOrDefault(x => (x.First - etat.Maintenant).TotalDays > 1.5 && (x.Second - x.First).TotalDays >= 3);
@@ -191,8 +191,8 @@
     }
 
     /// <summary>
-    /// On cherche un strike coté proche du future de l'échéance pour initialiser le choix manuel de
-    /// couverture.
+    /// We are looking for a strike close to the future of the expiry to initialize the manual
+    /// hedging choice.
     /// </summary>
     private double StrikeAtm(DateTime echeance)
     {
@@ -202,8 +202,8 @@
     }
 
     /// <summary>
-    /// On interpole l'OTC et on cherche une couverture automatique ou manuelle, puis on suit les
-    /// instruments proposés.
+    /// The CTA is interpolated and an automatic or manual cover is sought, followed by the
+    /// instruments proposed.
     /// </summary>
     private async Task CalculerAsync()
     {
@@ -237,8 +237,8 @@
     }
 
     /// <summary>
-    /// On garde les deux instruments de couverture choisis pour que la proposition reste lisible ; on
-    /// actualise leurs quantités et leurs prix avec le marché.
+    /// We keep the two hedging instruments chosen to keep the proposal legible; we update their
+    /// quantities and prices with the market.
     /// </summary>
     protected override Task AvantRafraichissementAsync()
     {
@@ -251,8 +251,8 @@
     }
 
     /// <summary>
-    /// On recalcule la proposition et on enregistre l'OTC avec ses couvertures si son règlement est
-    /// pris en charge.
+    /// The proposal is recalculated and the CTA is recorded with its covers if its regulations
+    /// are taken over.
     /// </summary>
     private void Traiter()
     {
@@ -261,7 +261,7 @@
             if (_jambe is null || _h1 is null || _h2 is null) return;
             if (_jambe.Echeance.TimeOfDay != TimeSpan.FromHours(8))
                 throw new PricerException("Le traitement nécessite 08:00 UTC pour utiliser le prix de règlement quotidien officiel.");
-            // On recalcule au dernier marché, même si le rafraîchissement de l'écran n'a pas encore eu lieu.
+            // We recalculate at the last market, even if the screen refresh has not yet taken place.
             _proposition = MoteurCouverture.Calculer(_jambe, _sensFige, _quantiteFigee, _h1, _h2, Marche.EtatCourant, Options.MargeVolPoints);
             var t = BlotterDesk.BookerSurMesure(_proposition, Marche.EtatCourant.Maintenant);
             Afficher($"Trade {t.Id.ToString()[..8]} booké : option sur mesure + {t.Jambes.Count - 1} instruments de couverture.", "succes");
@@ -270,19 +270,19 @@
     }
 
     /// <summary>
-    /// On efface la demande figée et ses instruments pour qu'une ancienne couverture ne réapparaisse
-    /// pas après une modification.
+    /// The frozen demand and its instruments are erased so that an old cover does not reappear
+    /// after a modification.
     /// </summary>
     private void Invalider()
     {
-        // On retire aussi la paire figée : un résultat précédent ne doit pas réapparaître pendant une nouvelle saisie.
+        // The frozen pair is also removed: a previous result must not reappear during a new entry.
         _proposition = null;
         _jambe = null;
         _h1 = _h2 = null;
     }
 
     /// <summary>
-    /// On associe un message et son niveau d'affichage au résultat du formulaire OTC.
+    /// A message and its level of display are associated with the result of the TBT form.
     /// </summary>
     private void Afficher(string texte, string type) => (_message, _typeMessage) = (texte, type);
 }

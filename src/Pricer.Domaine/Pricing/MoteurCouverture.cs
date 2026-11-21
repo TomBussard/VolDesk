@@ -7,8 +7,8 @@ using Pricer.Domaine.Utilitaires;
 namespace Pricer.Domaine.Pricing;
 
 /// <summary>
-/// On conserve les quantités avant et après arrondi d'un instrument de couverture pour montrer l'effet du
-/// pas de négociation.
+/// The quantities before and after rounding of a hedging instrument shall be retained to show
+/// the effect of the trading step.
 /// </summary>
 public sealed record LigneCouverture
 {
@@ -16,15 +16,20 @@ public sealed record LigneCouverture
     public required NatureJambe Nature { get; init; }
     public required double QuantiteAvantArrondi { get; init; }
     /// <summary>
-    /// On exprime les quantités affichées en unités de sous-jacent, y compris l'équivalent crypto du montant
-    /// USD du future.
+    /// The quantities displayed in units of the underlying are expressed, including the crypto
+    /// equivalent of the dollar amount of the future.
     /// </summary>
     public required double Quantite { get; init; }
-    /// <summary>On conserve un prix exécutable en crypto pour une option et en USD pour le future.</summary>
+    /// <summary>
+    /// We keep a crypto executable price for an option and USD for the future.
+    /// </summary>
     public required double PrixExecutable { get; init; }
     public required double Mid { get; init; }
     public required Grecques GrecquesUnitaires { get; init; }
-    /// <summary>On mesure le coût de fourchette par l'écart au mid, pondéré par la quantité ; on l'exprime en crypto.</summary>
+    /// <summary>
+    /// The cost of the range is measured by the difference at mid, weighted by the quantity; it
+    /// is expressed in crypto.
+    /// </summary>
     public required double CoutBtc { get; init; }
     public double? Strike { get; init; }
     public DateTime Echeance { get; init; }
@@ -36,15 +41,18 @@ public sealed record LigneCouverture
 }
 
 /// <summary>
-/// On rassemble la cotation OTC, les instruments retenus et les risques résiduels pour vérifier toute la
-/// proposition avant de traiter.
+/// The TBT rating, the instruments selected, and the residual risks are combined to verify the
+/// entire proposal before processing.
 /// </summary>
 public sealed record PropositionCouverture
 {
     public required JambeSurMesure Option { get; init; }
     public required Sens SensClient { get; init; }
     public required double Quantite { get; init; }
-    /// <summary>On prend le point de vue du desk : quand le client achète, la quantité OTC du desk est négative.</summary>
+    /// <summary>
+    /// We take the view of the desk: when the customer buys, the OTC quantity of the desk is
+    /// negative.
+    /// </summary>
     public required double QuantiteDesk { get; init; }
     public required ResultatInterpolation Interpolation { get; init; }
     public required ResultatBlack76 ValeurOption { get; init; }
@@ -61,29 +69,30 @@ public sealed record PropositionCouverture
     public double CoutCouvertureBtc => Lignes.Sum(l => l.CoutBtc);
 
     /// <summary>
-    /// On propose au client le prix théorique, ajusté du coût de couverture par unité et de la marge selon le
-    /// sens demandé.
+    /// The customer is offered the theoretical price, adjusted for the cost of hedge per
+    /// unit and the margin according to the meaning requested.
     /// </summary>
     public double PrixClientBtc => ValeurOption.PrixBtc + (int)SensClient * (CoutCouvertureBtc / Quantite + MargeBtc);
     public double PrixClientUsd => PrixClientBtc * Interpolation.Future;
 }
 
 /// <summary>
-/// On couvre d'abord gamma et vega avec deux options cotées, puis le delta avec un future. On affiche les
-/// risques résiduels car les pas de négociation empêchent parfois une neutralité exacte.
+/// We first cover gamma and vega with two listed options, then the delta with a future. We
+/// display the residual risks because the steps of negotiation sometimes prevent an exact
+/// neutrality.
 /// </summary>
 public static class MoteurCouverture
 {
     /// <summary>
-    /// On refuse un déterminant normalisé trop faible pour éviter des quantités énormes sur une paire presque
-    /// singulière.
+    /// A normalized determinant too weak to avoid huge quantities on an almost singular pair is
+    /// refused.
     /// </summary>
     public const double DeterminantNormaliseMinimal = 1e-6;
     public const double DeterminantNormaliseConfortable = 0.05;
 
     /// <summary>
-    /// On résout le système gamma/vega par la règle de Cramer, comme un système de deux équations à deux
-    /// inconnues. On refuse la paire lorsque le déterminant est trop faible.
+    /// The gamma/vega system is solved by Cramer's rule, as a system of two unknown equations.
+    /// The pair is refused when the determinant is too weak.
     /// </summary>
     /// <param name="a">La matrice 2 × 2 : gammas sur la première ligne, vegas sur la seconde.</param>
     /// <param name="b">Les deux risques à compenser, dans l'ordre gamma puis vega.</param>
@@ -109,8 +118,8 @@ public static class MoteurCouverture
     }
 
     /// <summary>
-    /// On calcule la couverture sur la paire précise choisie par l'utilisateur, avec les mêmes contrôles que le
-    /// choix automatique.
+    /// The hedge is calculated on the precise pair chosen by the user, with the same
+    /// controls as the automatic choice.
     /// </summary>
     /// <param name="option">Le contrat OTC dont les paramètres seront interpolés sur les smiles courants.</param>
     /// <param name="sensClient">Le sens du client ; le desk porte la position opposée sur l'OTC.</param>
@@ -139,12 +148,12 @@ public static class MoteurCouverture
         var h1 = Unitaire(couverture1, contexte);
         var h2 = Unitaire(couverture2, contexte);
 
-        // On résout gamma et vega ensemble : un seul instrument ne suffit généralement pas à annuler les deux.
+        // One solves gamma and vega together: one instrument is usually not enough to cancel both.
         double[,] a = { { h1.Valeur.Grecques.Gamma, h2.Valeur.Grecques.Gamma }, { h1.Valeur.Grecques.Vega, h2.Valeur.Grecques.Vega } };
         double[] b = { -q0 * valeur.Grecques.Gamma, -q0 * valeur.Grecques.Vega };
         double[] q = ResoudreSysteme2x2(a, b, out double det, out double detNorm);
 
-        // On calcule aussi le delta théorique avant arrondi pour le comparer aux résidus réellement négociables.
+        // The theoretical delta is also calculated before rounded to compare it with the actual tradable residues.
         double qF = -(q0 * valeur.Grecques.Delta + q[0] * h1.Valeur.Grecques.Delta + q[1] * h2.Valeur.Grecques.Delta);
         var avantArrondi = q0 * valeur.Grecques + q[0] * h1.Valeur.Grecques + q[1] * h2.Valeur.Grecques + new Grecques(qF, 0, 0, 0);
 
@@ -153,7 +162,7 @@ public static class MoteurCouverture
             LigneOption(couverture1, h1, q[0]),
             LigneOption(couverture2, h2, q[1])
         };
-        // On neutralise le delta après l'arrondi des deux options, puis on arrondit le notionnel du future.
+        // The delta is neutralized after the rounding of the two options, then the notional of the future is rounded.
         double deltaOptions = q0 * valeur.Grecques.Delta + lignes.Sum(l => l.Quantite * l.GrecquesUnitaires.Delta);
         lignes.Add(LigneFuture(option.Echeance, -deltaOptions, contexte, indice));
         double prixClient = valeur.PrixBtc + (int)sensClient * (lignes.Sum(l => l.CoutBtc) / quantite + margeVolPoints * valeur.Grecques.Vega / interpolation.Future);
@@ -178,9 +187,9 @@ public static class MoteurCouverture
     }
 
     /// <summary>
-    /// On cherche des options hors de la monnaie proches du strike équivalent sur des échéances distinctes. Le
-    /// rapport vega/gamma dépend notamment de la maturité ; on privilégie une paire bien conditionnée, puis le
-    /// coût parmi les propositions acceptables.
+    /// Options are sought outside the currency close to the equivalent strike on separate
+    /// maturities. The vega/gamma ratio depends in particular on maturity; one prefers a well
+    /// conditioned pair, then the cost among acceptable proposals.
     /// </summary>
     public static PropositionCouverture CalculerMeilleure(
         JambeSurMesure option, Sens sensClient, double quantite, IContexteMarche contexte,
@@ -216,8 +225,8 @@ public static class MoteurCouverture
     }
 
     /// <summary>
-    /// On cherche les options hors de la monnaie les plus proches du strike équivalent, avec bid, ask et IV
-    /// disponibles.
+    /// We are looking for options out of the money closest to the equivalent strike, with
+    /// bid, Ask and IV available.
     /// </summary>
     private static IEnumerable<Instrument> Candidats(DateTime echeance, double logMoneyness, IContexteMarche contexte, int nombre)
     {
@@ -232,12 +241,15 @@ public static class MoteurCouverture
             .Take(nombre);
     }
 
-    /// <summary>On conserve ensemble le carnet et les paramètres du calcul pour construire une ligne de couverture cohérente.</summary>
+    /// <summary>
+    /// Together, the notebook and the calculation parameters are retained to construct a
+    /// coherent line of hedge.
+    /// </summary>
     private sealed record ValeurUnitaire(Cotation Cotation, ResultatBlack76 Valeur, double Future, double Sigma);
 
     /// <summary>
-    /// On contrôle le carnet et la fraîcheur de l'option de couverture avant de calculer ses grecques
-    /// unitaires.
+    /// We check the notebook and the freshness of the cover option before calculating its
+    /// unitary Greeks.
     /// </summary>
     private static ValeurUnitaire Unitaire(Instrument instrument, IContexteMarche contexte)
     {
@@ -250,8 +262,8 @@ public static class MoteurCouverture
     }
 
     /// <summary>
-    /// On arrondit la quantité d'option, on choisit le côté exécutable et on mesure le coût de fourchette en
-    /// crypto.
+    /// The option quantity is rounded, the executable side is selected, and the cost of crypto
+    /// fork is measured.
     /// </summary>
     private static LigneCouverture LigneOption(Instrument instrument, ValeurUnitaire h, double quantiteBrute)
     {
@@ -278,8 +290,8 @@ public static class MoteurCouverture
     }
 
     /// <summary>
-    /// On choisit le premier future daté négociable après l'OTC, puis on arrondit son montant USD et on
-    /// calcule le coût inverse.
+    /// The first future date that can be negotiated after the CTA is chosen, then the USD
+    /// amount is rounded and the reverse cost is calculated.
     /// </summary>
     /// <returns>Une ligne dont la quantité est l'équivalent crypto au prix d'exécution ; son delta unitaire de proposition vaut un.</returns>
     private static LigneCouverture LigneFuture(DateTime echeanceOption, double quantiteBrute, IContexteMarche contexte, double indice)
@@ -293,7 +305,7 @@ public static class MoteurCouverture
         double bid = cotation.Bid!.Value, ask = cotation.Ask!.Value;
         double executable = quantiteBrute >= 0 ? ask : bid;
 
-        // On arrondit le montant USD au pas du future, puis on affiche son équivalent en unités de crypto.
+        // The USD amount is rounded to the next step, and its equivalent is displayed in crypto units.
         double montantUsd = (quantiteBrute * executable).ArrondirAuPas(future.QuantiteMinimaleUsd);
         double q = montantUsd / executable;
         return new LigneCouverture

@@ -4,14 +4,14 @@ using Spectre.Console;
 namespace Pricer.App.Ecrans;
 
 /// <summary>
-/// On vérifie les saisies avec TryParse et on redemande une valeur si nécessaire. On accepte la virgule et
-/// le point pour les nombres, afin de faciliter l'utilisation en français.
+/// The entries are checked with TryParse and a value is requested again if necessary. The comma
+/// and point for the numbers are accepted to facilitate use in French.
 /// </summary>
 public static class Saisie
 {
     /// <summary>
-    /// On accepte le point ou la virgule décimale et on retire les espaces avant d’essayer de convertir
-    /// le texte.
+    /// The point or decimal point is accepted and the spaces are removed before trying to
+    /// convert the text.
     /// </summary>
     /// <param name="valeur">On fournit le nombre lu lorsque la conversion réussit.</param>
     /// <returns>On renvoie vrai si le texte a pu être converti en nombre.</returns>
@@ -19,8 +19,8 @@ public static class Saisie
         double.TryParse((texte ?? "").Trim().Replace(',', '.').Replace(" ", ""), NumberStyles.Float, CultureInfo.InvariantCulture, out valeur);
 
     /// <summary>
-    /// On redemande la saisie jusqu’à obtenir un nombre et on propose une valeur par défaut si elle est
-    /// fournie.
+    /// The input is requested again until a number is obtained and a default value is proposed
+    /// if provided.
     /// </summary>
     public static double Nombre(string question, double? defaut = null)
     {
@@ -37,8 +37,8 @@ public static class Saisie
     }
 
     /// <summary>
-    /// On lit une liste de strikes séparés par des espaces, des points-virgules ou des barres obliques,
-    /// puis on redemande toute la liste si une valeur est illisible.
+    /// You read a list of strikes separated by spaces, semicolon or oblique bars, and then you
+    /// ask the whole list again if a value is unreadable.
     /// </summary>
     /// <returns>On conserve l’ordre saisi ; la validation de la structure est faite ensuite par le domaine.</returns>
     public static List<double> Strikes(string question)
@@ -61,8 +61,8 @@ public static class Saisie
     }
 
     /// <summary>
-    /// On accepte une date française ou ISO, avec une heure facultative. On retient 08:00 UTC lorsque
-    /// seule la date est saisie.
+    /// We accept a French or ISO date, with an optional time. We retain 08:00 UTC when only the
+    /// date is entered.
     /// </summary>
     /// <returns>On renvoie la date d’échéance interprétée en UTC.</returns>
     public static DateTime DateEcheance(string question)

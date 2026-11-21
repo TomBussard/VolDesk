@@ -1,7 +1,12 @@
 namespace Pricer.Domaine.Marche;
 
-/// <summary>On associe à chaque strike la volatilité décimale obtenue en inversant son mark.</summary>
+/// <summary>
+/// Each strike is associated with the decimal volatility obtained by inverting its mark.
+/// </summary>
 public readonly record struct PointSmile(double Strike, double Vol);
 
-/// <summary>On regroupe le future, la maturité et les points d'une échéance, triés par strike, pour interpoler son smile.</summary>
+/// <summary>
+/// We combine the future, maturity and points of a expiry, sorted by strike, to interpolate
+/// his smile.
+/// </summary>
 public sealed record SmileEcheance(DateTime Echeance, double Maturite, double Future, IReadOnlyList<PointSmile> Points);

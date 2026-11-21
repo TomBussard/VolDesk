@@ -7,8 +7,8 @@ using Pricer.Domaine.Utilitaires;
 namespace Pricer.Domaine.Tests.Outils;
 
 /// <summary>
-/// Doublure de marché déterministe : trois échéances, strikes de 60 000 à 90 000 par pas de 2 000,
-/// smile paramétrique, bid/ask à ±2 % autour du mark. Aucune dépendance réseau ni horloge système.
+/// Deterministic market lining: three maturities, 60,000 to 90,000 strikes per 2000 step,
+/// parametric smile, ±2% bid/ask around the mark. No network dependencies or system clocks.
 /// </summary>
 public static class MarcheDeTest
 {
@@ -26,8 +26,7 @@ public static class MarcheDeTest
     };
 
     /// <summary>
-    /// On définit un smile déterministe afin de connaître la volatilité attendue de chaque option de
-    /// test.
+    /// A deterministic smile is defined to know the expected volatility of each test option.
     /// </summary>
     public static double Vol(DateTime echeance, double strike)
     {
@@ -37,14 +36,15 @@ public static class MarcheDeTest
     }
 
     /// <summary>
-    /// On construit un nom d'instrument conforme aux dates et strikes du référentiel de test.
+    /// An instrument name conforming to the dates and strikes of the test frame is
+    /// constructed.
     /// </summary>
     public static string Nom(DateTime e, double k, TypeOption t) =>
         string.Create(CultureInfo.InvariantCulture, $"BTC-{e:dMMMyy}-{k:0}-{(t == TypeOption.Call ? "C" : "P")}").ToUpperInvariant();
 
     /// <summary>
-    /// On crée plusieurs échéances et strikes pour tester les recettes et l'interpolation sans appel
-    /// réseau.
+    /// Several expiries and strikes are created to test recipes and interpolation without
+    /// network calls.
     /// </summary>
     public static ReferentielOptions Referentiel()
     {
@@ -60,8 +60,8 @@ public static class MarcheDeTest
     }
 
     /// <summary>
-    /// On remplit un marché cohérent, puis on permet au test de modifier seulement le cas qu'il veut
-    /// vérifier.
+    /// A consistent contract is completed and the test is allowed to change only the case it
+    /// wants to verify.
     /// </summary>
     public static EtatMarche Etat(Action<EtatMarche>? personnaliser = null)
     {
@@ -78,8 +78,8 @@ public static class MarcheDeTest
     }
 
     /// <summary>
-    /// On produit bid, ask, mark et grecques cohérents avec la volatilité connue de l'instrument de
-    /// test.
+    /// We produce bid, ask, mark and Greeks consistent with the known volatility of the test
+    /// instrument.
     /// </summary>
     public static Cotation CotationOption(Instrument o)
     {

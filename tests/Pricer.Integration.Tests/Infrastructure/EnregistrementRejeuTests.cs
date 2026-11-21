@@ -7,7 +7,9 @@ using Pricer.Infrastructure.Transport;
 
 namespace Pricer.Integration.Tests.Infrastructure;
 
-/// <summary>On fixe les réponses REST et les messages WebSocket en mémoire pour tester le transport sans réseau.</summary>
+/// <summary>
+/// REST responses and WebSocket messages are fixed in memory to test networkless transport.
+/// </summary>
 internal sealed class FauxTransport : ITransportDeribit
 {
     public static readonly DateTime T0 = new(2026, 11, 11, 10, 0, 0, DateTimeKind.Utc);
@@ -16,19 +18,19 @@ internal sealed class FauxTransport : ITransportDeribit
     public bool FluxTermine { get; private set; }
 
     /// <summary>
-    /// On renvoie la réponse REST fixée par le test sans utiliser de connexion réseau.
+    /// The REST response set by the test is returned without using a network connection.
     /// </summary>
     public Task<ReponseRest> AppelerAsync(string methode, IReadOnlyDictionary<string, string> parametres, CancellationToken ct = default) =>
         Task.FromResult(new ReponseRest(JsonDocument.Parse(Reponses[CleRequete.Construire(methode, parametres)]).RootElement.Clone(), T0));
 
     /// <summary>
-    /// On accepte l'abonnement sans action réseau car les messages sont déjà préparés en mémoire.
+    /// The subscription is accepted without network action because the messages are already
+    /// prepared in memory.
     /// </summary>
     public Task SouscrireAsync(IEnumerable<string> canaux, CancellationToken ct = default) => Task.CompletedTask;
 
     /// <summary>
-    /// On émet les messages préparés dans leur ordre pour rendre les essais d'enregistrement
-    /// reproductibles.
+    /// Messages prepared in their order are sent to make the recording tests reproducible.
     /// </summary>
     public async IAsyncEnumerable<MessageFlux> LireFluxAsync([EnumeratorCancellation] CancellationToken ct)
     {
@@ -41,12 +43,12 @@ internal sealed class FauxTransport : ITransportDeribit
     }
 
     /// <summary>
-    /// On termine le faux transport, qui ne possède aucune ressource réseau à libérer.
+    /// We finish the fake transport, which does not have any network resources to release.
     /// </summary>
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     /// <summary>
-    /// On fabrique un ticker JSON avec un prix et un instant contrôlés pour les essais de transport.
+    /// A JSON ticker is produced with a price and a controlled moment for the transport tests.
     /// </summary>
     public static MessageFlux Tick(string instrument, double mark, DateTime t) => new(
         $"ticker.{instrument}.100ms",
@@ -60,19 +62,21 @@ public class EnregistrementRejeuTests
     private string _dossier = "";
 
     /// <summary>
-    /// On crée un dossier temporaire propre à ce test pour isoler ses fichiers des autres exécutions.
+    /// We create a temporary folder specific to this test to isolate its files from other
+    /// executions.
     /// </summary>
     [TestInitialize]
     public void Preparer() => _dossier = Directory.CreateTempSubdirectory("pricer-tests-").FullName;
 
     /// <summary>
-    /// On supprime les fichiers temporaires du scénario une fois ses vérifications terminées.
+    /// The temporary files are removed from the script once the checks are completed.
     /// </summary>
     [TestCleanup]
     public void Nettoyer() => Directory.Delete(_dossier, true);
 
     /// <summary>
-    /// On prépare une réponse d'indice et cinq ticks espacés pour comparer le direct simulé au rejeu.
+    /// An index response is prepared and five ticks spaced to compare simulated direct to
+    /// replay.
     /// </summary>
     private static FauxTransport Faux()
     {
@@ -84,8 +88,8 @@ public class EnregistrementRejeuTests
     }
 
     /// <summary>
-    /// On vérifie que l'enregistrement simple ou compressé restitue les réponses et les ticks sans en
-    /// changer l'ordre.
+    /// It is checked that the simple or compressed recording returns the answers and the ticks
+    /// without changing the order.
     /// </summary>
     [DataTestMethod]
     [DataRow("session.jsonl")]
@@ -110,7 +114,7 @@ public class EnregistrementRejeuTests
     }
 
     /// <summary>
-    /// On vérifie le rythme du rejeu sur des messages espacés d'intervalles connus.
+    /// We check the rhythm of the replay on messages spaced from known intervals.
     /// </summary>
     [TestMethod]
     public async Task Rejouer_Vitesse10_RespecteLesEcartsDOrigineDivisesPar10()
@@ -131,7 +135,7 @@ public class EnregistrementRejeuTests
     }
 
     /// <summary>
-    /// On vérifie qu'un enregistrement incomplet ne fournit pas une réponse REST inventée.
+    /// It is verified that an incomplete record does not provide an invented REST response.
     /// </summary>
     [TestMethod]
     public void Rejouer_RequeteNonEnregistree_DonneesIndisponibles()
@@ -145,7 +149,7 @@ public class EnregistrementRejeuTests
     }
 
     /// <summary>
-    /// On vérifie que l'absence de fichier est signalée par l'exception métier prévue.
+    /// It is verified that the absence of a file is reported by the planned business exception.
     /// </summary>
     [TestMethod]
     public void Rejouer_FichierAbsent_DonneesIndisponibles()
@@ -154,8 +158,8 @@ public class EnregistrementRejeuTests
     }
 
     /// <summary>
-    /// On vérifie que deux appels équivalents retrouvent la même réponse même si leurs paramètres sont
-    /// rangés autrement.
+    /// It is verified that two equivalent calls return the same response even if their
+    /// parameters are stored differently.
     /// </summary>
     [TestMethod]
     public void CleRequete_IndependanteDeLOrdreDesParametres()

@@ -6,9 +6,9 @@ using Pricer.Domaine.Exceptions;
 namespace Pricer.Infrastructure.Transport;
 
 /// <summary>
-/// On relit les messages enregistrés selon leurs intervalles d'origine, divisés par la vitesse choisie. On
-/// répond aux requêtes avec les dernières données disponibles à l'instant virtuel courant, sans appeler le
-/// réseau.
+/// The recorded messages are reread according to their original intervals, divided by the
+/// selected speed. Requests are answered with the latest data available at the current virtual
+/// moment, without calling the network.
 /// </summary>
 public sealed class TransportRejeu : ITransportDeribit
 {
@@ -19,8 +19,8 @@ public sealed class TransportRejeu : ITransportDeribit
     public LectureControlee Lecture { get; }
 
     /// <summary>
-    /// On lit puis on trie la capture par heure et on sépare les réponses REST des notifications
-    /// WebSocket.
+    /// The capture is read and sorted by hour and the REST responses are separated from
+    /// WebSocket notifications.
     /// </summary>
     /// <param name="fichier">On accepte un JSONL brut ou compressé en gzip, présent et non vide.</param>
     /// <param name="vitesse">On règle le facteur de lecture ; zéro signifie une lecture sans attente.</param>
@@ -45,8 +45,8 @@ public sealed class TransportRejeu : ITransportDeribit
     }
 
     /// <summary>
-    /// On décompresse le fichier si nécessaire et on parcourt ses lignes sans laisser le flux ouvert
-    /// après la lecture.
+    /// Unzip the file if necessary and run its lines without leaving the stream open after
+    /// playback.
     /// </summary>
     private static IEnumerable<string> LireLignes(string fichier)
     {
@@ -61,8 +61,8 @@ public sealed class TransportRejeu : ITransportDeribit
     public int NombreMessages => _flux.Count;
     public int MessagesEmis { get; private set; }
     /// <summary>
-    /// On place l’heure virtuelle avant le premier message émis et on borne la reprise à la période
-    /// couverte par le fichier.
+    /// The virtual time is placed before the first message is sent and the resumption is
+    /// limited to the period covered by the file.
     /// </summary>
     /// <param name="date">On garde le début de session si aucune date de reprise n’est fournie.</param>
     public void ReprendreA(DateTime? date)
@@ -73,14 +73,14 @@ public sealed class TransportRejeu : ITransportDeribit
     public bool FluxTermine { get; private set; }
 
     /// <summary>
-    /// On utilise l'instant de la dernière donnée émise pour que le temps du marché reste figé pendant une
+    /// The moment of the last data emitted is used to keep the market time frozen during a
     /// pause.
     /// </summary>
     public DateTime MaintenantVirtuel { get { lock (_verrou) return _dernierEmis; } }
 
     /// <summary>
-    /// On recherche la réponse enregistrée disponible à l’heure virtuelle. Pour un ticker, on peut
-    /// utiliser une notification plus récente du même instrument.
+    /// The recorded response available at virtual time is searched. A more recent notification
+    /// of the same instrument can be used for a ticker.
     /// </summary>
     /// <remarks>On prend la première réponse de la clé si aucune réponse n’est antérieure à l’heure virtuelle.</remarks>
     /// <returns>On renvoie la donnée réellement enregistrée ou on signale qu’aucune requête correspondante n’existe.</returns>
@@ -90,7 +90,7 @@ public sealed class TransportRejeu : ITransportDeribit
         var maintenant = MaintenantVirtuel;
         if (!_rest.TryGetValue(cle, out var reponses))
         {
-            // On peut relire un ticker réellement enregistré en WebSocket, jamais inventer ses champs.
+            // You can reread a ticker actually recorded in WebSocket, never invent your fields.
             if (methode == "public/ticker" && parametres.TryGetValue("instrument_name", out string? nom))
             {
                 var tick = _flux.LastOrDefault(l => l.T <= maintenant && l.Cle.StartsWith($"ticker.{nom}.", StringComparison.Ordinal));
@@ -108,14 +108,14 @@ public sealed class TransportRejeu : ITransportDeribit
     }
 
     /// <summary>
-    /// On rejoue tous les messages du fichier, indépendamment des canaux demandés à l'écran, afin de
-    /// conserver la session enregistrée.
+    /// All messages in the file are replayed, regardless of the channels requested on the
+    /// screen, in order to keep the saved session.
     /// </summary>
     public Task SouscrireAsync(IEnumerable<string> canaux, CancellationToken ct = default) => Task.CompletedTask;
 
     /// <summary>
-    /// On relit les notifications à partir de l’heure choisie et on fait avancer l’heure virtuelle
-    /// seulement lorsqu’un message est émis.
+    /// Reread notifications from the chosen time and advance virtual time only when a message
+    /// is sent.
     /// </summary>
     public async IAsyncEnumerable<MessageFlux> LireFluxAsync([EnumeratorCancellation] CancellationToken ct)
     {
@@ -133,8 +133,8 @@ public sealed class TransportRejeu : ITransportDeribit
     }
 
     /// <summary>
-    /// On termine sans ressource à libérer : le fichier a déjà été entièrement lu et fermé par le
-    /// constructeur.
+    /// Unresourced release ends: the file has already been fully read and closed by the
+    /// manufacturer.
     /// </summary>
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

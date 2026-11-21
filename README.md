@@ -9,6 +9,27 @@ VolDesk is a C# options desk for BTC and ETH. It connects the volatility smile y
 3. Compare the premium in USD and crypto, inspect the Greeks and add the simulated trade to the book.
 4. Move the market forward to see the position and its initial hedge change. The blotter preserves the sequence of trades.
 
+## Inside the application
+
+![VolDesk market dashboard with the BTC smile and expiry table](figures/market-overview.jpg)
+
+The market overview shows the forward, number of strikes and implied volatility near the money for each expiry. The smile uses out-of-the-money marks. Selecting an expiry in the option chain puts call and put bids, asks, marks and model deltas on the same strike row.
+
+![VolDesk option chain and implied volatility curve for a selected expiry](figures/option-chain.jpg)
+
+![VolDesk pricing two call legs in the offline demonstration](figures/strategy-quote.jpg)
+
+On the pricer, each row is a leg. Buying a spread means paying the ask on the long call and receiving the bid on the short call. Their theoretical values can be subtracted at the same forward, while the executable cost uses the correct side of each quote. A missing side prevents simulated execution. The trade blotter records the booking and the positions view aggregates the exposure.
+
+| Layer | What to look for |
+| --- | --- |
+| [Domain](src/Pricer.Domaine) | Instruments, forward pricing, implied volatility, structure quotes, Greeks and position valuation |
+| [Infrastructure](src/Pricer.Infrastructure) | Market feeds, replay files, rate limits and exports |
+| [Web desk](src/Pricer.Web) | Chain, strategy pricer, simulated positions and market scenarios |
+| [Console](src/Pricer.App) | A second entry point to the same pricing and booking logic |
+
+The screenshots are from a running offline BTC session. The numerical example below fixes its own strikes, maturity and volatility so you can study those effects separately.
+
 ## Implementation
 
 This example uses the project's pricing engine for a one-month call spread at 60 percent volatility. At a futures price of USD 100,000, the spread costs USD 3,584 and has a delta of 0.214 BTC. The dotted lines mark the strikes.
@@ -31,4 +52,4 @@ Open the local address printed by ASP.NET Core. The default session generates a 
 dotnet test DeribitPricer.sln --configuration Release
 ```
 
-Portfolio by **Tom Bussard** at Université Paris Dauphine PSL, November 2026.
+Tom Bussard

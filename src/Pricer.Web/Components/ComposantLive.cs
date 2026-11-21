@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Pricer.Web.Components;
 
 /// <summary>
-/// On rafraîchit la page tant qu'elle est affichée pour suivre le marché. On utilise une période de 500 ms
-/// par défaut, que chaque page peut adapter à ses besoins.
+/// The page is refreshed as long as it is displayed to track the market. A default period of
+/// 500 ms is used, which each page can adapt to its needs.
 /// </summary>
 public abstract class ComposantLive : ComponentBase, IDisposable
 {
@@ -15,7 +15,7 @@ public abstract class ComposantLive : ComponentBase, IDisposable
     protected bool EnPause { get; set; }
 
     /// <summary>
-    /// On démarre un minuteur propre à la page pour actualiser ses résultats pendant son affichage.
+    /// A page-specific timer is started to update its results during its display.
     /// </summary>
     protected override void OnInitialized()
     {
@@ -25,8 +25,8 @@ public abstract class ComposantLive : ComponentBase, IDisposable
     }
 
     /// <summary>
-    /// On attend chaque tick sans bloquer la page, puis on recalcule et on affiche les données sur le
-    /// contexte Blazor.
+    /// We wait for each tick without blocking the page, then recalculate and display the data
+    /// on the Blazor context.
     /// </summary>
     private async Task BoucleAsync(CancellationToken ct)
     {
@@ -39,18 +39,17 @@ public abstract class ComposantLive : ComponentBase, IDisposable
     }
 
     /// <summary>
-    /// On laisse chaque page définir les calculs à refaire avant son affichage. Par défaut, on relit
-    /// simplement l'état du marché déjà disponible.
+    /// We let each page define the calculations to be repeated before its display. By default,
+    /// we simply reread the market condition already available.
     /// </summary>
     protected virtual Task AvantRafraichissementAsync() => Task.CompletedTask;
 
     /// <summary>
-    /// On annule la boucle et on libère le minuteur pour arrêter les mises à jour après le départ de la
-    /// page.
+    /// Cancel the loop and release the timer to stop updates after the page starts.
     /// </summary>
     public virtual void Dispose()
     {
-        // On arrête le minuteur en quittant la page pour ne pas conserver des rafraîchissements devenus inutiles.
+        // The timer is stopped by leaving the page to avoid unnecessary refreshments.
         _arret?.Cancel();
         _minuteur?.Dispose();
         _arret?.Dispose();

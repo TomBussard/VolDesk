@@ -15,8 +15,8 @@ namespace Pricer.Infrastructure.Services;
 public static class FabriqueSourceDonnees
 {
     /// <summary>
-    /// On choisit le transport du mode actif, on reprend éventuellement la lecture à l’heure sauvegardée
-    /// et on l’adapte à la source métier.
+    /// The transport of the active mode is chosen, the reading is repeated at the saved time
+    /// and adapted to the business source.
     /// </summary>
     public static ISourceMarche Creer(OptionsPricer options, ILoggerFactory journaux)
     {
@@ -33,8 +33,8 @@ public static class FabriqueSourceDonnees
     }
 
     /// <summary>
-    /// On génère une session fictive propre à la devise puis on la relit avec les mêmes commandes qu’un
-    /// enregistrement réel.
+    /// We generate a fictitious session specific to the currency and then re-read it with the
+    /// same commands as a real record.
     /// </summary>
     private static TransportRejeu CreerDemonstration(OptionsPricer options)
     {
@@ -44,7 +44,8 @@ public static class FabriqueSourceDonnees
     }
 
     /// <summary>
-    /// On prépare les connexions REST et WebSocket avec leur journal et la limite de débit configurée.
+    /// REST and WebSocket connections are prepared with their log and the flow limit
+    /// configured.
     /// </summary>
     private static TransportLive CreerLive(OptionsPricer options, ILoggerFactory journaux) => new(
         new HttpClient { BaseAddress = new Uri(options.UrlRest), Timeout = TimeSpan.FromSeconds(15) },

@@ -27,7 +27,7 @@ h3 { font-size: 13px; margin: 0 0 8px; font-weight: 600; color: var(--muet); tex
 .alerte-txt { color: var(--alerte); font-weight: 600; }
 .mono { font-family: var(--mono); }
 
-/* On sépare la navigation et le contenu pour garder les actions principales accessibles. */
+/* Navigation and content are separated to keep key actions accessible. */
 .app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
 .barre { background: var(--fond-2); border-right: 1px solid var(--bord); padding: 18px 14px; display: flex; flex-direction: column; gap: 22px; position: sticky; top: 0; height: 100vh; }
 .logo { display: flex; gap: 10px; align-items: center; padding: 0 6px; }
@@ -50,7 +50,7 @@ nav a.active { background: var(--carte-2); color: var(--texte); box-shadow: inse
 h1:focus { outline: none; }
 .entete { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px; gap: 16px; flex-wrap: wrap; }
 
-/* On regroupe les informations en cartes et en grilles pour comparer les résultats sans surcharger chaque bloc. */
+/* The information is gathered in maps and grids to compare the results without overloading each block. */
 .carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; }
 .carte.alerte { border-color: var(--neg); }
 .grille { display: grid; gap: 16px; }
@@ -58,13 +58,13 @@ h1:focus { outline: none; }
 .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 1100px) { .g3, .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 1350px) { .g2 { grid-template-columns: 1fr; } }
+@media (max-width: 1050px) { .g2 { grid-template-columns: 1fr; } }
 .kpi { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 14px 16px; }
 .kpi .libelle { color: var(--muet); font-size: 12px; }
 .kpi .valeur { font-family: var(--mono); font-size: 22px; font-weight: 500; margin-top: 4px; }
 .kpi .detail { color: var(--muet); font-size: 12px; margin-top: 2px; font-family: var(--mono); }
 
-/* On garde des champs et des boutons cohérents entre les écrans pour faciliter les saisies. */
+/* Fields and buttons are kept consistent between screens to facilitate input. */
 .formulaire { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: flex-end; }
 .champ { display: flex; flex-direction: column; gap: 5px; }
 .champ label { font-size: 12px; color: var(--muet); }
@@ -84,7 +84,7 @@ input[type=number] { font-family: var(--mono); width: 130px; }
 .bouton.rouge { background: var(--neg); }
 .bouton.petit { padding: 4px 10px; font-size: 12px; }
 
-/* On aligne les nombres dans les tableaux et on permet le défilement horizontal des détails. */
+/* The numbers are aligned in the tables and the horizontal scrolling of the details is allowed. */
 .tableau-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th { text-align: right; color: var(--muet); font-weight: 500; font-size: 12px; padding: 7px 9px; border-bottom: 1px solid var(--bord); white-space: nowrap; }
@@ -96,7 +96,7 @@ tr.total td { font-weight: 600; border-top: 1px solid var(--bord); }
 td.strike { text-align: center; font-weight: 600; background: var(--carte-2); }
 tr.atm td.strike { color: var(--alerte); }
 td.signale { color: var(--neg); font-weight: 600; }
-td.signale::after { content: " ⚠"; }
+td.signale { text-decoration: underline dotted; text-underline-offset: 3px; }
 .badge { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-family: Inter, sans-serif; font-weight: 600; }
 .badge.ok { background: rgba(47,191,113,.15); color: var(--pos); }
 .badge.ko { background: rgba(240,82,91,.15); color: var(--neg); }
@@ -105,14 +105,14 @@ td.signale::after { content: " ⚠"; }
 .ligne-prix .lib { font-family: Inter, sans-serif; color: var(--muet); }
 .ligne-prix .fort { font-weight: 600; color: var(--texte); }
 
-/* On distingue les erreurs, les confirmations et les informations avec des messages visibles. */
+/* Errors, confirmations and information are distinguished with visible messages. */
 .message { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 9px; margin-bottom: 14px; border: 1px solid; }
 .message-erreur { background: rgba(240,82,91,.1); border-color: rgba(240,82,91,.5); color: #ffb3b8; }
 .message-succes { background: rgba(47,191,113,.1); border-color: rgba(47,191,113,.5); color: #a6ecc4; }
 .message-info { background: rgba(79,140,255,.1); border-color: rgba(79,140,255,.5); }
 .fermer { background: none; border: 0; color: inherit; font-size: 18px; cursor: pointer; }
 
-/* On conserve les mêmes couleurs pour les courbes et leurs légendes afin de faciliter leur lecture. */
+/* The same colours are retained for curves and their legends in order to facilitate their reading. */
 svg.graphique { width: 100%; height: auto; display: block; }
 svg.graphique text { fill: var(--muet); font-size: 11px; font-family: Inter, sans-serif; }
 svg.graphique .axe { stroke: var(--bord); stroke-width: 1; }
@@ -130,7 +130,7 @@ svg.graphique .zone-perte { fill: rgba(240,82,91,.10); }
 .legende span.auj::before { background: #c792ea; }
 .legende span.pm::before { background: var(--alerte); height: 8px; width: 8px; border-radius: 50%; }
 
-/* On signale le chargement pour éviter de présenter un écran vide pendant l'arrivée des données. */
+/* The load is reported to avoid presenting an empty screen during the arrival of the data. */
 .chargement { display: flex; gap: 14px; align-items: center; color: var(--muet); padding: 40px; }
 .spinner { width: 22px; height: 22px; border: 3px solid var(--bord); border-top-color: var(--accent); border-radius: 50%; animation: tourne .8s linear infinite; }
 @keyframes tourne { to { transform: rotate(360deg); } }
@@ -139,7 +139,7 @@ svg.graphique .zone-perte { fill: rgba(240,82,91,.10); }
 td.retour { white-space: normal; min-width: 170px; max-width: 260px; }
 .jambes { font-size: 11px; line-height: 1.5; white-space: nowrap; }
 
-/* On adapte la disposition des cartes pour garder les formulaires lisibles sur un petit écran. */
+/* The layout of the cards is adapted to keep the forms legible on a small screen. */
 .aide-accueil { display: flex; flex-direction: column; gap: 7px; line-height: 1.5; margin-top: 16px; }
 button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; }
 .legende { flex-wrap: wrap; }

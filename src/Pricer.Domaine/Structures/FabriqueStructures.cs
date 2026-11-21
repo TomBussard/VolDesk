@@ -4,15 +4,22 @@ using Pricer.Domaine.Modeles;
 
 namespace Pricer.Domaine.Structures;
 
-/// <summary>On décrit une jambe de recette par son type, le numéro du strike saisi et son ratio signé.</summary>
+/// <summary>
+/// A recipe leg is described by its type, the number of the strike entered, and its signed
+/// ratio.
+/// </summary>
 public readonly record struct GabaritJambe(TypeOption Type, int IndiceStrike, double Ratio);
 
-/// <summary>On rassemble les règles de construction d'une stratégie pour vérifier ses strikes avant de créer les jambes.</summary>
+/// <summary>
+/// The building rules of a strategy are assembled to check your strikes before you create your
+/// legs.
+/// </summary>
 public sealed record RecetteStructure(string Nom, int NombreStrikes, bool Symetrique, IReadOnlyList<GabaritJambe> Jambes);
 
 /// <summary>
-/// On a choisi une Factory de recettes pour centraliser la création et la validation des structures. On
-/// peut ainsi ajouter une recette au catalogue sans réécrire le pricer ni le book.
+/// A recipe factory has been chosen to centralize the creation and validation of the
+/// structures, so you can add a recipe to the catalogue without rewriting the prize or the
+/// book.
 /// </summary>
 public static class FabriqueStructures
 {
@@ -30,8 +37,8 @@ public static class FabriqueStructures
     public static IReadOnlyDictionary<TypeStructure, RecetteStructure> Catalogue => Recettes;
 
     /// <summary>
-    /// On vérifie le nombre, l'ordre et, si nécessaire, la symétrie des strikes avant de construire une
-    /// structure cotée.
+    /// The number, order and, if necessary, symmetry of the strikes are checked before
+    /// building a rated structure.
     /// </summary>
     public static Structure Creer(TypeStructure type, DateTime echeance, IReadOnlyList<double> strikes, ReferentielOptions referentiel)
     {
@@ -49,13 +56,16 @@ public static class FabriqueStructures
         return new Structure(type, jambes);
     }
 
-    /// <summary>On crée un call ou un put coté seul en vérifiant que le strike existe au référentiel.</summary>
+    /// <summary>
+    /// We create a call or a put-side alone by checking that the strike exists at the
+    /// repository.
+    /// </summary>
     public static Structure CreerOptionSimple(TypeOption typeOption, DateTime echeance, double strike, ReferentielOptions referentiel) =>
         new(TypeStructure.OptionSimple, [new JambeCotee(ValidateurStructure.ValiderStrikeCote(referentiel, echeance, strike, typeOption), +1)]);
 
     /// <summary>
-    /// On crée une option sur mesure et on vérifie immédiatement que ses paramètres peuvent être interpolés
-    /// dans la plage cotée.
+    /// We create a custom option and immediately check that its parameters can be interpolated
+    /// in the sided range.
     /// </summary>
     public static Structure CreerSurMesure(TypeOption typeOption, DateTime echeance, double strike, IContexteMarche contexte)
     {
@@ -65,8 +75,8 @@ public static class FabriqueStructures
     }
 
     /// <summary>
-    /// On reconstitue une structure à partir de jambes connues tout en vérifiant qu'elles partagent la même
-    /// échéance.
+    /// A structure is reconstructed from known legs while checking that they share the same
+    /// maturity.
     /// </summary>
     public static Structure Reconstruire(TypeStructure type, IEnumerable<Jambe> jambes)
     {

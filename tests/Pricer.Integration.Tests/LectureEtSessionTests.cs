@@ -18,12 +18,13 @@ public class LectureEtSessionTests
     private string _dossier = "";
     private WebApplication? _app;
     /// <summary>
-    /// On crée un dossier temporaire propre à ce test pour isoler ses fichiers des autres exécutions.
+    /// We create a temporary folder specific to this test to isolate its files from other
+    /// executions.
     /// </summary>
     [TestInitialize] public void Preparer() => _dossier = Directory.CreateTempSubdirectory("fusion-lecture-").FullName;
     /// <summary>
-    /// On arrête les services de marché et on supprime le dossier temporaire pour ne pas conserver de
-    /// flux après le test.
+    /// Market services are stopped and the temporary folder is removed so as not to keep a flow
+    /// after the test.
     /// </summary>
     [TestCleanup]
     public async Task Nettoyer()
@@ -33,8 +34,8 @@ public class LectureEtSessionTests
     }
 
     /// <summary>
-    /// On vérifie que la pause conserve un marché cohérent et que le pas ne laisse passer qu'une mise à
-    /// jour.
+    /// It is verified that the break retains a consistent market and that the step only allows
+    /// for an update.
     /// </summary>
     [TestMethod]
     public async Task Rejeu_PauseEtPas_SansAvanceDuTempsNiDuRest()
@@ -70,8 +71,8 @@ public class LectureEtSessionTests
     }
 
     /// <summary>
-    /// On vérifie que la démonstration produit des instruments et un indice adaptés à la devise
-    /// choisie.
+    /// It is verified that the demonstration produces instruments and an index adapted to the
+    /// currency chosen.
     /// </summary>
     [DataTestMethod]
     [DataRow("BTC", 100000d)]
@@ -89,7 +90,7 @@ public class LectureEtSessionTests
     }
 
     /// <summary>
-    /// On construit les services avec une démonstration locale et une configuration de test isolée.
+    /// The services are built with a local demonstration and an isolated test configuration.
     /// </summary>
     private async Task DemarrerAsync()
     {
@@ -102,8 +103,8 @@ public class LectureEtSessionTests
     }
 
     /// <summary>
-    /// On vérifie qu'une opération est sauvegardée immédiatement et qu'une nouvelle session ne détruit
-    /// pas l'ancien portefeuille.
+    /// We check that an operation is saved immediately and that a new session does not destroy
+    /// the old wallet.
     /// </summary>
     [TestMethod]
     public async Task Session_TradeSauvegardePuisRecommencer_AncienBookConserveEtDevisesIsolees()
@@ -132,8 +133,8 @@ public class LectureEtSessionTests
     }
 
     /// <summary>
-    /// On vérifie qu'une configuration illisible laisse démarrer une démonstration tout en conservant
-    /// le fichier à examiner.
+    /// It is checked that an unreadable configuration lets start a demonstration while keeping
+    /// the file to be examined.
     /// </summary>
     [TestMethod]
     public void ConfigurationIllisible_RetourDemoSansEcraserLeFichier()
@@ -148,7 +149,7 @@ public class LectureEtSessionTests
     }
 
     /// <summary>
-    /// On vérifie que le book d'une source ou d'une devise ne peut pas être repris par une autre.
+    /// It is verified that the book of one source or currency cannot be taken over by another.
     /// </summary>
     [TestMethod]
     public void Source_LesClesLiveEtDemoEtDevisesSontDistinctes()

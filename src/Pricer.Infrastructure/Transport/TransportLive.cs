@@ -10,8 +10,9 @@ using Pricer.Domaine.Exceptions;
 namespace Pricer.Infrastructure.Transport;
 
 /// <summary>
-/// On utilise REST pour les chargements ponctuels et WebSocket pour les cotations suivies. On limite les
-/// appels REST et on prévoit le heartbeat, la reconnexion et la reprise des abonnements après une coupure.
+/// REST is used for point loadings and WebSocket is used for the following quotes. REST
+/// calls are limited and heartbeat, reconnection and resumption of subscriptions are expected
+/// after a break.
 /// </summary>
 public sealed class TransportLive : ITransportDeribit
 {
@@ -29,8 +30,8 @@ public sealed class TransportLive : ITransportDeribit
     private int _idRequete;
 
     /// <summary>
-    /// On conserve les connexions, le limiteur REST et le journal qui seront utilisés pendant la session
-    /// en direct.
+    /// You keep the connections, the REST limiter and the log that will be used during the live
+    /// session.
     /// </summary>
     public TransportLive(HttpClient http, Uri urlWebSocket, LimiteurDebit limiteur, ILogger<TransportLive>? log = null)
     {
@@ -43,8 +44,8 @@ public sealed class TransportLive : ITransportDeribit
     public bool FluxTermine => false;
 
     /// <summary>
-    /// On attend un jeton REST, on envoie les paramètres encodés puis on contrôle les erreurs HTTP et
-    /// JSON-RPC avant de rendre le résultat.
+    /// We wait for a REST token, send the encoded parameters and then control HTTP and JSON-RPC
+    /// errors before rendering the result.
     /// </summary>
     public async Task<ReponseRest> AppelerAsync(string methode, IReadOnlyDictionary<string, string> parametres, CancellationToken ct = default)
     {
@@ -64,7 +65,8 @@ public sealed class TransportLive : ITransportDeribit
     }
 
     /// <summary>
-    /// On mémorise les canaux demandés sans doublons et on démarre la réception au premier abonnement.
+    /// We store the requested channels without duplicates and start reception at the first
+    /// subscription.
     /// </summary>
     public async Task SouscrireAsync(IEnumerable<string> canaux, CancellationToken ct = default)
     {
@@ -80,8 +82,7 @@ public sealed class TransportLive : ITransportDeribit
     }
 
     /// <summary>
-    /// On lit les messages placés dans la file de réception pour les transmettre un à un à la source de
-    /// marché.
+    /// Messages placed in the receiving line are read one by one at the market source.
     /// </summary>
     public async IAsyncEnumerable<MessageFlux> LireFluxAsync([EnumeratorCancellation] CancellationToken ct)
     {
@@ -91,8 +92,8 @@ public sealed class TransportLive : ITransportDeribit
     }
 
     /// <summary>
-    /// On ouvre le WebSocket, on rétablit ses abonnements et on reçoit les messages. On retente la
-    /// connexion avec une attente progressive après une coupure.
+    /// We open the WebSocket, we restore our subscriptions and we receive the messages. We
+    /// reconnect with a gradual wait after a break.
     /// </summary>
     private async Task BoucleReceptionAsync(CancellationToken ct)
     {
@@ -132,8 +133,8 @@ public sealed class TransportLive : ITransportDeribit
     }
 
     /// <summary>
-    /// On répond aux demandes de heartbeat et on conserve uniquement les notifications d’abonnement
-    /// contenant une donnée de marché.
+    /// Heartbeat requests are answered and only subscription notifications containing market
+    /// data are kept.
     /// </summary>
     private async Task TraiterAsync(string texte, CancellationToken ct)
     {
@@ -155,7 +156,7 @@ public sealed class TransportLive : ITransportDeribit
     }
 
     /// <summary>
-    /// On répartit les canaux en lots de cent avant d’envoyer les demandes d’abonnement.
+    /// Channels are distributed in batches of one hundred before sending subscription requests.
     /// </summary>
     private async Task EnvoyerSouscriptionAsync(IReadOnlyList<string> canaux, CancellationToken ct)
     {
@@ -164,8 +165,8 @@ public sealed class TransportLive : ITransportDeribit
     }
 
     /// <summary>
-    /// On sérialise une requête JSON-RPC et on protège l’envoi pour ne pas superposer deux messages sur
-    /// le même WebSocket.
+    /// A JSON-RPC request is serialized and the sending is protected to avoid overlaying two
+    /// messages on the same WebSocket.
     /// </summary>
     private async Task EnvoyerAsync(string methode, object parametres, CancellationToken ct)
     {
@@ -178,7 +179,7 @@ public sealed class TransportLive : ITransportDeribit
     }
 
     /// <summary>
-    /// On assemble tous les fragments d’un message WebSocket avant de décoder son texte UTF-8.
+    /// All fragments of a WebSocket message are assembled before decoding its UTF-8 text.
     /// </summary>
     /// <returns>On renvoie null lorsque le serveur demande la fermeture de la connexion.</returns>
     private static async Task<string?> RecevoirAsync(ClientWebSocket ws, CancellationToken ct)
@@ -196,8 +197,8 @@ public sealed class TransportLive : ITransportDeribit
     }
 
     /// <summary>
-    /// On convertit usOut, exprimé en microsecondes Unix, en date UTC. On utilise l’heure UTC locale si
-    /// ce champ manque.
+    /// We convert usOut, expressed in Unix microseconds, to UTC. Local UTC time is used if this
+    /// field is missing.
     /// </summary>
     private static DateTime HorodatageServeur(JsonElement racine) =>
         racine.TryGetProperty("usOut", out var us)
@@ -207,8 +208,8 @@ public sealed class TransportLive : ITransportDeribit
     private bool _libere;
 
     /// <summary>
-    /// On annule la réception, on attend sa fin puis on libère les connexions et leurs verrous une seule
-    /// fois.
+    /// We cancel the reception, we wait for its end and then we release the connections and
+    /// their locks once.
     /// </summary>
     public async ValueTask DisposeAsync()
     {

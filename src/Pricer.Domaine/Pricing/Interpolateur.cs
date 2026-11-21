@@ -5,8 +5,8 @@ using Pricer.Domaine.Utilitaires;
 namespace Pricer.Domaine.Pricing;
 
 /// <summary>
-/// On garde le détail des deux échéances et des volatilités utilisées pour pouvoir expliquer
-/// l'interpolation à l'écran.
+/// We keep the details of the two expiries and the volatility used to explain the
+/// interpolation on screen.
 /// </summary>
 public sealed record ResultatInterpolation(
     double Future,
@@ -29,8 +29,8 @@ public sealed record ResultatInterpolation(
 public static class Interpolateur
 {
     /// <summary>
-    /// On encadre l'option dans les smiles cotés, puis on interpole le future et la variance totale à log-
-    /// moneyness égale.
+    /// We frame the option in the sidemiles, then we interpolate the future and the total
+    /// variance to log- moneyness equal.
     /// </summary>
     /// <param name="strike">Le strike OTC en USD.</param>
     /// <param name="echeance">La date et l'heure UTC de l'option demandée.</param>
@@ -46,7 +46,7 @@ public static class Interpolateur
         var tries = smiles.Where(s => s.Maturite > 0 && double.IsFinite(s.Future) && s.Future > 0).OrderBy(s => s.Echeance).ToList();
         if (tries.Count == 0) throw new HorsPlageException("Aucune échéance cotée exploitable.");
 
-        // On interpole seulement le smile si la date demandée est déjà une échéance cotée.
+        // We only interpolate the smile if the requested date is already a rated expiry.
         var exacte = tries.FirstOrDefault(s => s.Echeance == echeance);
         if (exacte is not null)
         {
@@ -65,16 +65,16 @@ public static class Interpolateur
         double t2 = Maturite.EnAnnees(s2.Echeance, maintenant);
         double poids = (t - t1) / (t2 - t1);
 
-        // On interpole d'abord le future en temps pour situer le strike OTC par rapport à son propre sous-jacent.
+        // We first interpolate the future in time to situate the OTC strike in relation to its own underlying.
         double f = s1.Future + poids * (s2.Future - s1.Future);
-        // On compare ensuite les deux échéances à même log-moneyness, et non au même strike nominal.
+        // The two expiries are then compared to the same log-moneyness, not the same nominal strike.
         double k = Math.Log(strike / f);
-        // On obtient la volatilité de chaque smile au strike équivalent de cette log-moneyness.
+        // We get the volatility of each smile to the equivalent strike of this log-moneyness.
         double sigma1 = VolSurEcheance(s1, k);
         double sigma2 = VolSurEcheance(s2, k);
-        // On interpole la variance totale sigma²T, puis on revient à la volatilité de la date OTC.
+        // The total variance sigma2T is interpolated, then the volatility of the OTC date is returned.
         double w1 = sigma1 * sigma1 * t1, w2 = sigma2 * sigma2 * t2;
-        // On refuse une variance totale décroissante plutôt que de présenter une surface avec arbitrage calendaire.
+        // A decreasing total variance is refused rather than presenting a surface with calendar arbitration.
         if (w2 < w1 - 1e-12)
             throw new HorsPlageException("Variance totale décroissante : interpolation refusée (arbitrage calendaire).");
         double w = w1 + poids * (w2 - w1);

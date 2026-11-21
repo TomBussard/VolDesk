@@ -9,7 +9,7 @@
 <div class="entete">
     <div>
         <h1>Blotter</h1>
-        <div class="muet">Tous les trades : ouvertures, débouclages (liés au trade d'origine) et règlements à l'échéance.</div>
+        <div class="muet">All trades: openings, clearings (linked to the original trade) and settlement at maturity.</div>
     </div>
 </div>
 
@@ -18,13 +18,13 @@
 <div class="carte">
     @if (BlotterDesk.Trades.Count == 0)
     {
-        <div class="vide">Le blotter est vide.</div>
+        <div class="vide">The float is empty.</div>
     }
     else
     {
         <div class="tableau-wrap">
             <table>
-                <thead><tr><th>Trade</th><th class="texte">Nature</th><th class="texte">Description</th><th>Qté</th><th class="texte">Jambes (qté signée @@ prix, future, vol)</th><th>Prime @Options.Devise</th><th class="texte">Débouclage</th></tr></thead>
+                <thead><tr><th>Trade</th><th class="texte">Nature</th><th class="texte">Description</th><th>Qty</th><th class="texte">Jambes (qté signée @@ prix, future, vol)</th><th>Prime @Options.Devise</th><th class="texte">Unfreezing</th></tr></thead>
                 <tbody>
                     @foreach (var t in BlotterDesk.Trades.Reverse())
                     {
@@ -47,7 +47,7 @@
                                     <div style="display:flex; gap:6px; align-items:center">
                                         <input type="number" step="@t.Jambes.First(j => !j.Couverture).PasQuantite.ToString(CultureInfo.InvariantCulture)" style="width:80px; min-width:0" value="@Quantite(t.Id, ouverte).ToString(CultureInfo.InvariantCulture)"
                                                @oninput="e => _quantites[t.Id] = double.TryParse((string?)e.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var q) ? q : 0" />
-                                        <button class="bouton rouge petit" @onclick="() => DeboucherAsync(t)">@(ouverte > 0 ? "Déboucler" : "Fermer les couvertures")</button>
+                                        <button class="bouton rouge petit" @onclick="() => DeboucherAsync(t)">@(ouverte >0 ? "Ship" : "Ship the blankets")</button>
                                         <span class="muet">/ @ouverte.ToString("0.0")</span>
                                     </div>
                                 }
@@ -67,14 +67,14 @@
     protected override TimeSpan Periode => TimeSpan.FromSeconds(2);
 
     /// <summary>
-    /// On reprend la quantité saisie pour ce trade, ou toute la quantité ouverte lors du premier
-    /// affichage.
+    /// The amount entered for this trade is taken back, or the whole quantity opened during the
+    /// first display.
     /// </summary>
     private double Quantite(Guid id, double ouverte) => _quantites.TryGetValue(id, out var q) ? q : ouverte;
 
     /// <summary>
-    /// On demande les instruments du trade, puis on déboucle la quantité choisie avec les dernières
-    /// cotations disponibles.
+    /// We ask for the instruments of the trade, then we unpack the quantity chosen with the
+    /// latest quotes available.
     /// </summary>
     private async Task DeboucherAsync(Trade t)
     {
@@ -89,5 +89,3 @@
         catch (PricerException ex) { (_message, _typeMessage) = (ex.Message, "erreur"); }
     }
 }
-
-

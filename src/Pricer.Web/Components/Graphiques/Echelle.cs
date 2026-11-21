@@ -3,8 +3,8 @@ using System.Globalization;
 namespace Pricer.Web.Components.Graphiques;
 
 /// <summary>
-/// On transforme les valeurs de marché en positions sur le graphique SVG, avec des graduations lisibles
-/// plutôt qu'un grand nombre de décimales.
+/// Market values are transformed into positions on the SVG chart, with legible graduations
+/// rather than a large number of decimal places.
 /// </summary>
 public sealed class Echelle(double min, double max, double pixelMin, double pixelMax)
 {
@@ -12,19 +12,20 @@ public sealed class Echelle(double min, double max, double pixelMin, double pixe
     public double Max { get; } = max > min ? max : min + 1;
 
     /// <summary>
-    /// On projette une valeur métier sur la plage de pixels du graphique, y compris lorsque l'axe
-    /// vertical est inversé.
+    /// A business value is projected over the pixels range of the graph, including when the
+    /// vertical axis is reversed.
     /// </summary>
     public double Vers(double x) => pixelMin + (x - Min) / (Max - Min) * (pixelMax - pixelMin);
 
     /// <summary>
-    /// On écrit une coordonnée SVG avec un point décimal, quelle que soit la langue du système.
+    /// A SVG coordinate is written with a decimal point, regardless of the language of the
+    /// system.
     /// </summary>
     public static string P(double x) => x.ToString("0.##", CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// On choisit un pas arrondi pour afficher quelques repères lisibles plutôt que des graduations
-    /// trop détaillées.
+    /// A rounded step is chosen to display a few legible markers rather than too detailed
+    /// graduations.
     /// </summary>
     public IEnumerable<double> Graduations(int nombre = 5)
     {
@@ -35,8 +36,8 @@ public sealed class Echelle(double min, double max, double pixelMin, double pixe
     }
 
     /// <summary>
-    /// On ajoute une marge autour des valeurs pour que la courbe ne touche pas les bords. On peut aussi
-    /// inclure zéro lorsque cela aide à lire le résultat.
+    /// Add a margin around the values so that the curve does not touch the edges. You can also
+    /// include zero when it helps to read the result.
     /// </summary>
     public static Echelle Autour(IEnumerable<double> valeurs, double pixelMin, double pixelMax, bool inclureZero, double marge = 0.08)
     {

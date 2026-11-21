@@ -11,7 +11,7 @@ public class FabriqueEtValidationTests
     private readonly Pricer.Domaine.Marche.ReferentielOptions _ref = MarcheDeTest.Referentiel();
 
     /// <summary>
-    /// On vérifie le sens des deux jambes qui définit un call spread acheté.
+    /// We check the sense of both legs that defines a purchased call spread.
     /// </summary>
     [TestMethod]
     public void Creer_CallSpread_AchatDuStrikeBasVenteDuStrikeHaut()
@@ -25,7 +25,7 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie que le put spread retient la bonne combinaison de strikes et de signes.
+    /// We check that the put spread retains the right combination of strikes and signs.
     /// </summary>
     [TestMethod]
     public void Creer_PutSpread_AchatDuPutHautVenteDuPutBas()
@@ -36,7 +36,7 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie le poids double de la jambe centrale dans la recette du butterfly.
+    /// The double weight of the central leg is checked in the butterfly recipe.
     /// </summary>
     [TestMethod]
     public void Creer_ButterflyPut_Ratios1Moins2Plus1()
@@ -47,7 +47,7 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie qu'un butterfly asymétrique est refusé avec le code d'erreur attendu.
+    /// We check that an asymmetric butterfly is refused with the expected error code.
     /// </summary>
     [TestMethod]
     public void Creer_ButterflyNonSymetrique_LeveSaisieInvalideAvecCode()
@@ -59,7 +59,7 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie qu'une recette ne peut pas être construite avec des strikes inversés.
+    /// We check that a recipe can't be built with inverted strikes.
     /// </summary>
     [TestMethod]
     public void Creer_StrikesDansLeMauvaisOrdre_LeveSaisieInvalide()
@@ -70,7 +70,8 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie que le refus d'un strike absent fournit une indication utile pour corriger la saisie.
+    /// It is verified that the refusal of an absent strike provides a useful indication to
+    /// correct the seizure.
     /// </summary>
     [TestMethod]
     public void Creer_StrikeNonCote_MessageAvecLesStrikesLesPlusProches()
@@ -82,7 +83,7 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie qu'une structure cotée doit utiliser une maturité du référentiel.
+    /// It is verified that a rated structure must use a maturity of the repository.
     /// </summary>
     [TestMethod]
     public void Creer_EcheanceNonCotee_LeveSaisieInvalide()
@@ -93,7 +94,7 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie que la recette reçoit exactement les strikes nécessaires à ses jambes.
+    /// We check that the recipe receives exactly the necessary strikes for its legs.
     /// </summary>
     [TestMethod]
     public void Creer_MauvaisNombreDeStrikes_LeveSaisieInvalide()
@@ -104,7 +105,7 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie que le pas de négociation s'applique avant tout traitement de la quantité.
+    /// It is verified that the trading step applies before processing the quantity.
     /// </summary>
     [DataTestMethod]
     [DataRow(0.15)]
@@ -116,7 +117,8 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie que le sens du trade ne peut pas être contourné par une quantité nulle ou négative.
+    /// It is verified that the direction of the trade cannot be circumvented by a zero or
+    /// negative amount.
     /// </summary>
     [DataTestMethod]
     [DataRow(0.0)]
@@ -128,7 +130,8 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie qu'une quantité conforme est acceptée malgré les petites erreurs d'arrondi binaire.
+    /// It is verified that a consistent quantity is accepted despite small binary rounding
+    /// errors.
     /// </summary>
     [DataTestMethod]
     [DataRow(0.1)]
@@ -140,7 +143,8 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie que les recettes supplémentaires passent par la même Factory et les mêmes contrôles.
+    /// It is verified that the additional revenues go through the same Factory and the same
+    /// controls.
     /// </summary>
     [TestMethod]
     public void Catalogue_StructuresBonus_CreeesSansModifierLeCodeAppelant()
@@ -154,7 +158,8 @@ public class FabriqueEtValidationTests
     }
 
     /// <summary>
-    /// On vérifie qu'une demande OTC impossible à interpoler est refusée dès sa construction.
+    /// It is verified that an OTC application that cannot be interpolated is refused as soon as
+    /// it is constructed.
     /// </summary>
     [TestMethod]
     public void CreerSurMesure_EcheanceHorsPlage_LeveHorsPlageException()

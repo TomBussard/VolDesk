@@ -1,37 +1,37 @@
 @using System.Globalization
-@* On trace le smile à partir des volatilités que l'on a inversées depuis les marks, en privilégiant les options hors de la monnaie. *@
+@* The smile is traced from the volatility that has been reversed from the marks, favouring options outside the currency. *@
 @if (Smile is null || Smile.Points.Count < 2)
 {
-    <div class="vide">Pas assez de points pour tracer le smile.</div>
+    <div class="vide">The smile needs at least two strikes.</div>
 }
 else
 {
-    <svg class="graphique" viewBox="0 0 @L @H" role="img" aria-label="Smile de volatilité">
+    <svg class="graphique" viewBox="0 0 @L @H" role="img" aria-label="Implied volatility by strike">
         @foreach (var y in _y.Graduations(4))
         {
             <g>
             <line class="axe" x1="@G" x2="@(L - D)" y1="@P(_y.Vers(y))" y2="@P(_y.Vers(y))" opacity="0.35" />
-            <text x="@(G - 6)" y="@P(_y.Vers(y) + 4)" text-anchor="end">@((y * 100).ToString("0", Fr)) %</text>
+            <text x="@(G - 6)" y="@P(_y.Vers(y) + 4)" text-anchor="end">@((y * 100).ToString("0", DisplayCulture)) %</text>
             </g>
         }
         @foreach (var x in _x.Graduations(6))
         {
             <g>
-            <text x="@P(_x.Vers(x))" y="@(H - B + 16)" text-anchor="middle">@x.ToString("N0", Fr)</text>
+            <text x="@P(_x.Vers(x))" y="@(H - B + 16)" text-anchor="middle">@x.ToString("N0", DisplayCulture)</text>
             </g>
         }
         <line class="future" x1="@P(_x.Vers(Smile.Future))" x2="@P(_x.Vers(Smile.Future))" y1="@Haut" y2="@(H - B)" />
-        <text x="@P(_x.Vers(Smile.Future) + 4)" y="@(Haut + 10)">F = @Smile.Future.ToString("N0", Fr)</text>
+        <text x="@P(_x.Vers(Smile.Future) + 4)" y="@(Haut + 10)">F = @Smile.Future.ToString("N0", DisplayCulture)</text>
         <polyline class="courbe-smile" points="@string.Join(" ", Smile.Points.Select(p => $"{P(_x.Vers(p.Strike))},{P(_y.Vers(p.Vol))}"))" />
         @foreach (var p in Smile.Points)
         {
-            <circle class="point" cx="@P(_x.Vers(p.Strike))" cy="@P(_y.Vers(p.Vol))" r="2.6"><title>@p.Strike.ToString("N0", Fr) : @((p.Vol * 100).ToString("0.00", Fr)) %</title></circle>
+            <circle class="point" cx="@P(_x.Vers(p.Strike))" cy="@P(_y.Vers(p.Vol))" r="2.6"><title>@p.Strike.ToString("N0", DisplayCulture) : @((p.Vol * 100).ToString("0.00", DisplayCulture)) %</title></circle>
         }
         @if (StrikeMarque is double k && Vol is double v)
         {
             <g>
             <circle cx="@P(_x.Vers(k))" cy="@P(_y.Vers(v))" r="6" fill="none" stroke="#f5a524" stroke-width="2" />
-            <text x="@P(_x.Vers(k) + 8)" y="@P(_y.Vers(v) - 8)" style="fill:#f5a524">sur mesure</text>
+            <text x="@P(_x.Vers(k) + 8)" y="@P(_y.Vers(v) - 8)" style="fill:#f5a524">custom strike</text>
             </g>
         }
         <line class="axe" x1="@G" x2="@G" y1="@Haut" y2="@(H - B)" />
@@ -44,12 +44,12 @@ else
     [Parameter] public double? StrikeMarque { get; set; }
     [Parameter] public double? Vol { get; set; }
 
-    private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
+    private static readonly CultureInfo DisplayCulture = CultureInfo.GetCultureInfo("en-US");
     private const double L = 760, H = 260, G = 54, D = 16, Haut = 14, B = 28;
     private Echelle _x = default!, _y = default!;
 
     /// <summary>
-    /// On construit les axes et la courbe à partir des strikes disponibles pour l'échéance affichée.
+    /// The axes and curve are built from the available strikes for the displayed expiry.
     /// </summary>
     protected override void OnParametersSet()
     {
@@ -63,7 +63,7 @@ else
     }
 
     /// <summary>
-    /// On formate les positions du smile dans la notation numérique attendue par le SVG.
+    /// Smile positions are formatted in the digital notation expected by the SVG.
     /// </summary>
     private static string P(double v) => Echelle.P(v);
 }

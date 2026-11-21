@@ -2,24 +2,28 @@ using Pricer.Domaine.Modeles;
 
 namespace Pricer.Domaine.Marche;
 
-/// <summary>On donne au pricer et au book une vue en lecture du marché pour séparer les calculs de l'arrivée des données.</summary>
+/// <summary>
+/// The pricer and book are given a market reading view to separate the calculations from the
+/// data arrival.
+/// </summary>
 public interface IContexteMarche
 {
     ReferentielOptions Referentiel { get; }
     DateTime Maintenant { get; }
     double? Indice { get; }
     /// <summary>
-    /// On demande la dernière cotation d'un instrument en acceptant qu'elle soit encore indisponible.
+    /// The final rating of an instrument is requested by accepting that it is still
+    /// unavailable.
     /// </summary>
     Cotation? Cotation(string nomInstrument);
     /// <summary>
-    /// On cherche un future exploitable pour l'échéance à partir des options récentes, puis du future coté de
-    /// même échéance.
+    /// A future exploitable for maturity is sought from recent options, then from the future
+    /// side of the same maturity.
     /// </summary>
     double? Future(DateTime echeance);
     /// <summary>
-    /// On expose les smiles calculés à partir des marks pour réutiliser la même interpolation dans tous les
-    /// calculs OTC.
+    /// Smiles calculated from marks are exposed to re-use the same interpolation in all OTC
+    /// calculations.
     /// </summary>
     IReadOnlyList<SmileEcheance> Smiles();
 }

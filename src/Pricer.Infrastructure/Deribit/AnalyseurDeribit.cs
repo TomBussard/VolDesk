@@ -6,20 +6,20 @@ using Pricer.Domaine.Utilitaires;
 namespace Pricer.Infrastructure.Deribit;
 
 /// <summary>
-/// On transforme le JSON Deribit en objets du domaine avec System.Text.Json, en conservant les champs
-/// réellement présents dans les réponses.
+/// The JSON Deribit is transformed into objects of the domain with System.Text.Json, keeping
+/// the fields actually present in the answers.
 /// </summary>
 public static class AnalyseurDeribit
 {
     /// <summary>
-    /// On convertit l’horodatage Unix de Deribit, exprimé en millisecondes, en date UTC.
+    /// Deribit Unix time stamping is converted to UTC in milliseconds.
     /// </summary>
     /// <param name="ms">On compte les millisecondes écoulées depuis le 1er janvier 1970 UTC.</param>
     public static DateTime DepuisMillisecondes(long ms) => DateTime.UnixEpoch.AddMilliseconds(ms);
 
     /// <summary>
-    /// On lit les caractéristiques contractuelles d’une option sans les confondre avec sa cotation
-    /// courante.
+    /// The contractual characteristics of an option are read without confusing them with its
+    /// current rating.
     /// </summary>
     public static Instrument Option(JsonElement e) => new()
     {
@@ -36,8 +36,8 @@ public static class AnalyseurDeribit
     };
 
     /// <summary>
-    /// On construit la fiche d’un future et on distingue le contrat perpétuel, qui ne possède pas
-    /// d’échéance datée.
+    /// The sheet of a future is constructed and the perpetual contract is distinguished, which
+    /// does not have a date of expiry.
     /// </summary>
     public static InstrumentFuture Future(JsonElement e)
     {
@@ -53,8 +53,8 @@ public static class AnalyseurDeribit
     }
 
     /// <summary>
-    /// On lit de la même façon un ticker REST et un message reçu sur un canal ticker, car ils décrivent
-    /// les mêmes informations de marché.
+    /// A REST ticker and a message received on a ticker channel are read in the same way, as
+    /// they describe the same market information.
     /// </summary>
     public static Cotation Ticker(JsonElement e)
     {
@@ -83,8 +83,8 @@ public static class AnalyseurDeribit
     }
 
     /// <summary>
-    /// On lit une ligne du résumé de marché en laissant absentes les grecques et les IV bid/ask que cette
-    /// réponse ne fournit pas.
+    /// A line of the market summary is read by leaving the Greeks and the IV bid/asks missing
+    /// that this answer does not provide.
     /// </summary>
     public static Cotation Resume(JsonElement e, DateTime horodatageServeur) => new()
     {
@@ -100,29 +100,29 @@ public static class AnalyseurDeribit
     };
 
     /// <summary>
-    /// On associe une date de règlement au prix officiel de livraison publié pour cette journée.
+    /// A payment date is associated with the official delivery price published for this day.
     /// </summary>
     public static PrixReglement Reglement(JsonElement e) => new(
         DateOnly.ParseExact(e.GetProperty("date").GetString()!, "yyyy-MM-dd", CultureInfo.InvariantCulture),
         e.GetProperty("delivery_price").GetDouble());
 
     /// <summary>
-    /// On accepte uniquement un champ JSON numérique fini ; un champ absent, nul ou invalide reste
-    /// indisponible.
+    /// Only a finished digital JSON field is accepted; an absent, invalid or invalid field
+    /// remains unavailable.
     /// </summary>
     private static double? Nombre(JsonElement e, string propriete) =>
         e.TryGetProperty(propriete, out var v) && v.ValueKind == JsonValueKind.Number &&
         v.TryGetDouble(out double n) && double.IsFinite(n) ? n : null;
 
     /// <summary>
-    /// On écarte les valeurs nulles ou négatives lorsque le champ doit représenter une valeur
-    /// strictement positive.
+    /// The null or negative values are discarded when the field must be a strictly positive
+    /// value.
     /// </summary>
     private static double? NombrePositif(JsonElement e, string propriete) => Nombre(e, propriete) is > 0 and var x ? x : null;
 
     /// <summary>
-    /// On conserve une valeur absente lorsque Deribit ne publie aucun ordre. Un prix ou une quantité nuls
-    /// ne doivent pas devenir un prix exécutable.
+    /// An absent value is retained when Deribit does not publish any order. A null price or
+    /// quantity must not become an executable price.
     /// </summary>
     private static double? PrixStrictementPositif(JsonElement e, string prix, string quantite) =>
         Nombre(e, prix) is > 0 and var p && (Nombre(e, quantite) ?? 1) > 0 ? p : null;

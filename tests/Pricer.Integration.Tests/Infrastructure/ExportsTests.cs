@@ -5,7 +5,9 @@ using Pricer.Infrastructure.Exports;
 
 namespace Pricer.Integration.Tests.Infrastructure;
 
-/// <summary>Tests d'intégration des exports : écriture sur disque puis relecture avec la même bibliothèque.</summary>
+/// <summary>
+/// Export integration tests: writing to disk and then rereading with the same library.
+/// </summary>
 [TestClass]
 public class ExportsTests
 {
@@ -14,20 +16,20 @@ public class ExportsTests
     private static readonly DateTime E = new(2026, 11, 20, 8, 0, 0, DateTimeKind.Utc);
 
     /// <summary>
-    /// On crée un dossier temporaire propre à ce test pour isoler ses fichiers des autres exécutions.
+    /// We create a temporary folder specific to this test to isolate its files from other
+    /// executions.
     /// </summary>
     [TestInitialize]
     public void Preparer() => _dossier = Directory.CreateTempSubdirectory("pricer-exports-").FullName;
 
     /// <summary>
-    /// On supprime les fichiers temporaires du scénario une fois ses vérifications terminées.
+    /// The temporary files are removed from the script once the checks are completed.
     /// </summary>
     [TestCleanup]
     public void Nettoyer() => Directory.Delete(_dossier, true);
 
     /// <summary>
-    /// On crée un trade stable dont les champs et les jambes pourront être relus dans les formats
-    /// exportés.
+    /// A stable trade is created whose fields and legs can be read in exported formats.
     /// </summary>
     private static Trade Trade(Guid id) => new()
     {
@@ -47,8 +49,7 @@ public class ExportsTests
     };
 
     /// <summary>
-    /// On associe l'historique et son état de book pour comparer les trois exportateurs sur les mêmes
-    /// valeurs.
+    /// History and book status are combined to compare the three exporters on the same values.
     /// </summary>
     private static (List<Trade>, EtatBook) Donnees()
     {
@@ -71,7 +72,7 @@ public class ExportsTests
     }
 
     /// <summary>
-    /// On relit le CSV pour vérifier ses lignes de jambes, ses colonnes et sa notation numérique.
+    /// The CSV is read again to check its legs, columns and numerical notation.
     /// </summary>
     [TestMethod]
     public void ExportCsv_RelectureCsvHelper_UneLigneParJambeEtPointDecimal()
@@ -90,7 +91,7 @@ public class ExportsTests
     }
 
     /// <summary>
-    /// On rouvre le classeur pour vérifier ses cinq feuilles et les valeurs effectivement enregistrées.
+    /// The binder is reopened to check its five sheets and the actual values recorded.
     /// </summary>
     [TestMethod]
     public void ExportExcel_RelectureClosedXml_CinqFeuillesEtValeurs()
@@ -108,8 +109,7 @@ public class ExportsTests
     }
 
     /// <summary>
-    /// On vérifie qu'un aller-retour JSON conserve les identifiants, les paramètres et les jambes des
-    /// trades.
+    /// It is verified that a JSON round trip retains trade IDs, parameters, and legs.
     /// </summary>
     [TestMethod]
     public void ExportJson_SauvegarderPuisCharger_BlotterIdentique()
@@ -131,8 +131,8 @@ public class ExportsTests
     }
 
     /// <summary>
-    /// On vérifie que chaque format demandé possède son exportateur et que les formats disponibles sont
-    /// cohérents.
+    /// It is verified that each requested format has its exporter and that the available
+    /// formats are consistent.
     /// </summary>
     [TestMethod]
     public void FabriqueExportateurs_TroisFormats()
@@ -141,7 +141,8 @@ public class ExportsTests
     }
 
     /// <summary>
-    /// On vérifie que les exports distinguent une valeur absente d'une valeur de marché égale à zéro.
+    /// It is verified that exports distinguish an absent value from a market value equal to
+    /// zero.
     /// </summary>
     [TestMethod]
     public void Exports_ValorisationManquante_CellulesVidesEtStatutExplicite()
@@ -170,7 +171,7 @@ public class ExportsTests
     }
 
     /// <summary>
-    /// On vérifie qu'un remplacement de sauvegarde conserve la dernière liste complète de trades.
+    /// It is verified that a backup replacement retains the last complete list of trades.
     /// </summary>
     [TestMethod]
     public void Sauvegarde_DeuxEcrituresSuccessives_GardeLaDerniereVersionComplete()
@@ -187,4 +188,3 @@ public class ExportsTests
         Assert.AreEqual(0, Directory.GetFiles(_dossier, "*.tmp").Length);
     }
 }
-

@@ -10,7 +10,8 @@ namespace Pricer.Domaine.Tests.Pricing;
 public class DiversTests
 {
     /// <summary>
-    /// On vérifie que l'arrondi respecte les pas décimaux sans ajouter un écart de précision binaire.
+    /// It is checked that the rounding follows the decimal steps without adding a binary
+    /// precision deviation.
     /// </summary>
     [DataTestMethod]
     [DataRow(0.30000000000000004, 0.1, 0.3)]
@@ -23,7 +24,7 @@ public class DiversTests
     }
 
     /// <summary>
-    /// On vérifie la convention ACT/365 avec un intervalle calendaire connu.
+    /// The ACT/365 convention is checked with a known calendar interval.
     /// </summary>
     [TestMethod]
     public void Maturite_UnJourExact_Vaut1Sur365()
@@ -33,8 +34,8 @@ public class DiversTests
     }
 
     /// <summary>
-    /// On vérifie que tous les calculs partagent la même horloge et qu'un message ancien ne la fait pas
-    /// reculer.
+    /// We check that all calculations share the same clock and that an old message doesn't push
+    /// it back.
     /// </summary>
     [TestMethod]
     public void HorlogeMarche_Singleton_MemeInstanceEtNeReculeJamais()
@@ -54,13 +55,14 @@ public class DiversTests
     {
         public List<string> Recues { get; } = new();
         /// <summary>
-        /// On mémorise la notification reçue pour pouvoir vérifier les abonnements au marché.
+        /// The notification received is stored in order to be able to verify subscriptions to
+        /// the market.
         /// </summary>
         public void Actualiser(Cotation donnee) => Recues.Add(donnee.NomInstrument);
     }
 
     /// <summary>
-    /// On vérifie que les observateurs reçoivent les cotations uniquement pendant leur abonnement.
+    /// It is verified that observers receive the quotes only during their subscription.
     /// </summary>
     [TestMethod]
     public void EtatMarche_Observer_NotifieLesAbonnesPuisPlusApresDesabonnement()
@@ -78,8 +80,8 @@ public class DiversTests
     }
 
     /// <summary>
-    /// On vérifie qu'une mise à jour incomplète retire l'ancien prix négociable au lieu de le laisser
-    /// disponible.
+    /// It is verified that an incomplete update removes the old negotiable price instead of
+    /// leaving it available.
     /// </summary>
     [TestMethod]
     public void EtatMarche_ResumeSansBid_EffaceAncienPrixExecutable()
@@ -99,7 +101,7 @@ public class DiversTests
     }
 
     /// <summary>
-    /// On vérifie que les instruments sont rangés dans un ordre stable pour les menus et tableaux.
+    /// It is checked that the instruments are stored in a stable order for menus and tables.
     /// </summary>
     [TestMethod]
     public void Referentiel_ParcoursParEcheancePuisParStrike_Trie()
@@ -113,7 +115,8 @@ public class DiversTests
     }
 
     /// <summary>
-    /// On vérifie l'agrégation signée utilisée pour passer des jambes à la structure puis au book.
+    /// Check the signed aggregation used to move from legs to the structure and then to the
+    /// book.
     /// </summary>
     [TestMethod]
     public void Grecques_Operateurs_SommePondereeParLesQuantites()

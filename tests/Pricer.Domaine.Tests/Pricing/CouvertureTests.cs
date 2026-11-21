@@ -12,8 +12,8 @@ public class CouvertureTests
     private static readonly DateTime EcheanceOtc = new(2027, 1, 15, 8, 0, 0, DateTimeKind.Utc);
 
     /// <summary>
-    /// On vérifie la résolution du système sur une solution connue avant de l'utiliser pour les
-    /// quantités de couverture.
+    /// The resolution of the system on a known solution is checked before it is used for
+    /// hedge quantities.
     /// </summary>
     [TestMethod]
     public void ResoudreSysteme2x2_SystemeConnu_SolutionExacte()
@@ -26,8 +26,8 @@ public class CouvertureTests
     }
 
     /// <summary>
-    /// On vérifie qu'un système sans solution unique est refusé au lieu de produire des quantités
-    /// instables.
+    /// It is verified that a system without a single solution is refused instead of producing
+    /// unstable quantities.
     /// </summary>
     [TestMethod]
     public void ResoudreSysteme2x2_MatriceSinguliere_LeveCouvertureImpossible()
@@ -37,8 +37,8 @@ public class CouvertureTests
     }
 
     /// <summary>
-    /// On vérifie qu'une paire aux risques redondants ne peut pas être présentée comme une couverture
-    /// gamma/vega.
+    /// It is verified that a pair with redundant risks cannot be presented as a gamma/vega
+    /// cover.
     /// </summary>
     [TestMethod]
     public void Calculer_PaireCallPutMemeStrike_RefuseeCarGammaEtVegaIdentiques()
@@ -54,8 +54,8 @@ public class CouvertureTests
     }
 
     /// <summary>
-    /// On vérifie que les quantités brutes résolvent bien les trois contraintes de neutralisation
-    /// demandées.
+    /// It is verified that the raw quantities effectively resolve the three neutralization
+    /// constraints requested.
     /// </summary>
     [TestMethod]
     public void Calculer_PaireValide_PositionGlobaleNeutreAvantArrondi()
@@ -74,7 +74,7 @@ public class CouvertureTests
     }
 
     /// <summary>
-    /// On vérifie les pas de négociation et les sensibilités qui restent après les arrondis.
+    /// The trading steps and sensitivities that remain after rounding are checked.
     /// </summary>
     [TestMethod]
     public void Calculer_QuantitesArrondiesAuPas_ResidusBornes()
@@ -91,14 +91,15 @@ public class CouvertureTests
         var future = p.Lignes.Single(l => l.Nature == NatureJambe.Future);
         Assert.AreEqual(Math.Round(future.Quantite * future.PrixExecutable / 10), future.Quantite * future.PrixExecutable / 10, 1e-6, "multiple de 10 USD");
 
-        // On borne l'écart d'arrondi à un demi-pas pour chaque option de couverture.
+        // The rounding gap is limited to half a step for each hedge option.
         double vegaMax = 0.05 * p.Lignes.Where(l => l.Nature == NatureJambe.OptionCotee).Sum(l => Math.Abs(l.GrecquesUnitaires.Vega));
         Assert.IsTrue(Math.Abs(p.GrecquesGlobales.Vega) <= vegaMax + 1e-9);
         Assert.IsTrue(Math.Abs(p.GrecquesGlobales.Delta) <= 0.06 + 5.0 / future.PrixExecutable);
     }
 
     /// <summary>
-    /// On vérifie que le sens client incorpore le coût de couverture et la marge du bon côté du prix.
+    /// It is verified that the customer sense incorporates the cost of hedge and the margin
+    /// on the right side of the price.
     /// </summary>
     [TestMethod]
     public void Calculer_ClientAcheteur_PrixClientSuperieurAuTheorique()
@@ -117,8 +118,8 @@ public class CouvertureTests
     }
 
     /// <summary>
-    /// On vérifie que le choix automatique évite une paire presque redondante en diversifiant les
-    /// maturités.
+    /// It is checked that the automatic choice avoids an almost redundant pair by diversifying
+    /// maturity.
     /// </summary>
     [TestMethod]
     public void CalculerMeilleure_ChoisitDeuxEcheancesDifferentes()
@@ -135,7 +136,7 @@ public class CouvertureTests
     }
 
     /// <summary>
-    /// On vérifie qu'une couverture ne peut pas acheter un instrument dépourvu de prix vendeur.
+    /// It is verified that a blanket cannot buy an instrument without a selling price.
     /// </summary>
     [TestMethod]
     public void Calculer_OptionCouvranteSansAsk_Refusee()

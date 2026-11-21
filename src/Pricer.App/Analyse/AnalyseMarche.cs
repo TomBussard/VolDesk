@@ -9,16 +9,16 @@ using Pricer.Infrastructure.Exports;
 namespace Pricer.App.Analyse;
 
 /// <summary>
-/// On rassemble dans cette ligne les écarts entre nos calculs et les champs publiés par Deribit pour une
-/// même option.
+/// This brings together the differences between our calculations and the fields published by
+/// Deribit for the same option.
 /// </summary>
 public sealed record LigneValidation
 {
     public required string Instrument { get; init; }
     public required bool DansLaMonnaie { get; init; }
     /// <summary>
-    /// On mesure ici l'écart, en USD, entre le future qui reproduit le mark et le champ underlying_price
-    /// reçu de Deribit.
+    /// Here we measure the difference, in USD, between the future which reproduces the mark and
+    /// the underlying_price field received from Deribit.
     /// </summary>
     public double? EcartFutureImplicite { get; init; }
     public required double Strike { get; init; }
@@ -37,17 +37,17 @@ public sealed record LigneValidation
 }
 
 /// <summary>
-/// On compare notre prix Black-76, nos volatilités inversées et nos grecques aux tickers complets d'un
-/// enregistrement réel. On conserve les résultats en CSV et en LaTeX pour pouvoir vérifier les chiffres du
-/// rapport.
+/// We compare our Black-76 price, our reverse volatility and our Greeks to the complete
+/// tickers of a real record. We keep the results in CSV and LaTeX to be able to check the
+/// numbers of the report.
 /// </summary>
 public static class AnalyseMarche
 {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
     /// <summary>
-    /// On recalcule les prix, les volatilités et les grecques des options disposant d’un ticker complet
-    /// pour mesurer leurs écarts avec Deribit.
+    /// Prices, volatility and Greeks are recalculated for options with a complete ticker to
+    /// measure their differences with Deribit.
     /// </summary>
     /// <returns>On renvoie une ligne de comparaison par option exploitable, sans compléter les données manquantes.</returns>
     public static IReadOnlyList<LigneValidation> Valider(EtatMarche etat)
@@ -86,12 +86,12 @@ public static class AnalyseMarche
     }
 
     /// <summary>
-    /// On recherche par dichotomie le future F' qui reproduit le mark en crypto. On borne la recherche à
-    /// plus ou moins 2 % du future publié pour garder une comparaison locale.
+    /// The future F', which reproduces the mark in crypto, is searched by dichotomy. The search
+    /// is limited to more or less 2% of the future published to keep a local comparison.
     /// </summary>
     private static double? FutureImplicite(double mark, double strike, ParametresMarche p, Pricer.Domaine.Modeles.TypeOption type)
     {
-        // On cherche le future qui ramène le mark crypto observé au prix Black-76 pour cette même volatilité.
+        // We are looking for the future that brings the observed crypto mark back to the Black-76 price for this same volatility.
         double Ecart(double f) => Black76.Calculer(f, strike, p.Maturite, p.Sigma, type).PrixBtc - mark;
         double bas = p.Future * 0.98, haut = p.Future * 1.02;
         if (Ecart(bas) * Ecart(haut) > 0) return null;
@@ -104,8 +104,8 @@ public static class AnalyseMarche
     }
 
     /// <summary>
-    /// On exporte les comparaisons en CSV et les statistiques en LaTeX, avec une séparation entre
-    /// options dans et hors de la monnaie.
+    /// We export comparisons in CSV and statistics in LaTeX, with a separation between options
+    /// in and out of the money.
     /// </summary>
     /// <param name="dossier">On crée les fichiers de résultats dans ce dossier.</param>
     public static void Ecrire(IReadOnlyList<LigneValidation> lignes, string dossier)
@@ -120,9 +120,9 @@ public static class AnalyseMarche
         var volAsk = lignes.Select(l => l.EcartVolAsk).OfType<double>().ToList();
 
         var tex = new StringBuilder();
-        // On centralise l’écriture des commandes LaTeX utilisées par les tableaux de statistiques.
+        // Centralize the writing of the LaTeX commands used in the statistics tables.
         void Cmd(string nom, string valeur) => tex.AppendLine($"\\newcommand{{\\{nom}}}{{{valeur}}}");
-        // On garde le point décimal dans les valeurs techniques écrites pour LaTeX.
+        // The decimal point is kept in the technical values written for LaTeX.
         string F(double x, string format = "0.0000") => x.ToString(format, Inv);
         // On trie les écarts absolus et on retient un rang simple ; une série vide donne zéro.
         double Quantile(List<double> v, double q) { var s = v.Select(Math.Abs).OrderBy(x => x).ToList(); return s.Count == 0 ? 0 : s[(int)Math.Min(s.Count - 1, Math.Floor(q * s.Count))]; }
@@ -150,7 +150,7 @@ public static class AnalyseMarche
         Cmd("StatThetaMax", F(lignes.Select(l => Math.Abs(l.EcartTheta ?? 0)).DefaultIfEmpty().Max(), "0.000"));
         Cmd("StatThetaConformes", lignes.Count(l => Math.Abs(l.EcartTheta ?? 0) < 0.5).ToString(Inv));
 
-        // On sépare les options dans et hors de la monnaie pour ne pas mélanger des inversions de sensibilité très différente.
+        // Options are separated in and out of the money so as not to mix very different inversions of sensitivity.
         var otm = lignes.Where(l => !l.DansLaMonnaie).ToList();
         var itm = lignes.Where(l => l.DansLaMonnaie).ToList();
         var volOtm = otm.Select(l => l.EcartVolMark).OfType<double>().ToList();
@@ -169,7 +169,7 @@ public static class AnalyseMarche
         Cmd("StatFutureImpliciteMax", F(fImp.DefaultIfEmpty().Max(), "0.0"));
         Cmd("StatEcheancesValidees", lignes.Select(l => l.Instrument.Split('-')[1]).Distinct().Count().ToString(Inv));
 
-        // On regroupe les écarts de volatilité en classes pour visualiser leur fréquence dans le rapport.
+        // Volatility differences are grouped into classes to visualize their frequency in the report.
         double[] bornes = [-0.5, -0.2, -0.1, -0.05, -0.02, 0.02, 0.05, 0.1, 0.2, 0.5];
         var classes = new List<(string Etiquette, int N)>();
         classes.Add(("<-0,5", volMarkOtm.Count(x => x < bornes[0])));
@@ -189,14 +189,14 @@ public static class AnalyseMarche
         h.AppendLine($"  \\draw ({0},0) -- ({classes.Count.ToString(Inv)},0);");
         h.AppendLine("\\end{tikzpicture}");
 
-        // On présente aussi les écarts par échéance pour examiner l'effet de la maturité et du vega sur les inversions.
+        // Differences by maturity are also presented to examine the effect of maturity and vega on inversions.
         var parEcheance = new StringBuilder();
         parEcheance.AppendLine("\\begin{table}[H]\\centering\\resizebox{\\linewidth}{!}{\\begin{tabular}{lrrrrrr}\\toprule");
         parEcheance.AppendLine("Échéance & Jours & Options & Prix signalés & Vols du mark signalées (OTM) & Écart de vol médian (pt) & Theta conformes \\\\\\midrule");
         foreach (var g in lignes.GroupBy(l => l.Instrument.Split('-')[1]).OrderBy(g => g.Min(l => l.JoursRestants)))
         {
             var horsMonnaie = g.Where(l => !l.DansLaMonnaie).Select(l => l.EcartVolMark).OfType<double>().ToList();
-            // On protège la virgule française pour qu’elle reste correctement espacée dans les nombres LaTeX.
+            // The French comma is protected so that it stays correctly spaced in the LaTeX numbers.
             string V(double x, string format) => F(x, format).Replace(".", "{,}");
             parEcheance.AppendLine($"{g.Key} & {V(g.Average(l => l.JoursRestants), "0.0")} & {g.Count()} & {g.Count(l => Math.Abs(l.EcartPrixBtc) > PricerStructure.SeuilEcartPrixBtc)} & " +
                 $"{horsMonnaie.Count(x => Math.Abs(x) > PricerStructure.SeuilEcartVolPoints)} / {horsMonnaie.Count} & {V(Quantile(horsMonnaie, 0.5), "0.000")} & {g.Count(l => Math.Abs(l.EcartTheta ?? 0) < 0.5)} / {g.Count()} \\\\");

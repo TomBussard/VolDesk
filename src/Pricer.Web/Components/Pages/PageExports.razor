@@ -9,7 +9,7 @@
 <div class="entete">
     <div>
         <h1>Exports</h1>
-        <div class="muet">Téléchargez l'historique des trades, les positions, les résultats et le risque par échéance en CSV, Excel et JSON.</div>
+        <div class="muet">Download trade history, positions, results and maturity risk in CSV, Excel and JSON.</div>
     </div>
 </div>
 
@@ -24,13 +24,13 @@
         }
         <button class="bouton vert" @onclick="() => Exporter(Enum.GetValues<FormatExport>())">Tout exporter</button>
     </div>
-    <div class="muet" style="margin-top:10px; font-size:12px">Dossier : <code>@Path.GetFullPath(Options.DossierExports)</code> · @BlotterDesk.Trades.Count trade(s) au blotter</div>
+    <div class="muet" style="margin-top:10px; font-size:12px">Folder:<code>@Path.GetFullPath(Options.DossierExports)</code> · @BlotterDesk.Trades.Count trade(s) au blotter</div>
 </div>
 
 @if (_fichiers.Count > 0)
 {
     <div class="carte">
-        <h2>Fichiers générés</h2>
+        <h2>Files generated</h2>
         <table>
             <thead><tr><th class="texte">Fichier</th><th>Taille</th><th class="texte"></th></tr></thead>
             <tbody>
@@ -39,7 +39,7 @@
                     <tr>
                         <td class="texte mono">@Path.GetFileName(f)</td>
                         <td>@((new FileInfo(f).Length / 1024.0).ToString("0.0")) Ko</td>
-                        <td class="texte"><a class="bouton petit secondaire" href="telecharger/@Uri.EscapeDataString(Path.GetFileName(f))" download>Télécharger</a></td>
+                        <td class="texte"><a class="bouton petit secondaire" href="telecharger/@Uri.EscapeDataString(Path.GetFileName(f))" download>Download</a></td>
                     </tr>
                 }
             </tbody>
@@ -52,8 +52,8 @@
     private string? _message;
 
     /// <summary>
-    /// On crée les formats demandés à partir du même état du book et on présente les fichiers
-    /// téléchargeables.
+    /// The requested formats are created from the same state of the book and downloadable files
+    /// are presented.
     /// </summary>
     private void Exporter(IEnumerable<FormatExport> formats)
     {

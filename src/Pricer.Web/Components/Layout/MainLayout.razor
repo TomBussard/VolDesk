@@ -11,35 +11,35 @@
         <div class="logo">
             <span class="logo-icone">Δ</span>
             <div>
-                <div class="logo-titre">Deribit Desk</div>
-                <div class="logo-sous">options @Options.Devise · desk</div>
+                <div class="logo-titre">VolDesk</div>
+                <div class="logo-sous">@Options.Devise options</div>
             </div>
         </div>
         <nav>
-            <NavLink href="" Match="NavLinkMatch.All"><span>◎</span> Tableau de bord</NavLink>
-            <NavLink href="referentiel"><span>☰</span> Référentiel</NavLink>
-            <NavLink href="pricer"><span>⚖</span> Pricer de structures</NavLink>
-            <NavLink href="sur-mesure"><span>✎</span> Option sur mesure</NavLink>
-            <NavLink href="book"><span>▤</span> Book</NavLink>
-            <NavLink href="blotter"><span>≡</span> Blotter</NavLink>
-            <NavLink href="exports"><span>⇩</span> Exports</NavLink>
-            <NavLink href="donnees"><span>▷</span> Données &amp; lecture</NavLink>
+            <NavLink href="" Match="NavLinkMatch.All">Market overview</NavLink>
+            <NavLink href="referentiel">Option chain</NavLink>
+            <NavLink href="pricer">Strategy pricer</NavLink>
+            <NavLink href="sur-mesure">Custom option</NavLink>
+            <NavLink href="book">Positions and risk</NavLink>
+            <NavLink href="blotter">Trade blotter</NavLink>
+            <NavLink href="exports">Exports</NavLink>
+            <NavLink href="donnees">Market data and replay</NavLink>
         </nav>
         <div class="statut">
             <div class="mode mode-@Options.Mode.ToString().ToLowerInvariant()">@Session.LibelleMode</div>
             @if (Etat.Erreur is not null)
             {
-                <div class="neg">Erreur de démarrage</div>
+                <div class="neg">Startup error</div>
             }
             else if (!Etat.Pret)
             {
-                <div class="muet">Chargement du marché…</div>
+                <div class="muet">Loading market data…</div>
             }
             else
             {
                 <div class="muet">@Marche.EtatCourant.Maintenant.ToString("dd/MM HH:mm:ss") UTC</div>
-                <div class="muet">@Marche.MessagesRecus.ToString("N0") ticks @(Marche.FluxTermine ? "· rejeu terminé" : "")</div>
-                <div class="muet">indice @Format.Usd(Marche.EtatCourant.Indice) $</div>
+                <div class="muet">@Marche.MessagesRecus.ToString("N0") ticks @(Marche.FluxTermine ? "· replay complete" : "")</div>
+                <div class="muet">Index $@Format.Usd(Marche.EtatCourant.Indice)</div>
             }
         </div>
     </aside>
@@ -53,19 +53,19 @@
                         <strong>@Session.LibelleMode · @Options.Devise</strong>
                         <div class="muet">@DescriptionSource</div>
                     </div>
-                    <div><strong>@EtatLecture</strong><div class="muet">Marché du @Marche.EtatCourant.Maintenant.ToString("dd/MM/yyyy HH:mm:ss.fff") UTC</div></div>
+                    <div><strong>@EtatLecture</strong><div class="muet">Market time @Marche.EtatCourant.Maintenant.ToString("dd/MM/yyyy HH:mm:ss.fff") UTC</div></div>
                 </div>
                 @if (Marche.Rejeu is { } r)
                 {
                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px">
-                        <button class="bouton secondaire petit" disabled="@(r.FluxTermine || Session.ChangementEnCours)" @onclick="Pause">@(r.Lecture.EnPause ? "Reprendre" : "Pause lecture")</button>
-                        <button class="bouton secondaire petit" disabled="@(r.FluxTermine || Session.ChangementEnCours)" @onclick="Suivante">Données suivantes</button>
-                        <label for="vitesse-lecture">Vitesse</label>
+                        <button class="bouton secondaire petit" disabled="@(r.FluxTermine || Session.ChangementEnCours)" @onclick="Pause">@(r.Lecture.EnPause ? "Resume" : "Pause replay")</button>
+                        <button class="bouton secondaire petit" disabled="@(r.FluxTermine || Session.ChangementEnCours)" @onclick="Suivante">Next tick</button>
+                        <label for="vitesse-lecture">Speed</label>
                         <select id="vitesse-lecture" style="min-width:100px;width:115px" value="@r.Lecture.Vitesse.ToString(CultureInfo.InvariantCulture)" @onchange="Vitesse">
                             <option value="1">×1 · normal</option><option value="5">×5</option><option value="20">×20</option><option value="100">×100</option><option value="0">Maximum</option>
                         </select>
-                        <button class="bouton secondaire petit" disabled="@Session.ChangementEnCours" @onclick="Recommencer">Recommencer</button>
-                        <a href="donnees">Comprendre ces commandes</a>
+                        <button class="bouton secondaire petit" disabled="@Session.ChangementEnCours" @onclick="Recommencer">Restart</button>
+                        <a href="donnees">Playback guide</a>
                     </div>
                 }
                 @if (_erreur is not null) { <div class="neg" role="alert">@_erreur</div> }
@@ -75,14 +75,14 @@
         @if (Etat.Erreur is not null)
         {
             <div class="carte alerte">
-                <h2>Démarrage impossible</h2>
+                <h2>Market unavailable</h2>
                 <p>@Etat.Erreur</p>
-                <p class="muet">Choisissez une démonstration hors connexion dans <a href="donnees">Données &amp; lecture</a>.</p>
+                <p class="muet">Select the offline session under <a href="donnees">Market data and replay</a>.</p>
             </div>
         }
         else if (!Etat.Pret)
         {
-            <div class="chargement"><div class="spinner"></div>Chargement des options @Options.Devise (@Options.Mode)…</div>
+            <div class="chargement"><div class="spinner"></div>Loading options for @Options.Devise (@Options.Mode)…</div>
         }
         @if (Etat.Pret || Navigation.Uri.TrimEnd('/').EndsWith("/donnees",StringComparison.OrdinalIgnoreCase))
         {
@@ -96,14 +96,14 @@
     private string? _erreur;
     private string DescriptionSource => Options.Mode switch
     {
-        ModeDonnees.Demonstration => "Données fictives pour explorer l'application sans Internet.",
-        ModeDonnees.Rejeu => "Cotations d'un fichier enregistré. L'heure affichée est celle de l'enregistrement.",
-        _ => "Cotations publiques reçues de Deribit. Une connexion Internet est nécessaire."
+        ModeDonnees.Demonstration => "Model-generated quotes for the offline session.",
+        ModeDonnees.Rejeu => "Recorded quotes. The clock follows the original session.",
+        _ => "Public Deribit market data."
     };
-    private string EtatLecture => Marche.ErreurFlux is not null ? "Lecture interrompue" : Marche.Rejeu is { } r ?
-        r.FluxTermine ? "Fin du fichier" : r.Lecture.EnPause ? "En pause · marché figé" : "Lecture en cours" : "Actualisation automatique";
+    private string EtatLecture => Marche.ErreurFlux is not null ? "Playback interrupted" : Marche.Rejeu is { } r ?
+        r.FluxTermine ? "End of replay" : r.Lecture.EnPause ? "Paused" : "Playing" : "Updating automatically";
     /// <summary>
-    /// On bascule entre pause et reprise du fichier sans modifier le marché déjà reçu.
+    /// We switch between pause and file recovery without changing the market already received.
     /// </summary>
     private void Pause()
     {
@@ -111,19 +111,19 @@
         if(r.Lecture.EnPause) r.Lecture.Reprendre(); else r.Lecture.Pause();
     }
     /// <summary>
-    /// On autorise un ticker supplémentaire puis on laisse la lecture en pause pour examiner son effet.
+    /// An additional ticker is allowed and the reading is left on pause to examine its effect.
     /// </summary>
     private void Suivante() => Marche.Rejeu?.Lecture.DonneeSuivante();
     /// <summary>
-    /// On transforme le choix du menu en facteur de vitesse et on le transmet au service de session.
+    /// The choice of menu is transformed into a speed factor and transmitted to the session
+    /// service.
     /// </summary>
     private void Vitesse(ChangeEventArgs e)
     {
         if(double.TryParse((string?)e.Value,NumberStyles.Float,CultureInfo.InvariantCulture,out double v)) Session.Vitesse(v);
     }
     /// <summary>
-    /// On crée une nouvelle session de lecture et on conserve le message d'erreur si le redémarrage
-    /// échoue.
+    /// You create a new playback session and keep the error message if the restart fails.
     /// </summary>
     private async Task Recommencer()
     {
@@ -133,7 +133,7 @@
     }
 
     /// <summary>
-    /// On s'abonne aux changements de l'état de démarrage pour actualiser le bandeau des pages.
+    /// You can subscribe to changes in the boot state to update the page banner.
     /// </summary>
     protected override void OnInitialized()
     {
@@ -142,12 +142,12 @@
     }
 
     /// <summary>
-    /// On demande le rafraîchissement du bandeau sur le contexte d'affichage Blazor.
+    /// Refreshing of the banner is requested on the Blazor display context.
     /// </summary>
     private void Rafraichir() => InvokeAsync(StateHasChanged);
 
     /// <summary>
-    /// On retire l'abonnement à l'état partagé lorsque la mise en page est détruite.
+    /// The shared status subscription is removed when the layout is destroyed.
     /// </summary>
     public void Dispose()
     {

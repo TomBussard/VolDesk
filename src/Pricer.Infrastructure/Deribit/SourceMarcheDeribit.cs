@@ -6,8 +6,8 @@ using Pricer.Infrastructure.Transport;
 namespace Pricer.Infrastructure.Deribit;
 
 /// <summary>
-/// On traduit les réponses publiques Deribit en objets métier sans imposer un transport précis. On utilise
-/// donc le même analyseur pour le direct, l'enregistrement et le rejeu.
+/// Deribit's public responses are translated into business objects without requiring specific
+/// transport, so the same analyser is used for direct, recording and replay.
 /// </summary>
 /// <param name="transport">On fournit le transport qui échange les messages JSON de la session.</param>
 /// <param name="intervalleTicker">On choisit l’intervalle ajouté aux noms des canaux d’abonnement.</param>
@@ -17,8 +17,8 @@ public sealed class SourceMarcheDeribit(ITransportDeribit transport, string inte
     public bool FluxTermine => Transport.FluxTermine;
 
     /// <summary>
-    /// On demande les options non échues de la devise et on transforme leurs fiches JSON en instruments
-    /// métier.
+    /// We ask for the unmatured options of the currency and we turn their JSON cards into
+    /// business instruments.
     /// </summary>
     public async Task<IReadOnlyList<Instrument>> ChargerOptionsAsync(string devise, CancellationToken ct = default)
     {
@@ -27,8 +27,8 @@ public sealed class SourceMarcheDeribit(ITransportDeribit transport, string inte
     }
 
     /// <summary>
-    /// On charge les fiches des futures non échus, dont les contrats perpétuels, pour construire le
-    /// référentiel de couverture.
+    /// The files of unmatured futures, including perpetual contracts, are loaded to build the
+    /// hedging repository.
     /// </summary>
     public async Task<IReadOnlyList<InstrumentFuture>> ChargerFuturesAsync(string devise, CancellationToken ct = default)
     {
@@ -37,8 +37,8 @@ public sealed class SourceMarcheDeribit(ITransportDeribit transport, string inte
     }
 
     /// <summary>
-    /// On charge un premier ensemble de cotations d’options ou de futures et on conserve l’horodatage de
-    /// la réponse.
+    /// A first set of options or future quotes is loaded and the response time stamp is
+    /// maintained.
     /// </summary>
     /// <param name="type">On utilise option ou future selon le résumé demandé.</param>
     public async Task<IReadOnlyList<Cotation>> ChargerResumeAsync(string devise, string type, CancellationToken ct = default)
@@ -48,8 +48,8 @@ public sealed class SourceMarcheDeribit(ITransportDeribit transport, string inte
     }
 
     /// <summary>
-    /// On récupère le ticker détaillé d’un instrument pour disposer de ses prix, de ses volatilités et
-    /// de ses grecques publiées.
+    /// The detailed ticker of an instrument is retrieved to dispose of its prices, volatility
+    /// and published Greeks.
     /// </summary>
     public async Task<Cotation> ObtenirTickerAsync(string instrument, CancellationToken ct = default)
     {
@@ -58,7 +58,7 @@ public sealed class SourceMarcheDeribit(ITransportDeribit transport, string inte
     }
 
     /// <summary>
-    /// On lit l’indice USD de la crypto et on conserve son heure pour synchroniser le marché.
+    /// We read the USD index of the crypto and we keep his hour to synchronize the market.
     /// </summary>
     /// <returns>On renvoie le prix de l’indice en USD et l’horodatage serveur.</returns>
     public async Task<(double Prix, DateTime Horodatage)> ObtenirIndiceAsync(string devise, CancellationToken ct = default)
@@ -68,7 +68,7 @@ public sealed class SourceMarcheDeribit(ITransportDeribit transport, string inte
     }
 
     /// <summary>
-    /// On demande les derniers prix de livraison de l’indice pour régler les jambes arrivées à échéance.
+    /// The latest delivery prices of the index are requested to adjust the matured legs.
     /// </summary>
     /// <param name="nombre">On limite la réponse au nombre de journées demandé.</param>
     public async Task<IReadOnlyList<PrixReglement>> ObtenirPrixReglementAsync(string devise, int nombre = 10, CancellationToken ct = default)
@@ -79,15 +79,15 @@ public sealed class SourceMarcheDeribit(ITransportDeribit transport, string inte
     }
 
     /// <summary>
-    /// On traduit les noms d’instruments en canaux ticker en gardant l’intervalle de mise à jour
-    /// configuré.
+    /// The instrument names are translated into ticker channels by keeping the update interval
+    /// configured.
     /// </summary>
     public Task SuivreAsync(IEnumerable<string> instruments, CancellationToken ct = default) =>
         Transport.SouscrireAsync(instruments.Select(i => $"ticker.{i}.{intervalleTicker}"), ct);
 
     /// <summary>
-    /// On transforme uniquement les messages des canaux ticker en cotations métier transmises au fil de
-    /// leur arrivée.
+    /// Only the messages of the ticker channels are transformed into business ratings
+    /// transmitted as they arrive.
     /// </summary>
     public async IAsyncEnumerable<Cotation> FluxCotationsAsync([EnumeratorCancellation] CancellationToken ct)
     {
@@ -97,12 +97,12 @@ public sealed class SourceMarcheDeribit(ITransportDeribit transport, string inte
     }
 
     /// <summary>
-    /// On regroupe les paires de paramètres dans un dictionnaire avant de les transmettre au transport.
+    /// Parameter pairs are grouped into a dictionary before they are transmitted to transport.
     /// </summary>
     private static Dictionary<string, string> Params(params (string Cle, string Valeur)[] p) => p.ToDictionary(x => x.Cle, x => x.Valeur);
 
     /// <summary>
-    /// On libère le transport sous-jacent lorsque la source de marché n’est plus utilisée.
+    /// The underlying transport is released when the market source is no longer used.
     /// </summary>
     public ValueTask DisposeAsync() => Transport.DisposeAsync();
 }

@@ -3,8 +3,8 @@ using Pricer.Domaine.Modeles;
 namespace Pricer.Domaine.Pricing;
 
 /// <summary>
-/// On renvoie ensemble le prix USD, le prix crypto et les grecques pour utiliser les mêmes paramètres dans
-/// tout le pricer.
+/// Together we return the price USD, the price crypto and the Greeks to use the same parameters
+/// throughout the price.
 /// </summary>
 /// <param name="PrixUsd">On exprime le prix du modèle en USD.</param>
 /// <param name="PrixBtc">On convertit le prix USD en crypto en le divisant par le future F.</param>
@@ -13,14 +13,15 @@ namespace Pricer.Domaine.Pricing;
 public readonly record struct ResultatBlack76(double PrixUsd, double PrixBtc, Grecques Grecques, double VegaBrut);
 
 /// <summary>
-/// On applique Black-76 à taux nul. On calcule d1 et d2 à partir du future de
-/// l'échéance, du strike, de la maturité et de la volatilité.
+/// Black-76 is applied at zero rate. D1 and d2 are calculated from the future maturity, strike,
+/// maturity and volatility.
 /// </summary>
 public static class Black76
 {
     /// <summary>
-    /// On calcule le prix et les quatre grecques d'une option européenne sur future avec un delta en sous-jacent,
-    /// un gamma par USD, un vega en USD par point de vol et un theta en USD par jour.
+    /// The price and the four Greeks of a European option over the future are calculated with
+    /// an underlying delta, one gamma per USD, one vega in USD per volatility point and one theta
+    /// in USD per day.
     /// </summary>
     /// <param name="future">Le prix du future de l'échéance en USD, strictement positif.</param>
     /// <param name="strike">Le strike de l'option en USD, strictement positif.</param>
@@ -36,7 +37,7 @@ public static class Black76
         if (!double.IsFinite(maturite) || maturite < 0 || !double.IsFinite(sigma) || sigma < 0)
             throw new ArgumentOutOfRangeException(nameof(sigma), "Maturité et volatilité positives ou nulles et finies obligatoires.");
 
-        // On revient au payoff à maturité ou volatilité nulle pour éviter une division par zéro.
+        // You go back to payoff at maturity or zero volatility to avoid a division by zero.
         if (maturite <= 0 || sigma <= 0)
         {
             double intrinseque = type == TypeOption.Call ? Math.Max(future - strike, 0) : Math.Max(strike - future, 0);
@@ -59,21 +60,26 @@ public static class Black76
         double vegaBrut = future * nd1 * racineT;
         double thetaBrut = -future * nd1 * sigma / (2 * racineT);
 
-        // On convertit le vega par point de volatilité et le theta par jour pour garder les mêmes unités dans tout le pricer.
+        // The vega is converted by volatility point and theta by day to keep the same units in all the pricer.
         var grecques = new Grecques(delta, gamma, vegaBrut / 100, thetaBrut / 365);
         return new ResultatBlack76(prix, prix / future, grecques, vegaBrut);
     }
 
     /// <summary>
-    /// On propose une surcharge qui renvoie seulement le prix USD lorsque les autres résultats ne sont pas
-    /// nécessaires.
+    /// An overload is proposed that only returns the USD price when other results are not
+    /// required.
     /// </summary>
     public static double Prix(double future, double strike, double maturite, double sigma, TypeOption type) =>
         Calculer(future, strike, maturite, sigma, type).PrixUsd;
 
-    /// <summary>On accepte aussi un jeu de paramètres déjà regroupé pour éviter de les réécrire à chaque appel.</summary>
+    /// <summary>
+    /// We also accept a set of parameters already grouped to avoid rewriting them at each call.
+    /// </summary>
     public static double Prix(ParametresOption p) => Calculer(p.Future, p.Strike, p.Maturite, p.Sigma, p.Type).PrixUsd;
 }
 
-/// <summary>On regroupe les paramètres d'une option pour les transmettre au calcul sans perdre leurs unités.</summary>
+/// <summary>
+/// The parameters of an option are grouped together to transmit them to the calculation without
+/// losing their units.
+/// </summary>
 public readonly record struct ParametresOption(double Future, double Strike, double Maturite, double Sigma, TypeOption Type);

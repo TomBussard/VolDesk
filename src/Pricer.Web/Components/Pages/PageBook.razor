@@ -14,10 +14,10 @@
 
 <div class="entete">
     <div>
-        <h1>Suivi du book</h1>
+        <h1>Monitoring of the book</h1>
         <div class="muet">Valorisation continue au mark Deribit et au théorique · P&amp;L converti à l'indice (@Format.Usd(e.Indice) $) · règlement automatique des échéances au prix de livraison Deribit.</div>
     </div>
-    <a class="bouton secondaire" href="blotter">Blotter et débouclage</a>
+    <a class="bouton secondaire" href="blotter">Blocking and debunking</a>
 </div>
 
 <Message @bind-Texte="_message" Type="succes" />
@@ -27,9 +27,9 @@
 }
 
 <div class="grille g4">
-    <div class="kpi"><div class="libelle">Valeur au mark</div><div class="valeur">@Format.Btc(e.ValeurMarkBtc) @Options.Devise</div><div class="detail">théorique @Format.Btc(e.ValeurTheoriqueBtc) @Options.Devise</div></div>
+    <div class="kpi"><div class="libelle">Value per mark</div><div class="valeur">@Format.Btc(e.ValeurMarkBtc) @Options.Devise</div><div class="detail">théorique @Format.Btc(e.ValeurTheoriqueBtc) @Options.Devise</div></div>
     <div class="kpi"><div class="libelle">P&amp;L latent</div><div class="valeur @Format.ClasseSigne(e.PnlLatentBtc)">@Format.Signe(e.PnlLatentBtc, 6) @Options.Devise</div><div class="detail">@Format.Usd(e.PnlLatentBtc * e.Indice) $</div></div>
-    <div class="kpi"><div class="libelle">P&amp;L réalisé</div><div class="valeur @Format.ClasseSigne(e.PnlRealiseBtc)">@Format.Signe(e.PnlRealiseBtc, 6) @Options.Devise</div><div class="detail">débouclages et règlements</div></div>
+    <div class="kpi"><div class="libelle">P&amp;L réalisé</div><div class="valeur @Format.ClasseSigne(e.PnlRealiseBtc)">@Format.Signe(e.PnlRealiseBtc, 6) @Options.Devise</div><div class="detail">de-clouding and regulations</div></div>
     <div class="kpi"><div class="libelle">P&amp;L total</div><div class="valeur @Format.ClasseSigne(e.PnlTotalBtc)">@Format.Usd(e.PnlTotalUsd) $</div><div class="detail">@Format.Signe(e.PnlTotalBtc, 6) @Options.Devise</div></div>
 </div>
 
@@ -37,19 +37,19 @@
     <h2>Positions</h2>
     @if (e.Positions.Count == 0)
     {
-        <div class="vide">Aucun trade : cotez une structure dans le <a href="pricer">pricer</a> puis bookez-la.</div>
+        <div class="vide">No trade: rate a structure in the<a href="pricer">pricer</a>Then book it.</div>
     }
     else
     {
         <div class="tableau-wrap">
             <table>
-                <thead><tr><th>Trade</th><th class="texte">Structure</th><th>Qté ouverte</th><th>Valeur mark</th><th>Valeur théo</th><th>Prime</th><th>P&amp;L latent</th><th>P&amp;L réalisé</th><th>P&amp;L total $</th><th>Delta</th><th>Gamma</th><th>Vega</th><th>Theta</th></tr></thead>
+                <thead><tr><th>Trade</th><th class="texte">Structure</th><th>Open Qty</th><th>Valeur mark</th><th>Theo value</th><th>Prime</th><th>P&amp;L latent</th><th>P&amp;L réalisé</th><th>P&amp;L total $</th><th>Delta</th><th>Gamma</th><th>Vega</th><th>Theta</th></tr></thead>
                 <tbody>
                     @foreach (var p in e.Positions)
                     {
                         <tr class="@(p.EstOuverte ? "" : "muet")">
                             <td>@p.Origine.Id.ToString()[..8]</td>
-                            <td class="texte">@p.Origine.Description<div class="muet" style="font-size:11px">@p.Statut · mark : @p.SourceMark</div> @if (!p.EstOuverte) { <span class="badge neutre">fermée</span> }</td>
+                            <td class="texte">@p.Origine.Description<div class="muet" style="font-size:11px">@p.Statut · mark : @p.SourceMark</div> @if (!p.EstOuverte) { <span class="badge neutre">closed</span> }</td>
                             <td>@p.QuantiteOuverte.ToString("0.0")</td>
                             <td>@Format.Btc(p.ValeurMarkBtc)</td><td>@Format.Btc(p.ValeurTheoriqueBtc)</td><td>@Format.Btc(p.PrimeOuverteBtc)</td>
                             <td class="@Format.ClasseSigne(p.PnlLatentBtc)">@Format.Signe(p.PnlLatentBtc, 6)</td>
@@ -73,7 +73,7 @@
 <div class="carte">
     <h2>Grecques agrégées par échéance @(e.RisqueComplet ? "" : "· PARTIELLES")</h2>
     <table>
-        <thead><tr><th>Échéance</th><th>Delta</th><th>Gamma</th><th>Vega $/pt</th><th>Theta $/j</th><th style="width:30%">Vega</th></tr></thead>
+        <thead><tr><th>Expiry</th><th>Delta</th><th>Gamma</th><th>Vega $/pt</th><th>Theta $/j</th><th style="width:30%">Vega</th></tr></thead>
         <tbody>
             @foreach (var (ech, g) in e.GrecquesParEcheance)
             {
@@ -95,7 +95,8 @@
     protected override TimeSpan Periode => TimeSpan.FromSeconds(1);
 
     /// <summary>
-    /// On réévalue les positions et les grecques avant chaque rafraîchissement du tableau de suivi.
+    /// The Greek positions and the Greeks are re-evaluated before each refreshment of the
+    /// follow-up table.
     /// </summary>
     protected override async Task AvantRafraichissementAsync()
     {
@@ -107,4 +108,3 @@
 
     }
 }
-

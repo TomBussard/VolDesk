@@ -3,7 +3,7 @@
 @inject ServiceMarche Marche
 @inject OptionsPricer Options
 
-<PageTitle>Référentiel · Pricer Deribit</PageTitle>
+<PageTitle>Option chain · VolDesk</PageTitle>
 
 @{
     var etat = Marche.EtatCourant;
@@ -14,27 +14,27 @@
 
 <div class="entete">
     <div>
-        <h1>Référentiel des options</h1>
-        <div class="muet">Parcours par échéance puis par strike : bid, ask, mark et vol implicite (Deribit), en temps réel.</div>
+        <h1>Option chain</h1>
+        <div class="muet">Choose an expiry to compare quotes, implied volatility and delta at each strike.</div>
     </div>
     <div class="champ">
-        <label>Échéance</label>
+        <label>Expiry</label>
         <select @bind="EcheanceTexte">
             @foreach (var e in echeances)
             {
-                <option value="@e.Ticks">@Format.Echeance(e) (@Format.Nombre((e - etat.Maintenant).TotalDays, "0.0") j)</option>
+                <option value="@e.Ticks">@Format.Echeance(e) (@Format.Nombre((e - etat.Maintenant).TotalDays, "0.0") days)</option>
             }
         </select>
     </div>
 </div>
 
 <div class="grille g2">
-    <div class="kpi"><div class="libelle">Future de l'échéance</div><div class="valeur">@Format.Usd(f)</div><div class="detail">maturité @Format.Nombre(Maturite.EnAnnees(_echeance, etat.Maintenant) * 365, "0.00") jours</div></div>
-    <div class="kpi"><div class="libelle">Strikes cotés</div><div class="valeur">@etat.Referentiel.Strikes(_echeance).Count</div><div class="detail">options européennes inverses, prix et règlements en @Options.Devise</div></div>
+    <div class="kpi"><div class="libelle">Forward price</div><div class="valeur">@Format.Usd(f)</div><div class="detail">Maturity @Format.Nombre(Maturite.EnAnnees(_echeance, etat.Maintenant) * 365, "0.00") days</div></div>
+    <div class="kpi"><div class="libelle">Quoted strikes</div><div class="valeur">@etat.Referentiel.Strikes(_echeance).Count</div><div class="detail">European inverse options, quoted and settled in @Options.Devise</div></div>
 </div>
 
 <div class="carte" style="margin-top:16px">
-    <h2>Smile de l'échéance <span class="muet">— notre inversion du mark, options hors de la monnaie</span></h2>
+    <h2>Volatility smile <span class="muet">· inferred from out-of-the-money marks</span></h2>
     <GraphiqueSmile Smile="etat.Smiles().FirstOrDefault(s => s.Echeance == _echeance)" />
 </div>
 
@@ -42,7 +42,7 @@
     <div class="tableau-wrap">
         <table>
             <thead>
-                <tr><th>Bid</th><th>Ask</th><th>Mark</th><th>IV mark</th><th>Delta B-76</th><th style="text-align:center">CALL · Strike · PUT</th><th>Bid</th><th>Ask</th><th>Mark</th><th>IV mark</th><th>Delta B-76</th></tr>
+                <tr><th>Bid</th><th>Ask</th><th>Mark</th><th>Mark IV</th><th>Model delta</th><th style="text-align:center">CALL · Strike · PUT</th><th>Bid</th><th>Ask</th><th>Mark</th><th>Mark IV</th><th>Model delta</th></tr>
             </thead>
             <tbody>
                 @foreach (var p in etat.Referentiel.Strikes(_echeance))
@@ -73,8 +73,8 @@
     protected override TimeSpan Periode => TimeSpan.FromSeconds(1);
 
     /// <summary>
-    /// On calcule le delta avec notre Black-76 à partir du future et de mark_iv, même lorsque le résumé ne
-    /// contient pas les grecques Deribit.
+    /// We calculate the delta with our Black-76 from the future and mark_iv, even when the
+    /// summary does not contain the Greeks Deribit.
     /// </summary>
     private static double? Delta(Instrument? instrument, EtatMarche etat)
     {

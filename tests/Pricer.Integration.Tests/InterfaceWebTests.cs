@@ -4,15 +4,14 @@ using Pricer.Web;
 namespace Pricer.Integration.Tests;
 
 /// <summary>
-/// Test de bout en bout de l'interface web : le serveur Blazor démarre en rejeu sur l'enregistrement
-/// de démonstration, charge le marché et sert toutes ses pages.
+/// End-to-end test of the web interface: the Blazor server starts playing again on the demo
+/// recording, loads the market and serves all its pages.
 /// </summary>
 [TestClass]
 public class InterfaceWebTests
 {
     /// <summary>
-    /// On remonte jusqu'à la solution pour retrouver les données du test sans imposer un dossier de
-    /// lancement.
+    /// We go back to the solution to retrieve the test data without imposing a launch file.
     /// </summary>
     private static string RacineDepot()
     {
@@ -22,7 +21,8 @@ public class InterfaceWebTests
     }
 
     /// <summary>
-    /// On vérifie que le serveur local répond sur ses pages et finit de charger le marché enregistré.
+    /// We check that the local server is responding on its pages and finish loading the
+    /// registered market.
     /// </summary>
     [TestMethod]
     [Timeout(120_000)]
@@ -47,7 +47,7 @@ public class InterfaceWebTests
             {
                 var reponse = await client.GetAsync(page);
                 Assert.AreEqual(HttpStatusCode.OK, reponse.StatusCode, page);
-                StringAssert.Contains(await reponse.Content.ReadAsStringAsync(), "Deribit Desk", page);
+                StringAssert.Contains(await reponse.Content.ReadAsStringAsync(), "VolDesk", page);
             }
             Assert.AreEqual(HttpStatusCode.OK, (await client.GetAsync("/app.css")).StatusCode);
             StringAssert.Contains(await client.GetStringAsync("/sante"), "DeribitDesk-Fusion");

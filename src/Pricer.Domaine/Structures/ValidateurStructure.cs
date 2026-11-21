@@ -6,16 +6,16 @@ using Pricer.Domaine.Utilitaires;
 namespace Pricer.Domaine.Structures;
 
 /// <summary>
-/// On regroupe les contrôles de saisie pour refuser une demande incohérente avec un message précis avant de
-/// la coter.
+/// The input controls are grouped together to refuse an inconsistent request with a specific
+/// message before rating it.
 /// </summary>
 public static class ValidateurStructure
 {
     public const double ToleranceSymetrie = 1e-9;
 
     /// <summary>
-    /// On vérifie le nombre de strikes attendu par la recette avant d'accéder à leurs positions dans la
-    /// liste.
+    /// We check the number of strikes expected by the recipe before accessing their positions
+    /// in the list.
     /// </summary>
     public static void ValiderNombreStrikes(TypeStructure type, IReadOnlyList<double> strikes, int attendu)
     {
@@ -25,8 +25,8 @@ public static class ValidateurStructure
     }
 
     /// <summary>
-    /// On exige des strikes positifs, finis et strictement croissants pour garder les recettes et leurs
-    /// signes cohérents.
+    /// Positive, finite and strictly growing strikes are required to keep the recipes and
+    /// their signs consistent.
     /// </summary>
     public static void ValiderOrdre(IReadOnlyList<double> strikes)
     {
@@ -39,8 +39,8 @@ public static class ValidateurStructure
     }
 
     /// <summary>
-    /// On compare les deux ailes du butterfly avec une tolérance numérique pour refuser une construction
-    /// asymétrique.
+    /// The two wings of the butterfly are compared with a numerical tolerance to refuse
+    /// asymmetrical construction.
     /// </summary>
     public static void ValiderSymetrie(IReadOnlyList<double> strikes)
     {
@@ -51,8 +51,8 @@ public static class ValidateurStructure
     }
 
     /// <summary>
-    /// On vérifie la date et le contrat demandé ; en cas d'absence, on indique les strikes voisins pour
-    /// faciliter la correction.
+    /// The requested date and contract is checked; in case of absence, the neighbouring
+    /// strikes are indicated to facilitate the correction.
     /// </summary>
     /// <returns>L'instrument coté correspondant exactement à la demande.</returns>
     public static Instrument ValiderStrikeCote(ReferentielOptions referentiel, DateTime echeance, double strike, TypeOption type)
@@ -66,8 +66,8 @@ public static class ValidateurStructure
     }
 
     /// <summary>
-    /// On exige une quantité positive et multiple du pas ; le sens du trade porte séparément le signe de
-    /// l'exposition.
+    /// A positive and multiple step is required; the direction of the trade bears the sign of
+    /// exposure separately.
     /// </summary>
     public static void ValiderQuantite(double quantite, double pas)
     {
@@ -79,8 +79,8 @@ public static class ValidateurStructure
     }
 
     /// <summary>
-    /// On refuse de mélanger plusieurs dates dans une même structure, dont le payoff suppose une échéance
-    /// commune.
+    /// Several dates are refused to be mixed into the same structure, the payoff of which
+    /// assumes a common expiry.
     /// </summary>
     public static void ValiderEcheanceUnique(IEnumerable<Jambe> jambes)
     {

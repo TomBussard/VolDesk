@@ -9,14 +9,14 @@ using Pricer.Domaine.Booking;
 namespace Pricer.Infrastructure.Exports;
 
 /// <summary>
-/// On utilise une interface commune pour exporter le même blotter et le même book, quel que soit le format
-/// choisi.
+/// A common interface is used to export the same floater and book, regardless of the format
+/// chosen.
 /// </summary>
 public interface IExportateur
 {
     string Format { get; }
     /// <summary>
-    /// On écrit le blotter et les données du book utiles au format choisi.
+    /// We write the slotter and the data of the book useful in the chosen format.
     /// </summary>
     /// <param name="dossier">On place les fichiers générés dans ce dossier.</param>
     /// <returns>On renvoie les chemins des fichiers créés pour pouvoir les afficher ou les télécharger.</returns>
@@ -31,13 +31,13 @@ public enum FormatExport
 }
 
 /// <summary>
-/// On centralise le choix de l'exportateur pour que l'écran n'ait pas à connaître l'écriture propre à
-/// chaque format.
+/// The exporter's choice is centralized so that the screen does not have to know the proper
+/// writing for each format.
 /// </summary>
 public static class FabriqueExportateurs
 {
     /// <summary>
-    /// On choisit l’exportateur correspondant au format demandé et on refuse un format inconnu.
+    /// The exporter is selected for the requested format and an unknown format is refused.
     /// </summary>
     public static IExportateur Creer(FormatExport format) => format switch
     {
@@ -48,12 +48,13 @@ public static class FabriqueExportateurs
     };
 
     /// <summary>
-    /// On propose un exportateur pour chaque format disponible, dans l’ordre défini par l’énumération.
+    /// An exporter is proposed for each available format in the sequence defined by the
+    /// enumeration.
     /// </summary>
     public static IEnumerable<IExportateur> Tous() => Enum.GetValues<FormatExport>().Select(Creer);
 
     /// <summary>
-    /// On crée le dossier de sortie puis on ajoute la date et l’heure au nom du fichier exporté.
+    /// Create the output folder and add the date and time to the name of the exported file.
     /// </summary>
     internal static string Horodater(string dossier, string nom, string extension)
     {
@@ -63,16 +64,15 @@ public static class FabriqueExportateurs
 }
 
 /// <summary>
-/// On écrit les CSV avec CsvHelper et une culture invariante : le séparateur et le point décimal restent
-/// stables d'un ordinateur à l'autre.
+/// CSV is written with CsvHelper and an invariant culture: the separator and decimal point
+/// remain stable from one computer to another.
 /// </summary>
 public sealed class ExportCsv : IExportateur
 {
     public string Format => "CSV";
 
     /// <summary>
-    /// On écrit cinq CSV séparés pour le blotter, les positions, les grecques, les jambes ouvertes et la
-    /// synthèse.
+    /// Five separate CSVs are written to float, positions, Greeks, open legs and synthesis.
     /// </summary>
     /// <returns>On renvoie les cinq chemins dans cet ordre.</returns>
     public IReadOnlyList<string> Exporter(IReadOnlyList<Trade> blotter, EtatBook book, string dossier)
@@ -91,8 +91,8 @@ public sealed class ExportCsv : IExportateur
     }
 
     /// <summary>
-    /// On écrit les propriétés des lignes en CSV avec les mêmes conventions numériques sur tous les
-    /// ordinateurs.
+    /// The properties of the CSV lines are written with the same digital conventions on all
+    /// computers.
     /// </summary>
     /// <param name="fichier">On remplace le contenu de ce fichier par le nouvel export.</param>
     public static void Ecrire<T>(string fichier, IEnumerable<T> lignes)
@@ -103,8 +103,8 @@ public sealed class ExportCsv : IExportateur
     }
 
     /// <summary>
-    /// On relit le CSV avec les mêmes conventions que l’écriture pour retrouver des objets du type
-    /// demandé.
+    /// The CSV is reread with the same conventions as writing to find objects of the type
+    /// requested.
     /// </summary>
     /// <returns>On matérialise toutes les lignes avant de fermer le fichier.</returns>
     public static List<T> Lire<T>(string fichier)
@@ -116,16 +116,16 @@ public sealed class ExportCsv : IExportateur
 }
 
 /// <summary>
-/// On a choisi ClosedXML pour produire un vrai classeur .xlsx sans exiger une installation d'Excel. On
-/// écrit les tableaux par plages entières avec InsertTable pour conserver leurs en-têtes et leurs colonnes.
+/// We chose ClosedXML to produce a real .xlsx binder without requiring an Excel installation.
+/// We write entire arrays with InsertTable to keep their headers and columns.
 /// </summary>
 public sealed class ExportExcel : IExportateur
 {
     public string Format => "Excel";
 
     /// <summary>
-    /// On construit le classeur avec une synthèse et des feuilles détaillées pour le blotter, le book,
-    /// les grecques et les jambes ouvertes.
+    /// The binder is built with a synthesis and detailed sheets to float, book, Greeks and open
+    /// legs.
     /// </summary>
     public IReadOnlyList<string> Exporter(IReadOnlyList<Trade> blotter, EtatBook book, string dossier)
     {
@@ -173,8 +173,8 @@ public sealed class ExportExcel : IExportateur
     }
 
     /// <summary>
-    /// On crée une feuille et son tableau, on fige la ligne d’en-tête et on ajuste les colonnes. On
-    /// indique explicitement une liste vide.
+    /// You create a sheet and its table, freeze the header line and adjust the columns. You
+    /// explicitly indicate an empty list.
     /// </summary>
     private static IXLWorksheet AjouterFeuille<T>(XLWorkbook classeur, string nom, IReadOnlyList<T> lignes)
     {
@@ -190,8 +190,8 @@ public sealed class ExportExcel : IExportateur
 }
 
 /// <summary>
-/// On sauvegarde le blotter en JSON pour retrouver ses opérations entre deux sessions et conserver les
-/// liens entre les trades et leurs jambes.
+/// The floater is saved in JSON to recover its operations between two sessions and maintain the
+/// links between the trades and their legs.
 /// </summary>
 public sealed class ExportJson : IExportateur
 {
@@ -204,8 +204,8 @@ public sealed class ExportJson : IExportateur
     public string Format => "JSON";
 
     /// <summary>
-    /// On exporte le blotter en JSON pour conserver les liens entre opérations et permettre une
-    /// restauration ultérieure.
+    /// The floater is exported to JSON to maintain the links between operations and allow
+    /// further restoration.
     /// </summary>
     public IReadOnlyList<string> Exporter(IReadOnlyList<Trade> blotter, EtatBook book, string dossier)
     {
@@ -215,26 +215,24 @@ public sealed class ExportJson : IExportateur
     }
 
     /// <summary>
-    /// On sérialise toutes les opérations dans un fichier temporaire avant de remplacer la sauvegarde
-    /// précédente.
+    /// Serialize all operations in a temporary file before replacing the previous backup.
     /// </summary>
     /// <param name="blotter">On conserve les identifiants et les références des jambes pour pouvoir reconstruire le book.</param>
     public static void Sauvegarder(IReadOnlyList<Trade> blotter, string fichier)
     {
         string? dossier = Path.GetDirectoryName(Path.GetFullPath(fichier));
         if (dossier is not null) Directory.CreateDirectory(dossier);
-        // On écrit d'abord une copie complète, puis on remplace le fichier de la session.
+        // First write a full copy, then replace the session file.
         string temporaire = fichier + "." + Guid.NewGuid().ToString("N") + ".tmp";
         File.WriteAllText(temporaire, JsonSerializer.Serialize(blotter, Options));
         File.Move(temporaire, fichier, overwrite: true);
     }
 
     /// <summary>
-    /// On relit les opérations sauvegardées et on laisse remonter une erreur de contenu plutôt que de
-    /// masquer un fichier corrompu.
+    /// We reread the saved operations and let a content error go back instead of masking a
+    /// corrupted file.
     /// </summary>
     /// <returns>On renvoie une liste vide si le fichier n’existe pas ou si son contenu JSON vaut null.</returns>
     public static List<Trade> Charger(string fichier) =>
         File.Exists(fichier) ? JsonSerializer.Deserialize<List<Trade>>(File.ReadAllText(fichier), Options) ?? [] : [];
 }
-

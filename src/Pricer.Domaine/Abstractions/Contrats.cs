@@ -1,35 +1,41 @@
 namespace Pricer.Domaine.Abstractions;
 
 /// <summary>
-/// On injecte l'heure de marché pour que le rejeu utilise la date du fichier et que les tests restent
-/// reproductibles.
+/// Market time is injected so that the replay uses the file date and tests remain reproducible.
 /// </summary>
 public interface IHorloge
 {
     DateTime Maintenant { get; }
 
-    /// <summary>On fait avancer l'horloge avec les messages reçus, sans revenir à une date antérieure.</summary>
+    /// <summary>
+    /// The clock is moved forward with the messages received, without returning to an earlier
+    /// date.
+    /// </summary>
     void Synchroniser(DateTime horodatageMarche);
 }
 
-/// <summary>On donne aux écrans et aux calculs un même contrat pour recevoir les nouvelles cotations.</summary>
+/// <summary>
+/// Screens and calculations are given the same contract to receive new listings.
+/// </summary>
 public interface IObservateur<in T>
 {
     /// <summary>
-    /// On transmet une nouvelle donnée à l'observateur pour qu'il mette à jour son propre état.
+    /// A new data is transmitted to the observer to update his/her own condition.
     /// </summary>
     void Actualiser(T donnee);
 }
 
-/// <summary>On regroupe les abonnements aux cotations pour prévenir les observateurs quand le marché change.</summary>
+/// <summary>
+/// The listing subscriptions are grouped together to warn observers when the market changes.
+/// </summary>
 public interface ISujet<out T>
 {
     /// <summary>
-    /// On inscrit un observateur pour lui transmettre les prochaines données reçues.
+    /// An observer is registered to provide the next data received.
     /// </summary>
     void AjouterObservateur(IObservateur<T> observateur);
     /// <summary>
-    /// On retire un observateur pour arrêter de lui transmettre les mises à jour.
+    /// An observer is removed to stop transmitting the updates.
     /// </summary>
     void SupprimerObservateur(IObservateur<T> observateur);
 }

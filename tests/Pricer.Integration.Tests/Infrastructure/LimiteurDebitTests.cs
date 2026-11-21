@@ -2,14 +2,16 @@ using Pricer.Infrastructure.Transport;
 
 namespace Pricer.Integration.Tests.Infrastructure;
 
-/// <summary>Tests unitaires du seau à jetons, avec une horloge manuelle (aucune attente réelle).</summary>
+/// <summary>
+/// Unit tests of the token bucket, with a manual clock (no actual expectations).
+/// </summary>
 [TestClass]
 public class LimiteurDebitTests
 {
     private TimeSpan _maintenant = TimeSpan.Zero;
 
     /// <summary>
-    /// On vérifie qu'une rafale autorisée ne permet pas de dépasser les jetons disponibles.
+    /// It is verified that an authorized burst does not exceed the available tokens.
     /// </summary>
     [TestMethod]
     public void TenterPrendre_RafaleConsommee_PuisRefus()
@@ -24,7 +26,7 @@ public class LimiteurDebitTests
     }
 
     /// <summary>
-    /// On vérifie que le temps écoulé reconstitue progressivement la capacité d'appel.
+    /// It is verified that the time elapsed gradually reconstitutes the call capacity.
     /// </summary>
     [TestMethod]
     public void TenterPrendre_ApresAttente_JetonsReconstitues()
@@ -39,7 +41,7 @@ public class LimiteurDebitTests
     }
 
     /// <summary>
-    /// On vérifie qu'une attente prolongée ne permet pas d'accumuler une rafale sans limite.
+    /// It is verified that a prolonged wait does not accumulate a boundless gust.
     /// </summary>
     [TestMethod]
     public void JetonsDisponibles_NeDepassentJamaisLaRafale()
@@ -50,7 +52,7 @@ public class LimiteurDebitTests
     }
 
     /// <summary>
-    /// On vérifie qu'un limiteur configuré sans débit est rejeté dès sa création.
+    /// We check that a flow-free configured limiter is rejected as soon as it is created.
     /// </summary>
     [TestMethod]
     public void Constructeur_DebitNul_LeveArgumentOutOfRange()

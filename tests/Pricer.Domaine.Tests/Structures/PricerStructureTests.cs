@@ -9,7 +9,8 @@ namespace Pricer.Domaine.Tests.Structures;
 public class PricerStructureTests
 {
     /// <summary>
-    /// On vérifie qu'un marché synthétique cohérent ne déclenche pas d'alerte de prix inutile.
+    /// It is verified that a coherent synthetic market does not trigger unnecessary price
+    /// alerts.
     /// </summary>
     [TestMethod]
     public void Coter_MarkCoherentAvecLaVol_AucunEcartSignale()
@@ -25,7 +26,8 @@ public class PricerStructureTests
     }
 
     /// <summary>
-    /// On vérifie qu'un écart au mark supérieur au seuil devient visible dans la cotation.
+    /// It is verified that a mark difference above the threshold becomes visible in the
+    /// quote.
     /// </summary>
     [TestMethod]
     public void Coter_MarkDecaleDe0_0002Btc_EcartSignale()
@@ -43,7 +45,7 @@ public class PricerStructureTests
     }
 
     /// <summary>
-    /// On vérifie la cohérence économique des deux côtés exécutables de la structure.
+    /// The economic coherence of the two executable sides of the structure is verified.
     /// </summary>
     [TestMethod]
     public void Coter_PrixExecutables_AchatAuDessusDeLaVenteEtFourchettePositive()
@@ -61,7 +63,7 @@ public class PricerStructureTests
     }
 
     /// <summary>
-    /// On vérifie chaque flux d'une structure achetée pour détecter une inversion de bid et d'ask.
+    /// Each stream of a purchased structure is checked to detect an inversion of bid and ask.
     /// </summary>
     [TestMethod]
     public void Coter_PrixExecutableAchat_PaieAskDesJambesAcheteesEtRecoitBidDesVendues()
@@ -75,7 +77,8 @@ public class PricerStructureTests
     }
 
     /// <summary>
-    /// On vérifie que l'absence d'un côté nécessaire empêche le traitement de toute la structure.
+    /// It is verified that the absence of a necessary side prevents treatment of the entire
+    /// structure.
     /// </summary>
     [TestMethod]
     public void Coter_JambeSansBid_StructureNonTraitable()
@@ -93,8 +96,8 @@ public class PricerStructureTests
     }
 
     /// <summary>
-    /// On vérifie que la vente inverse les expositions tout en réutilisant les mêmes paramètres de
-    /// marché.
+    /// It is verified that the sale reverses the exposures while reusing the same market
+    /// parameters.
     /// </summary>
     [TestMethod]
     public void Coter_Vente_GrecquesOpposeesALAchat()
@@ -110,7 +113,7 @@ public class PricerStructureTests
     }
 
     /// <summary>
-    /// On vérifie l'agrégation des grecques sur un jeu de données où la comparaison est connue.
+    /// Aggregation of Greeks is verified on a dataset where the comparison is known.
     /// </summary>
     [TestMethod]
     public void Coter_GrecquesDeLaStructure_EgalesAuxGrecquesDeribitSurMarcheSynthetique()
@@ -124,8 +127,8 @@ public class PricerStructureTests
     }
 
     /// <summary>
-    /// On vérifie qu'un OTC conserve un prix de modèle sans lui attribuer artificiellement une cotation
-    /// Deribit.
+    /// It is verified that an OTC retains a model price without artificially assigning a
+    /// Deribit rating.
     /// </summary>
     [TestMethod]
     public void Coter_OptionSurMesure_PrixTheoriqueSansMarkNiExecutable()

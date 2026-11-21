@@ -7,19 +7,21 @@ using Pricer.Domaine.Utilitaires;
 
 namespace Pricer.Domaine.Structures;
 
-/// <summary>On regroupe les paramètres qui décrivent une jambe à l'instant de son évaluation.</summary>
+/// <summary>
+/// The parameters that describe a leg at the moment of its evaluation are grouped.
+/// </summary>
 public readonly record struct ParametresMarche(double Future, double Sigma, double Maturite, DateTime Horodatage);
 
 /// <summary>
-/// On représente chaque structure par des jambes et des ratios signés du point de vue de son acheteur : +1
-/// achète une option, -2 en vend deux. On garde le bid/ask dans une interface réservée aux jambes cotées,
-/// car un OTC n'a pas de carnet Deribit.
+/// Each structure is represented by legs and ratios signed from the buyer's point of view: +1
+/// buys an option, -2 sells two. Bid/ask is kept in an interface reserved for rated legs, as an
+/// OTC does not have a Deribit notebook.
 /// </summary>
 public abstract class Jambe
 {
     /// <summary>
-    /// On conserve les caractéristiques communes de la jambe et son ratio signé pour séparer le contrat de
-    /// la quantité de structure.
+    /// The common characteristics of the leg and its signed ratio to separate the contract from
+    /// the amount of structure are retained.
     /// </summary>
     protected Jambe(TypeOption type, double strike, DateTime echeance, double ratio)
     {
@@ -36,12 +38,15 @@ public abstract class Jambe
 
     public abstract string Libelle { get; }
 
-    /// <summary>On laisse chaque type de jambe obtenir son future et sa volatilité selon sa propre règle.</summary>
+    /// <summary>
+    /// Each type of leg is allowed to obtain its future and its volatility according to its own
+    /// rule.
+    /// </summary>
     public abstract ParametresMarche ParametresMarche(IContexteMarche contexte);
 
     /// <summary>
-    /// On applique le même Black-76 après avoir obtenu les paramètres de la jambe, qu'elle soit cotée ou sur
-    /// mesure.
+    /// The same Black-76 is applied after having obtained the parameters of the leg, whether it
+    /// is rated or tailored.
     /// </summary>
     public virtual ResultatBlack76 Evaluer(IContexteMarche contexte)
     {
@@ -50,8 +55,8 @@ public abstract class Jambe
     }
 
     /// <summary>
-    /// On réévalue la jambe à un future choqué, en conservant sa volatilité et sa durée pour le profil
-    /// d'aujourd'hui.
+    /// We re-evaluate the leg to a future shock, keeping its volatility and duration for
+    /// today's profile.
     /// </summary>
     public double PrixUsdAvecFuture(IContexteMarche contexte, double futureChoque)
     {
@@ -59,32 +64,41 @@ public abstract class Jambe
         return Black76.Prix(futureChoque, Strike, p.Maturite, p.Sigma, Type);
     }
 
-    /// <summary>On calcule le payoff USD à l'échéance pour le prix du sous-jacent choisi dans le scénario.</summary>
+    /// <summary>
+    /// The USD payoff is calculated at maturity for the price of the underlying chosen in the
+    /// scenario.
+    /// </summary>
     public double PayoffUsd(double sousJacent) =>
         Type == TypeOption.Call ? Math.Max(sousJacent - Strike, 0) : Math.Max(Strike - sousJacent, 0);
 
     /// <summary>
-    /// On affiche le ratio signé avec le libellé pour rendre lisibles les achats et ventes qui composent la
-    /// structure.
+    /// The signed-to-text ratio is displayed to make the purchases and sales that make up the
+    /// structure readable.
     /// </summary>
     public override string ToString() => $"{(Ratio > 0 ? "+" : "")}{Ratio} {Libelle}";
 }
 
-/// <summary>On réserve l'accès au bid, à l'ask et au mark aux jambes réellement cotées sur Deribit.</summary>
+/// <summary>
+/// Access to the bid, ask and mark is reserved for the legs actually listed on Deribit.
+/// </summary>
 public interface ICotableSurMarche
 {
     Instrument Instrument { get; }
     /// <summary>
-    /// On demande la cotation d'une jambe réellement négociée pour accéder à son bid, son ask et son mark.
+    /// A really negotiated leg is asked to be rated to access its bid, its Ask and its mark.
     /// </summary>
     Cotation ObtenirCotation(IContexteMarche contexte);
 }
 
-/// <summary>On lit underlying_price et mark_iv pour une option cotée, puis on les utilise dans notre calcul Black-76.</summary>
+/// <summary>
+/// We read underlying_price and mark_iv for a rated option, then we use them in our Black-76
+/// calculation.
+/// </summary>
 public sealed class JambeCotee : Jambe, ICotableSurMarche
 {
     /// <summary>
-    /// On rattache la jambe à un instrument du référentiel tout en conservant son ratio dans la structure.
+    /// The leg is attached to an instrument in the repository while maintaining its ratio in
+    /// the structure.
     /// </summary>
     public JambeCotee(Instrument instrument, double ratio)
         : base(instrument.Type, instrument.Strike, instrument.Echeance, ratio)
@@ -96,15 +110,15 @@ public sealed class JambeCotee : Jambe, ICotableSurMarche
     public override string Libelle => Instrument.Nom;
 
     /// <summary>
-    /// On lit la cotation de l'instrument et on signale son absence avant tout calcul ou choix de prix
-    /// exécutable.
+    /// The rating of the instrument is read and its absence is reported before any calculation
+    /// or choice of executable price.
     /// </summary>
     public Cotation ObtenirCotation(IContexteMarche contexte) =>
         contexte.Cotation(Instrument.Nom) ?? throw new DonneesIndisponiblesException($"Pas de cotation reçue pour {Instrument.Nom}.");
 
     /// <summary>
-    /// On contrôle la fraîcheur, le future et mark_iv du contrat coté, puis on mesure sa maturité depuis
-    /// l'horodatage de cette cotation.
+    /// We control the freshness, the future and mark_iv of the rated contract, and then we
+    /// measure its maturity since the time stamping of this rating.
     /// </summary>
     public override ParametresMarche ParametresMarche(IContexteMarche contexte)
     {
@@ -120,13 +134,14 @@ public sealed class JambeCotee : Jambe, ICotableSurMarche
 }
 
 /// <summary>
-/// On obtient les paramètres d'une option de gré à gré par interpolation, car son strike et sa date ne
-/// correspondent pas nécessairement à un instrument coté.
+/// The parameters of an over-the-counter option are obtained by interpolation, as its strike
+/// and date do not necessarily correspond to a sided instrument.
 /// </summary>
 public sealed class JambeSurMesure : Jambe
 {
     /// <summary>
-    /// On décrit l'option OTC par son type, son strike et sa date sans lui attribuer de carnet Deribit.
+    /// The OTC option is described by its type, strike and date without assigning a Deribit
+    /// notebook.
     /// </summary>
     public JambeSurMesure(TypeOption type, double strike, DateTime echeance, double ratio)
         : base(type, strike, echeance, ratio) { }
@@ -135,14 +150,15 @@ public sealed class JambeSurMesure : Jambe
         string.Create(CultureInfo.InvariantCulture, $"OTC-{Echeance:dMMMyy}-{Strike:0}-{(Type == TypeOption.Call ? "C" : "P")}").ToUpperInvariant();
 
     /// <summary>
-    /// On demande les paramètres OTC aux smiles du marché en conservant le détail nécessaire pour expliquer
-    /// l'interpolation.
+    /// The OTC parameters are asked to the market smiles by keeping the details necessary to
+    /// explain the interpolation.
     /// </summary>
     public ResultatInterpolation Interpoler(IContexteMarche contexte) =>
         Interpolateur.Interpoler(Strike, Echeance, contexte.Maintenant, contexte.Smiles());
 
     /// <summary>
-    /// On transforme le résultat interpolé en paramètres Black-76, datés de l'instant de marché courant.
+    /// The interpolated result is converted into Black-76 parameters, dated from the current
+    /// market moment.
     /// </summary>
     public override ParametresMarche ParametresMarche(IContexteMarche contexte)
     {

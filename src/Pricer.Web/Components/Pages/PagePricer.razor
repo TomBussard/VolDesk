@@ -3,7 +3,7 @@
 @inject ServiceMarche Marche
 @inject Blotter BlotterDesk
 
-<PageTitle>Pricer · Pricer Deribit</PageTitle>
+<PageTitle>Strategy pricer · VolDesk</PageTitle>
 
 @{
     var etat = Marche.EtatCourant;
@@ -13,8 +13,8 @@
 
 <div class="entete">
     <div>
-        <h1>Pricer de structures</h1>
-        <div class="muet">Black-76 maison sur le future et la vol du mark · vols recalculées par notre inversion · prix exécutable sur le carnet.</div>
+        <h1>Strategy pricer</h1>
+        <div class="muet">Price each leg with Black-76, compare its implied volatility with the market and inspect the executable spread.</div>
     </div>
 </div>
 
@@ -29,7 +29,7 @@
                 {
                     <option value="@t">@r.Nom</option>
                 }
-                <option value="@TypeStructure.OptionSimple">Call ou put coté</option>
+                <option value="@TypeStructure.OptionSimple">Listed call or put</option>
             </select>
         </div>
         @if (_type == TypeStructure.OptionSimple)
@@ -43,7 +43,7 @@
             </div>
         }
         <div class="champ">
-            <label>Échéance</label>
+            <label>Expiry</label>
             <select value="@_echeance.Ticks" @onchange="ChangerEcheance">
                 @foreach (var e in echeances)
                 {
@@ -65,30 +65,30 @@
             </div>
         }
         <div class="champ">
-            <label>Sens</label>
+            <label>Side</label>
             <div class="segmente">
-                <button class="@(_sens == Sens.Achat ? "actif achat" : "")" @onclick="() => { _sens = Sens.Achat; Invalider(); }">Achat</button>
-                <button class="@(_sens == Sens.Vente ? "actif vente" : "")" @onclick="() => { _sens = Sens.Vente; Invalider(); }">Vente</button>
+                <button class="@(_sens == Sens.Achat ? "actif achat" : "")" @onclick="() => { _sens = Sens.Achat; Invalider(); }">Buy</button>
+                <button class="@(_sens == Sens.Vente ? "actif vente" : "")" @onclick="() => { _sens = Sens.Vente; Invalider(); }">Sell</button>
             </div>
         </div>
         <div class="champ">
-            <label>Quantité (pas @PasQuantite.ToString("0.###"))</label>
+            <label>Quantity (step @PasQuantite.ToString("0.###"))</label>
             <input type="number" step="@PasQuantite.ToString(CultureInfo.InvariantCulture)" @bind="_quantite" @bind:after="Invalider" />
         </div>
-        <button class="bouton" @onclick="CoterAsync">Coter</button>
+        <button class="bouton" @onclick="CoterAsync">Get quote</button>
     </div>
 </div>
 
 @if (_cotation is { } c)
 {
     <div class="carte">
-        <h2>@c.Structure.Description — <span class="@(c.Sens == Sens.Achat ? "pos" : "neg")">@(c.Sens == Sens.Achat ? "ACHAT" : "VENTE")</span> × @c.Quantite.ToString("0.0") <span class="muet" style="font-weight:400">· @c.Horodatage.ToString("HH:mm:ss.fff") UTC</span></h2>
+        <h2>@c.Structure.Description · <span class="@(c.Sens == Sens.Achat ? "pos" : "neg")">@(c.Sens == Sens.Achat ? "BUY" : "SELL")</span> × @Format.Nombre(c.Quantite, "0.0") <span class="muet" style="font-weight:400">· @c.Horodatage.ToString("HH:mm:ss.fff") UTC</span></h2>
         <div class="tableau-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th>Jambe</th><th>Qté</th><th>Future</th><th>σ mark</th><th>Théo USD</th><th>Théo @etat.Referentiel.Devise</th><th>Mark @etat.Referentiel.Devise</th><th>Écart @etat.Referentiel.Devise</th>
-                        <th>Vol bid nous / Deribit</th><th>Vol mark nous / Deribit</th><th>Vol ask nous / Deribit</th><th>Bid</th><th>Ask</th>
+                        <th>Leg</th><th>Qty</th><th>Future</th><th>σ mark</th><th>Model USD</th><th>Model @etat.Referentiel.Devise</th><th>Mark @etat.Referentiel.Devise</th><th>Difference @etat.Referentiel.Devise</th>
+                        <th>Bid IV model / feed</th><th>Mark IV model / feed</th><th>Ask IV model / feed</th><th>Bid</th><th>Ask</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,42 +111,42 @@
                 </tbody>
             </table>
         </div>
-        <div class="muet" style="font-size:12px;margin-top:8px">⚠ = écart au mark supérieur à 0,0001 @etat.Referentiel.Devise ou écart de vol supérieur à 0,1 point.</div>
+        <div class="muet" style="font-size:12px;margin-top:8px">Highlighted differences exceed 0.0001 @etat.Referentiel.Devise in price or 0.1 volatility points.</div>
     </div>
 
     <div class="grille g2">
         <div class="carte">
-            <h2>Prix de la structure <span class="muet">(par unité)</span></h2>
+            <h2>Strategy price <span class="muet">(per unit)</span></h2>
             <div class="ligne-prix">
                 <span class="lib"></span><span class="lib">@etat.Referentiel.Devise</span><span class="lib">USD</span>
-                <span class="lib">Théorique (Black-76)</span><span>@Format.Btc(c.TheoriqueUnitaireBtc)</span><span>@Format.Usd(c.TheoriqueUnitaireUsd)</span>
-                <span class="lib">Mark Deribit</span><span>@Format.Btc(c.MarkUnitaireBtc)</span><span>@Format.Usd(c.MarkUnitaireBtc * c.Future)</span>
+                <span class="lib">Model (Black-76)</span><span>@Format.Btc(c.TheoriqueUnitaireBtc)</span><span>@Format.Usd(c.TheoriqueUnitaireUsd)</span>
+                <span class="lib">Market mark</span><span>@Format.Btc(c.MarkUnitaireBtc)</span><span>@Format.Usd(c.MarkUnitaireBtc * c.Future)</span>
                 @if (c.Traitable)
                 {
-                    <span class="lib pos">Exécutable à l'achat</span><span>@Format.Btc(c.PrixExecutableAchatBtc)</span><span>@Format.Usd(c.PrixExecutableAchatBtc * c.Future)</span>
-                    <span class="lib neg">Exécutable à la vente</span><span>@Format.Btc(c.PrixExecutableVenteBtc)</span><span>@Format.Usd(c.PrixExecutableVenteBtc * c.Future)</span>
-                    <span class="lib">Fourchette</span><span>@Format.Btc(c.FourchetteBtc)</span><span>@Format.Usd(c.FourchetteBtc * c.Future)</span>
-                    <span class="lib fort">Prime totale (@c.Sens)</span><span class="fort">@Format.Btc(c.PrimeTotaleBtc)</span><span class="fort">@Format.Usd(c.PrimeTotaleBtc * c.Future)</span>
+                    <span class="lib pos">Buy at the ask</span><span>@Format.Btc(c.PrixExecutableAchatBtc)</span><span>@Format.Usd(c.PrixExecutableAchatBtc * c.Future)</span>
+                    <span class="lib neg">Sell at the bid</span><span>@Format.Btc(c.PrixExecutableVenteBtc)</span><span>@Format.Usd(c.PrixExecutableVenteBtc * c.Future)</span>
+                    <span class="lib">Bid/ask spread</span><span>@Format.Btc(c.FourchetteBtc)</span><span>@Format.Usd(c.FourchetteBtc * c.Future)</span>
+                    <span class="lib fort">Total premium (@(c.Sens == Sens.Achat ? "buy" : "sell"))</span><span class="fort">@Format.Btc(c.PrimeTotaleBtc)</span><span class="fort">@Format.Usd(c.PrimeTotaleBtc * c.Future)</span>
                 }
                 else
                 {
-                    <span class="lib alerte-txt">NON TRAITABLE</span><span class="alerte-txt" style="grid-column: span 2">une jambe ne dispose pas d’un bid/ask exploitable ou son marché est fermé</span>
+                    <span class="lib alerte-txt">Quote unavailable</span><span class="alerte-txt" style="grid-column: span 2">A leg is missing a two-sided quote or its market is closed.</span>
                 }
             </div>
             <div style="display:flex; gap:8px; margin-top:16px">
-                <button class="bouton vert" disabled="@(!c.Traitable)" @onclick="Booker">Booker au prix exécutable</button>
-                <button class="bouton secondaire" @onclick="() => _afficherProfil = !_afficherProfil">@(_afficherProfil ? "Masquer" : "Afficher") les scénarios et sensibilités</button>
+                <button class="bouton vert" disabled="@(!c.Traitable)" @onclick="Booker">Book simulated trade</button>
+                <button class="bouton secondaire" @onclick="() => _afficherProfil = !_afficherProfil">@(_afficherProfil ? "Hide" : "Show") scenarios and sensitivities</button>
             </div>
         </div>
         <div class="carte">
-            <h2>Grecques de la structure</h2>
+            <h2>Strategy Greeks</h2>
             <table>
-                <thead><tr><th>Grecque</th><th>Black-76 (nous)</th><th>Deribit</th><th>Écart</th></tr></thead>
+                <thead><tr><th>Greek</th><th>Black-76</th><th>Deribit</th><th>Difference</th></tr></thead>
                 <tbody>
                     <LigneGrecque Nom="Delta" Nous="c.Grecques.Delta" Deribit="c.GrecquesDeribit?.Delta" Motif="0.0000" />
                     <LigneGrecque Nom="Gamma" Nous="c.Grecques.Gamma" Deribit="c.GrecquesDeribit?.Gamma" Motif="0.000000" />
-                    <LigneGrecque Nom="Vega ($ / pt de vol)" Nous="c.Grecques.Vega" Deribit="c.GrecquesDeribit?.Vega" Motif="0.00" />
-                    <LigneGrecque Nom="Theta ($ / jour)" Nous="c.Grecques.Theta" Deribit="c.GrecquesDeribit?.Theta" Motif="0.00" />
+                    <LigneGrecque Nom="Vega (USD / vol point)" Nous="c.Grecques.Vega" Deribit="c.GrecquesDeribit?.Vega" Motif="0.00" />
+                    <LigneGrecque Nom="Theta (USD / day)" Nous="c.Grecques.Theta" Deribit="c.GrecquesDeribit?.Theta" Motif="0.00" />
                 </tbody>
             </table>
         </div>
@@ -181,8 +181,8 @@ else if (_erreurCotation is not null)
     private int NombreStrikes => _type == TypeStructure.OptionSimple ? 1 : FabriqueStructures.Catalogue[_type].NombreStrikes;
 
     /// <summary>
-    /// On choisit une échéance encore ouverte et des strikes proches de la monnaie pour préparer une
-    /// première cotation.
+    /// A still open maturity is chosen and strings near the money are chosen to prepare
+    /// a first quote.
     /// </summary>
     protected override void OnInitialized()
     {
@@ -193,8 +193,8 @@ else if (_erreurCotation is not null)
     }
 
     /// <summary>
-    /// On adapte le nombre et les valeurs des strikes à la nouvelle recette et on retire la cotation
-    /// précédente.
+    /// The number and values of the strikes are adjusted to the new recipe and the previous
+    /// rating is removed.
     /// </summary>
     private void ChangerType(ChangeEventArgs e)
     {
@@ -204,8 +204,8 @@ else if (_erreurCotation is not null)
     }
 
     /// <summary>
-    /// On choisit des strikes cotés sur la nouvelle échéance et on invalide le résultat obtenu sur
-    /// l'ancienne.
+    /// Strikes listed on the new expiry are selected and the result obtained on the old one
+    /// is invalidated.
     /// </summary>
     private void ChangerEcheance(ChangeEventArgs e)
     {
@@ -215,8 +215,8 @@ else if (_erreurCotation is not null)
     }
 
     /// <summary>
-    /// On propose des strikes autour du future pour commencer avec une structure proche de la monnaie ;
-    /// l'utilisateur peut ensuite modifier ces valeurs.
+    /// Strikes around the future are proposed to start with a structure near the money;
+    /// the user can then change these values.
     /// </summary>
     private void StrikesParDefaut()
     {
@@ -236,8 +236,8 @@ else if (_erreurCotation is not null)
     }
 
     /// <summary>
-    /// On vérifie la saisie, on suit les instruments de la structure et on calcule les prix exécutables
-    /// avant tout traitement.
+    /// The input is checked, the instruments of the structure are monitored, and the executable
+    /// prices are calculated before processing.
     /// </summary>
     private async Task CoterAsync()
     {
@@ -255,13 +255,13 @@ else if (_erreurCotation is not null)
             await Marche.SuivreAsync(structure.Jambes.OfType<ICotableSurMarche>().Select(j => j.Instrument.Nom));
             Recalculer();
         }
-        catch (SaisieInvalideException ex) { Afficher($"Saisie refusée (code {(int)ex.CodeErreur}) : {ex.Message}", "erreur"); }
+        catch (SaisieInvalideException ex) { Afficher($"Input rejected (code {(int)ex.CodeErreur}) : {ex.Message}", "erreur"); }
         catch (PricerException ex) { Afficher(ex.Message, "erreur"); }
     }
 
     /// <summary>
-    /// On actualise la structure figée avec le dernier marché et on retire la cote si les données ne
-    /// permettent plus le calcul.
+    /// The frozen structure is updated with the last market and the rating is removed if the
+    /// data no longer allow calculation.
     /// </summary>
     private void Recalculer()
     {
@@ -280,8 +280,8 @@ else if (_erreurCotation is not null)
     }
 
     /// <summary>
-    /// On recalcule la cotation avant l'affichage périodique pour que les prix et les risques suivent
-    /// le marché.
+    /// The quote is recalculated prior to periodic posting to ensure that prices and risks
+    /// follow the market.
     /// </summary>
     protected override Task AvantRafraichissementAsync()
     {
@@ -290,33 +290,33 @@ else if (_erreurCotation is not null)
     }
 
     /// <summary>
-    /// On refait la cote au marché courant avant d'enregistrer le trade et ses exécutions dans le
-    /// blotter.
+    /// We are going back to the current market before we record the trade and its performances
+    /// in the floater.
     /// </summary>
     private void Booker()
     {
         try
         {
             var t = BlotterDesk.Booker(PricerStructure.Coter(_structure!, _sensCote, _quantiteCotee, Marche.EtatCourant));
-            Afficher($"Trade {t.Id.ToString()[..8]} booké : {t.Description}, prime {Format.Btc(t.PrimeBtc)} {Marche.EtatCourant.Referentiel.Devise}. Voir le blotter et le book.", "succes");
+            Afficher($"Trade {t.Id.ToString()[..8]} booked. {t.Description}, premium {Format.Btc(t.PrimeBtc)} {Marche.EtatCourant.Referentiel.Devise}. See the blotter and positions.", "succes");
         }
         catch (PricerException ex) { Afficher(ex.Message, "erreur"); }
     }
 
     /// <summary>
-    /// On retire la structure et ses résultats dès que la saisie change pour éviter de traiter une
-    /// ancienne demande.
+    /// The structure and its results are removed as soon as the input changes to avoid
+    /// processing an old application.
     /// </summary>
     private void Invalider()
     {
-        // On retire l'ancien résultat quand une saisie change, pour ne pas traiter une autre structure par erreur.
+        // The old result is removed when a input changes, not to treat another structure by mistake.
         _cotation = null;
         _structure = null;
         _erreurCotation = null;
     }
 
     /// <summary>
-    /// On choisit le texte et le niveau du message présenté sous le formulaire.
+    /// The text and level of the message presented under the form are selected.
     /// </summary>
     private void Afficher(string texte, string type) => (_message, _typeMessage) = (texte, type);
 }

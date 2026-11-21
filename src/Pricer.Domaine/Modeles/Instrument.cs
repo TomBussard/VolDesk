@@ -1,8 +1,9 @@
 namespace Pricer.Domaine.Modeles;
 
 /// <summary>
-/// On conserve les caractéristiques de l'option dans le référentiel. On utilise required et init pour
-/// exiger les champs nécessaires dès la construction et éviter de les modifier ensuite.
+/// The features of the option are retained in the repository. Required and init are used to
+/// require the necessary fields from the moment of construction and avoid subsequent
+/// modification.
 /// </summary>
 public sealed record Instrument
 {
@@ -17,21 +18,29 @@ public sealed record Instrument
     public double QuantiteMinimale { get; init; } = 0.1;
     public double PasCotation { get; init; } = 0.0001;
 
-    /// <summary>On retient la quantité minimale comme pas de quantité de l'option Deribit.</summary>
+    /// <summary>
+    /// The minimum quantity is retained as not the quantity of the Deribit option.
+    /// </summary>
     public double PasQuantite => QuantiteMinimale;
 }
 
-/// <summary>On décrit le future coté séparément des options, car sa quantité se traite en montant USD.</summary>
+/// <summary>
+/// The future rating is described separately from the options, as its quantity is treated as
+/// USD.
+/// </summary>
 public sealed record InstrumentFuture
 {
     public required string Nom { get; init; }
     public required string Devise { get; init; }
     /// <summary>
-    /// On garde l'échéance du future ; on représente le perpétuel par DateTime.MaxValue, car il n'a pas de date
-    /// de livraison.
+    /// We keep the expiry of the future; we represent the perpetual by DateTime.MaxValue,
+    /// because it has no delivery date.
     /// </summary>
     public required DateTime Echeance { get; init; }
-    /// <summary>On conserve la taille d'un contrat en USD ; elle vaut notamment 10 USD pour les futures BTC du périmètre.</summary>
+    /// <summary>
+    /// The size of a contract is kept in USD, which is worth 10 USD for future BTCs on the
+    /// perimeter.
+    /// </summary>
     public double TailleContratUsd { get; init; } = 10.0;
     public double QuantiteMinimaleUsd { get; init; } = 10.0;
     public bool EstPerpetuel => Echeance == DateTime.MaxValue;

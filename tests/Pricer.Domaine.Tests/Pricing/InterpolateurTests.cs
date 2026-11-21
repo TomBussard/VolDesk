@@ -10,13 +10,15 @@ namespace Pricer.Domaine.Tests.Pricing;
 public class InterpolateurTests
 {
     /// <summary>
-    /// On prépare les points d'un smile simple dont les interpolations sont calculables à la main.
+    /// The points of a simple smile are prepared, the interpolations of which are calculated by
+    /// hand.
     /// </summary>
     private static SmileEcheance Smile(DateTime e, double f, params (double K, double V)[] points) =>
         new(e, Maturite.EnAnnees(e, MarcheDeTest.Maintenant), f, points.Select(p => new PointSmile(p.K, p.V)).ToList());
 
     /// <summary>
-    /// On vérifie qu'un point déjà coté est restitué sans créer un écart d'interpolation.
+    /// It is checked that an already rated point is returned without creating an interpolation
+    /// gap.
     /// </summary>
     [TestMethod]
     public void Interpoler_EcheanceEtStrikeCotes_RetrouveLaVolCotee()
@@ -30,7 +32,7 @@ public class InterpolateurTests
     }
 
     /// <summary>
-    /// On vérifie le poids logarithmique entre deux strikes d'une même échéance.
+    /// The logarithmic weight between two strikes of the same maturity is checked.
     /// </summary>
     [TestMethod]
     public void Interpoler_EcheanceCoteeStrikeIntermediaire_LineaireEnLogMoneyness()
@@ -44,12 +46,13 @@ public class InterpolateurTests
     }
 
     /// <summary>
-    /// On vérifie séparément les conventions d'interpolation du future et de la variance totale.
+    /// The interpolation conventions of the future and the total variance are separately
+    /// checked.
     /// </summary>
     [TestMethod]
     public void Interpoler_EntreDeuxEcheances_FutureLineaireEtVarianceTotaleLineaire()
     {
-        // On utilise des smiles plats pour isoler le calcul de variance totale entre les dates.
+        // Flat smiles are used to isolate the calculation of total variance between dates.
         var s1 = Smile(MarcheDeTest.E1, 74000, (50000, 0.40), (100000, 0.40));
         var s2 = Smile(MarcheDeTest.E3, 76000, (50000, 0.60), (100000, 0.60));
         var e = new DateTime(2027, 1, 15, 8, 0, 0, DateTimeKind.Utc);
@@ -65,7 +68,7 @@ public class InterpolateurTests
     }
 
     /// <summary>
-    /// On vérifie que des futures différents conduisent aux strikes équivalents appropriés sur chaque
+    /// It is checked that different futures lead to the appropriate equivalent strikes on each
     /// smile.
     /// </summary>
     [TestMethod]
@@ -83,7 +86,8 @@ public class InterpolateurTests
     }
 
     /// <summary>
-    /// On vérifie que le prix interpolé ne saute pas à l'approche d'une maturité déjà cotée.
+    /// It is verified that the interpolated price does not jump as an already rated maturity
+    /// approaches.
     /// </summary>
     [TestMethod]
     public void Interpoler_ContinuiteVersLEcheanceCotee()
@@ -96,7 +100,7 @@ public class InterpolateurTests
     }
 
     /// <summary>
-    /// On vérifie que l'outil n'extrapole pas une volatilité hors des strikes disponibles.
+    /// We check that the tool does not extrapolate volatility from the available strikes.
     /// </summary>
     [TestMethod]
     public void Interpoler_StrikeEquivalentHorsDesStrikesCotes_LeveHorsPlage()
@@ -106,7 +110,7 @@ public class InterpolateurTests
     }
 
     /// <summary>
-    /// On vérifie qu'une date non encadrée par le marché est refusée.
+    /// It is verified that a date not covered by the contract is refused.
     /// </summary>
     [TestMethod]
     public void Interpoler_EcheanceAvantLaPremiere_LeveHorsPlage()
@@ -117,7 +121,8 @@ public class InterpolateurTests
     }
 
     /// <summary>
-    /// On vérifie qu'une demande échue n'entre pas dans les calculs de variance et de maturité.
+    /// It is verified that a failed request is not included in the variance and maturity
+    /// calculations.
     /// </summary>
     [TestMethod]
     public void Interpoler_EcheancePassee_LeveHorsPlage()
@@ -127,7 +132,7 @@ public class InterpolateurTests
     }
 
     /// <summary>
-    /// On vérifie l'inversion des marks sur un marché dont la volatilité de départ est connue.
+    /// Marks are checked for reversal in a market whose initial volatility is known.
     /// </summary>
     [TestMethod]
     public void Smiles_CalculesParNotreInversionDuMark_RetrouventLeSmileSynthetique()
