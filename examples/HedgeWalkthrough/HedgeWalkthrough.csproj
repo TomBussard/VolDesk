@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Pricer.Domaine/Pricer.Domaine.csproj" />
+    <Compile Include="../../tests/Pricer.Domaine.Tests/Outils/MarcheDeTest.cs" Link="MarcheDeTest.cs" />
+  </ItemGroup>
+</Project>
