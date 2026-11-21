@@ -16,7 +16,7 @@
     @foreach (var point in Profil.Points)
     {
         <circle cx="@P(_x.Vers(point.SousJacent))" cy="@P(_y.Vers(Valeur(point)))" r="4" fill="transparent">
-            <title>@($"Sous-jacent {point.SousJacent:N2} USD — {Titre} : {Valeur(point):N4}")</title>
+            <title>@($"Underlying {point.SousJacent:N2} USD · {Titre} : {Valeur(point):N4}")</title>
         </circle>
     }
     <g><text x="380" y="307" text-anchor="middle">Sous-jacent (USD)</text></g>

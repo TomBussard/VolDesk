@@ -81,7 +81,7 @@ public static class Rendu
     {
         double? f = etat.Future(echeance);
         var t = new Table().Border(TableBorder.Rounded).Expand()
-            .Title($"[bold]{etat.Referentiel.Devise} — échéance {Echeance(echeance)}[/]  future {Usd(f)}  T = {Nombre(Maturite.EnAnnees(echeance, etat.Maintenant) * 365, "0.0")} j")
+            .Title($"[bold]{etat.Referentiel.Devise} · expiry {Echeance(echeance)}[/]  future {Usd(f)}  T = {Nombre(Maturite.EnAnnees(echeance, etat.Maintenant) * 365, "0.0")} j")
             .AddColumns("[blue]Bid C[/]", "[blue]Ask C[/]", "[blue]Mark C[/]", "[blue]IV C[/]", "[bold]Strike[/]", "[purple]Bid P[/]", "[purple]Ask P[/]", "[purple]Mark P[/]", "[purple]IV P[/]");
         foreach (var p in etat.Referentiel.Strikes(echeance))
         {
@@ -102,7 +102,7 @@ public static class Rendu
     public static IRenderable Cotation(CotationStructure c)
     {
         var jambes = new Table().Border(TableBorder.Rounded).Expand()
-            .Title($"[bold]{Markup.Escape(c.Structure.Description)}[/] — {(c.Sens == Sens.Achat ? "[green]ACHAT[/]" : "[red]VENTE[/]")} × {Nombre(c.Quantite, "0.0")}   [grey]{c.Horodatage:HH:mm:ss.fff} UTC[/]")
+            .Title($"[bold]{Markup.Escape(c.Structure.Description)}[/] · {(c.Sens == Sens.Achat ? "[green]ACHAT[/]" : "[red]VENTE[/]")} × {Nombre(c.Quantite, "0.0")}   [grey]{c.Horodatage:HH:mm:ss.fff} UTC[/]")
             .AddColumns("Jambe", "Qté", "F", "σ mark", "Théo USD", "Théo BTC", "Mark BTC", "Écart BTC", "Vol bid (nous / Deribit)", "Vol mark", "Vol ask", "Bid", "Ask");
         foreach (var l in c.Lignes)
             jambes.AddRow(
@@ -153,7 +153,7 @@ public static class Rendu
                 Couleur(x.PnlAujourdhuiUsd, Usd(x.PnlAujourdhuiUsd)), Couleur(x.PnlAujourdhuiBtc, Btc(x.PnlAujourdhuiBtc)));
 
         // On trace la valeur absolue du résultat car BarChart attend une longueur positive ; la couleur et l'étiquette conservent son signe.
-        var graphe = new BarChart().Width(70).Label("[bold]P&L à l'échéance (USD) — vert gain, rouge perte[/]");
+        var graphe = new BarChart().Width(70).Label("[bold]Expiry P&L (USD) · green for gains, red for losses[/]");
         foreach (var x in p.Points)
             graphe.AddItem($"{x.Variation.EnPourcentage()} {(x.PnlEcheanceUsd >= 0 ? "+" : "−")}", Math.Round(Math.Abs(x.PnlEcheanceUsd), 0), x.PnlEcheanceUsd >= 0 ? Color.Green : Color.Red);
 
@@ -172,7 +172,7 @@ public static class Rendu
     public static IRenderable Couverture(PropositionCouverture p)
     {
         var i = p.Interpolation;
-        var interp = new Table().Border(TableBorder.Simple).Title($"[bold]{Markup.Escape(p.Option.Libelle)}[/] — client {(p.SensClient == Sens.Achat ? "acheteur" : "vendeur")} de {Nombre(p.Quantite, "0.0")}")
+        var interp = new Table().Border(TableBorder.Simple).Title($"[bold]{Markup.Escape(p.Option.Libelle)}[/] · client {(p.SensClient == Sens.Achat ? "acheteur" : "vendeur")} de {Nombre(p.Quantite, "0.0")}")
             .AddColumns("Interpolation", "Valeur");
         interp.AddRow("Échéances encadrantes", i.EcheanceCotee ? Echeance(i.Echeance1.Echeance) + " (cotée)" : $"{Echeance(i.Echeance1.Echeance)} → {Echeance(i.Echeance2!.Echeance)}");
         interp.AddRow("Future interpolé", Usd(i.Future));
@@ -207,7 +207,7 @@ public static class Rendu
     public static IRenderable Book(EtatBook e)
     {
         var t = new Table().Border(TableBorder.Rounded).Expand()
-            .Title($"[bold]Book[/] — {e.Horodatage:dd/MM HH:mm:ss} UTC — indice {Usd(e.Indice)} $ — {Markup.Escape(e.Statut)}{(!e.RisqueComplet ? " — risque partiel" : "")}")
+            .Title($"[bold]Book[/] · {e.Horodatage:dd/MM HH:mm:ss} UTC · indice {Usd(e.Indice)} $ · {Markup.Escape(e.Statut)}{(!e.RisqueComplet ? " · risque partiel" : "")}")
             .AddColumns("Id", "Structure", "Qté ouv.", "Valeur mark", "Valeur théo", "Prime", "P&L latent", "P&L réalisé", "P&L total $", "Delta", "Vega");
         foreach (var p in e.Positions)
             t.AddRow(p.Origine.Id.ToString()[..8], Markup.Escape(p.Origine.Description), Nombre(p.QuantiteOuverte, "0.0"),

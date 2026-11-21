@@ -59,7 +59,7 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
         var choix = ChoixMenu.Referentiel;
         do
         {
-            AnsiConsole.Write(new Rule($"[bold yellow]Pricer Deribit[/] — mode [bold]{options.Mode}[/] — {Etat.Referentiel.NombreOptions} options — {marche.MessagesRecus} ticks reçus — {Etat.Maintenant:dd/MM HH:mm:ss} UTC").LeftJustified());
+            AnsiConsole.Write(new Rule($"[bold yellow]VolDesk[/] · mode [bold]{options.Mode}[/] · {Etat.Referentiel.NombreOptions} options · {marche.MessagesRecus} ticks reçus · {Etat.Maintenant:dd/MM HH:mm:ss} UTC").LeftJustified());
             choix = AnsiConsole.Prompt(new SelectionPrompt<ChoixMenu>().Title("Que voulez-vous faire ?").UseConverter(c => Libelles[c]).AddChoices(Enum.GetValues<ChoixMenu>()));
             try
             {
@@ -150,7 +150,7 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
         else if (action == "Retour") return;
 
         var trade = blotter.Booker(cotation);
-        AnsiConsole.MarkupLine($"[bold green]Trade {trade.Id} booké[/] — prime {Rendu.Btc(trade.PrimeBtc)} BTC.");
+        AnsiConsole.MarkupLine($"[bold green]Trade {trade.Id} booké[/] · prime {Rendu.Btc(trade.PrimeBtc)} BTC.");
     }
 
     /// <summary>
@@ -175,7 +175,7 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
             Instrument ChoisirOption(string titre)
             {
                 var e = ChoisirEcheance();
-                double k = Saisie.Nombre($"{titre} — strike :");
+                double k = Saisie.Nombre($"{titre} · strike :");
                 var t = AnsiConsole.Prompt(new SelectionPrompt<TypeOption>().AddChoices(TypeOption.Call, TypeOption.Put));
                 return ValidateurStructure.ValiderStrikeCote(Etat.Referentiel, e, k, t);
             }
@@ -235,7 +235,7 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
         double quantite = Saisie.Nombre("Quantité à déboucler :", blotter.QuantiteOuverte(trade.Id));
         await marche.SuivreAsync(trade.Jambes.Where(j => j.Nature != NatureJambe.OptionSurMesure).Select(j => j.Instrument), ct);
         var d = blotter.Deboucler(trade.Id, quantite, Etat);
-        AnsiConsole.MarkupLine($"[bold green]Débouclage {d.Id} booké[/], lié au trade {trade.Id} — prime {Rendu.Btc(d.PrimeBtc)} BTC.");
+        AnsiConsole.MarkupLine($"[bold green]Débouclage {d.Id} booké[/], lié au trade {trade.Id} · prime {Rendu.Btc(d.PrimeBtc)} BTC.");
     }
 
     /// <summary>
@@ -258,7 +258,7 @@ public sealed class Application(ServiceMarche marche, Blotter blotter, Book book
         // The screen is rebuilt and a business error is displayed in the tracking area if the calculation fails.
         IRenderable Ecran()
         {
-            try { return new Rows(construire(), new Markup("[grey]Mise à jour en continu — appuyez sur une touche pour continuer.[/]")); }
+            try { return new Rows(construire(), new Markup("[grey]Updating live. Press a key to continue.[/]")); }
             catch (PricerException ex) { return new Markup($"[red]{Markup.Escape(ex.Message)}[/]"); }
         }
 

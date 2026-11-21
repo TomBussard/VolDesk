@@ -98,7 +98,7 @@
         @if (i.Echeance2 is not null)
         {
             <div class="carte">
-                <h2>Smile @Format.Court(i.Echeance2.Echeance) — échéance encadrante 2</h2>
+                <h2>Smile @Format.Court(i.Echeance2.Echeance) · upper expiry</h2>
                 <GraphiqueSmile Smile="i.Echeance2" StrikeMarque="i.Echeance2.Future * Math.Exp(i.LogMoneyness)" Vol="i.Sigma2" />
             </div>
         }
